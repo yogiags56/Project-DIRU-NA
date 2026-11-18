@@ -73,6 +73,22 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - [ ] Trace actual Nokia-specific API call sites and determine whether any are required by gameplay
 - [ ] Confirm original handset model, physical display characteristics, and distribution channel (not established by manifest alone)
 
+
+## DIRU-NA-AUDIT-006 — Sprite resource mapping and animation reconstruction
+
+**Working document:** [DIRU-NA-AUDIT-006 Sprite Resource Mapping](DIRU-NA-AUDIT-006_SPRITE_RESOURCE_MAPPING.md)
+
+- [x] Document sprite parser sections, palette formats, and encoded module formats at static-source level
+- [x] Document module-to-frame composition and animation timing behavior
+- [x] Map selected generated-resource chunks to runtime sprite slots and texture arrays
+- [x] Map selected `cm.f`, UI, hero, and other directly loaded sprite resources
+- [ ] Complete conditional load-mask, palette, world, and resource-lifetime mapping
+- [ ] Identify visual meaning of sprite slots and animation indices using legally usable fixtures
+- [ ] Validate decoder formats, offsets, flips, frame bounds, and animation timing with synthetic fixtures
+- [ ] Trace hero/enemy/object state-to-animation transitions
+- [ ] Confirm unresolved chunk boundaries and compare with original handset/runtime evidence
+
+
 ## DIRU-NA-AUDIT-004 — Gameplay state machine and movement reconstruction
 
 **Working document:** [DIRU-NA-AUDIT-004 Gameplay State & Movement](DIRU-NA-AUDIT-004_GAMEPLAY_STATE_MOVEMENT.md)
@@ -100,7 +116,7 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - [x] Record partial foreground code catalog from initialization, collision, and rendering branches
 - [x] Record partial object/entity code catalog and confirmed player-start/checkpoint/door/multi-cell behaviors
 - [x] Document sprite parser structure and animation composition model
-- [ ] Complete sprite-slot to file/chunk/palette mapping
+- [x] Record partial sprite-slot to file/chunk/palette mapping (see AUDIT-006; visual identities and conditional paths remain open)
 - [ ] Validate all image decoder formats and malformed-input behavior
 - [ ] Correlate tile/entity codes with visual sprite frames using permitted fixtures
 - [ ] Trace dynamic entity updates and remaining puzzle/hazard/collectible behaviors
