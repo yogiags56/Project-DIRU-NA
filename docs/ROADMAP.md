@@ -75,6 +75,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-008 — Hero animation and movement state reconstruction
+
+**Working document:** [DIRU-NA-AUDIT-008 Hero Animation & Movement State](DIRU-NA-AUDIT-008_HERO_ANIMATION_MOVEMENT_STATE.md)
+
+- [x] Trace hero sprite resource, chunk, and palette selection
+- [x] Inspect central hero animation selector and environment-dependent overrides
+- [x] Record special auxiliary animator path
+- [x] Separate hero animator timeline from nearby entity update logic
+- [ ] Trace all callers of the hero animation selector and assign state names only where proven
+- [ ] Complete hero movement and scripted-state mapping
+- [ ] Trace damage, death, retry, and checkpoint animation transitions
+- [ ] Complete hero draw/tick lifecycle and offset behavior
+- [ ] Create deterministic hero state-transition fixtures
+- [ ] Validate animation behavior against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-007 — Entity animation and state mapping
 
 **Working document:** [DIRU-NA-AUDIT-007 Entity Animation & State Mapping](DIRU-NA-AUDIT-007_ENTITY_ANIMATION_STATE_MAPPING.md)
