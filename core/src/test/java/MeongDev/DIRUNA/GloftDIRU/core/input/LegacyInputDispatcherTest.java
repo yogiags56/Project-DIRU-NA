@@ -4,6 +4,10 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public final class LegacyInputDispatcherTest {
+    // Synthetic single-bit fixtures: 0x10 matches CENTER; 0x20 matches CONFIRM
+    // without also matching CENTER. These are not Android or handset key codes.
+    private static final int CENTER_SAMPLE = 0x10;
+    private static final int CONFIRM_ONLY_SAMPLE = 0x20;
     private static LegacyInputDispatcher.Context normalContext() {
         return new LegacyInputDispatcher.Context(false, 0, 0,
                 false, 1, false, false, false, 0);
@@ -26,7 +30,7 @@ public final class LegacyInputDispatcherTest {
 
     @Test public void clearBeforeDispatchHappensBeforeClIntGate() {
         HeldKeyState keys = new HeldKeyState();
-        LegacyInputDispatcher.Result result = dispatch(LegacyInputMasks.CONFIRM,
+        LegacyInputDispatcher.Result result = dispatch(CONFIRM_ONLY_SAMPLE,
                 new LegacyInputDispatcher.Context(true, 1, 0,
                         false, 1, false, false, false, 0), keys);
         assertEquals(LegacyInputDispatcher.Kind.BLOCKED, result.kind());
@@ -35,7 +39,7 @@ public final class LegacyInputDispatcherTest {
 
     @Test public void confirmBypassesOnlyTheClIntGate() {
         HeldKeyState keys = new HeldKeyState();
-        LegacyInputDispatcher.Result result = dispatch(LegacyInputMasks.CONFIRM,
+        LegacyInputDispatcher.Result result = dispatch(CONFIRM_ONLY_SAMPLE,
                 new LegacyInputDispatcher.Context(false, 1, 0,
                         false, 1, false, false, false, 0), keys);
         assertEquals(LegacyInputDispatcher.Kind.NO_INPUT, result.kind());
@@ -70,7 +74,7 @@ public final class LegacyInputDispatcherTest {
     @Test public void interactionPrefersCenterOverConfirmAndAlwaysClears() {
         HeldKeyState keys = new HeldKeyState();
         LegacyInputDispatcher.Result result = dispatch(
-                LegacyInputMasks.CENTER | LegacyInputMasks.CONFIRM,
+                CENTER_SAMPLE | CONFIRM_ONLY_SAMPLE,
                 new LegacyInputDispatcher.Context(false, 0, 0,
                         false, 1, false, false, true, 0), keys);
         assertEquals(LegacyInputDispatcher.Kind.INTERACTION_CENTER, result.kind());
@@ -79,7 +83,7 @@ public final class LegacyInputDispatcherTest {
 
     @Test public void interactionConfirmIsDistinctFromCenterAction() {
         HeldKeyState keys = new HeldKeyState();
-        LegacyInputDispatcher.Result result = dispatch(LegacyInputMasks.CONFIRM,
+        LegacyInputDispatcher.Result result = dispatch(CONFIRM_ONLY_SAMPLE,
                 new LegacyInputDispatcher.Context(false, 0, 0,
                         false, 1, false, false, true, 0), keys);
         assertEquals(LegacyInputDispatcher.Kind.INTERACTION_CONFIRM, result.kind());
@@ -122,7 +126,7 @@ public final class LegacyInputDispatcherTest {
 
     @Test public void specialMovementConfirmIsSeparateAction() {
         HeldKeyState keys = new HeldKeyState();
-        LegacyInputDispatcher.Result result = dispatch(LegacyInputMasks.CONFIRM,
+        LegacyInputDispatcher.Result result = dispatch(CONFIRM_ONLY_SAMPLE,
                 new LegacyInputDispatcher.Context(false, 0, 0,
                         false, 1, false, false, false, 2), keys);
         assertEquals(LegacyInputDispatcher.Kind.SPECIAL_CONFIRM_ACTION, result.kind());
@@ -159,7 +163,7 @@ public final class LegacyInputDispatcherTest {
 
     @Test public void normalCenterActionClearsInput() {
         HeldKeyState keys = new HeldKeyState();
-        LegacyInputDispatcher.Result result = dispatch(LegacyInputMasks.CENTER,
+        LegacyInputDispatcher.Result result = dispatch(CENTER_SAMPLE,
                 normalContext(), keys);
         assertEquals(LegacyInputDispatcher.Kind.CENTER_ACTION, result.kind());
         assertEquals(0, keys.snapshotMask());
@@ -167,7 +171,7 @@ public final class LegacyInputDispatcherTest {
 
     @Test public void broadConfirmIsNotNormalCenterAction() {
         HeldKeyState keys = new HeldKeyState();
-        LegacyInputDispatcher.Result result = dispatch(LegacyInputMasks.CONFIRM,
+        LegacyInputDispatcher.Result result = dispatch(CONFIRM_ONLY_SAMPLE,
                 normalContext(), keys);
         assertEquals(LegacyInputDispatcher.Kind.NO_INPUT, result.kind());
         assertTrue(keys.isAnyPressed(LegacyInputMasks.CONFIRM));
