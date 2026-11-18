@@ -100,6 +100,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-033 — Sprite animation tables and frame metadata
+
+**Working document:** [DIRU-NA-AUDIT-033 Sprite Animation & Frame Metadata](DIRU-NA-AUDIT-033_SPRITE_ANIMATION_FRAME_METADATA.md)
+
+- [x] Reconstruct f_Sprite metadata section order
+- [x] Parse animation metadata for all five encounter chunks
+- [x] Extract frame counts and selected animation frame/duration sequences
+- [x] Trace b_SpriteAnimator tick, loop, and setAnimation semantics
+- [x] Record Great Anaconda constructor-default animation state
+- [ ] Trace every encounter animation-selection call site
+- [ ] Decode bounding boxes and establish collision semantics
+- [ ] Establish game-loop tick frequency and time conversion
+- [ ] Resolve sprite slot 7 and its animation resource
+- [ ] Add bounded parser and deterministic animation tests
+- [ ] Validate sequences against original runtime
+
+
 ## DIRU-NA-AUDIT-032 — Special encounter sprite and animation resource mapping
 
 **Working document:** [DIRU-NA-AUDIT-032 Special Encounter Sprite & Animation Mapping](DIRU-NA-AUDIT-032_SPECIAL_ENCOUNTER_SPRITE_ANIMATION_MAPPING.md)
