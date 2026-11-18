@@ -129,7 +129,7 @@ The launcher/display name is **Diamond Rush**. The project owner supplied `Meong
 - [x] Application name and identifier recorded.
 - [x] targetSdk 36 selected as the initial Google Play-compatible baseline; recheck before release.
 
-**Status: project choices recorded; build implementation remains pending.**
+**Status: toolchain and initial Android debug build validated by GitHub Actions run #5.**
 
 ## 9. Next work item
 

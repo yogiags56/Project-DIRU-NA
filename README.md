@@ -61,7 +61,7 @@ The candidate source repository is an audit input only. Its presence does not es
 - [ ] Original gameplay loop mapped
 - [x] Initial logical viewport decision recorded: 240×320 portrait
 - [ ] Adaptive viewport behavior implemented and tested
-- [x] Initial Gradle root, wrapper, and launcher shell committed (execution validation pending)
+- [x] Initial Gradle root, wrapper, and launcher shell committed and validated by CI run #5
 - [x] Platform-independent Java core module and initial viewport contract added
 - [x] Core JVM tests and Android debug APK assembly passed in GitHub Actions run #5
 - [x] Automated core-test and Android debug-build validation passed

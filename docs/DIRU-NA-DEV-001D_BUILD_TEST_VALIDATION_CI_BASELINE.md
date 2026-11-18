@@ -6,7 +6,7 @@
 
 ## 1. Purpose
 
-Add an independent GitHub Actions workflow to validate the plain JVM core and assemble the Android debug variant. This is a validation pipeline, not evidence of a successful run until GitHub Actions reports a completed passing job.
+Add an independent GitHub Actions workflow to validate the plain JVM core and assemble the Android debug variant. This is the reproducible CI baseline for the initial core module and Android debug launcher.
 
 ## 2. Workflow
 
@@ -71,4 +71,4 @@ A successful debug build is not a release-ready game. The launcher remains a tem
 
 ## 6. Next work item
 
-After the first successful CI run, proceed to **DIRU-NA-DEV-002 — Core Game Loop and Platform Ports**. Before that, fix any failures reported by CI and record the exact run URL, commit, test count, and APK artifact.
+With the initial CI baseline passed, proceed to **DIRU-NA-DEV-002 — Core Game Loop and Platform Ports**. Keep the core module platform-independent and preserve the successful build configuration.

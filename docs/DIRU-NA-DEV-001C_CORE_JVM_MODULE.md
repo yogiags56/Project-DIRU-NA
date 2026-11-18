@@ -57,8 +57,8 @@ The core module must remain free of Android SDK imports. Future gameplay entitie
 
 **Validated:** GitHub Actions run #5 passed `:core:test`; the four current JUnit test methods passed. The same run also passed `:app:assembleDebug`.
 
-No claim is made that `./gradlew :core:test`, `:core:build`, Android compilation, or APK assembly has passed. A Gradle/JDK execution environment is still required to validate dependency resolution and actual test results.
+The workflow run is recorded in [DEV-001D](DIRU-NA-DEV-001D_BUILD_TEST_VALIDATION_CI_BASELINE.md). The result validates the initial core module and launcher shell only; it does not validate gameplay behavior.
 
 ## 7. Next work item
 
-Next: **DIRU-NA-DEV-002 — Core Game Loop and Platform Ports.** Begin the platform-independent update loop and port contracts only after reconciling the audited game-loop, animation, input, and encounter call sites. The workflow must fail on either task failure.
+Next: **DIRU-NA-DEV-002 — Core Game Loop and Platform Ports.** Begin the platform-independent update loop and port contracts only after reconciling the audited game-loop, animation, input, and encounter call sites.
