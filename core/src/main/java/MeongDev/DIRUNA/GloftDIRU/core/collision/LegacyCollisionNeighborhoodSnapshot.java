@@ -59,11 +59,20 @@ public final class LegacyCollisionNeighborhoodSnapshot {
     private final Map<Role, CellSample> samples;
     private final CellSample type19Anchor;
     private final List<CellSample> type19Scan;
+    private final List<CellSample> type19ForegroundRun;
 
     public LegacyCollisionNeighborhoodSnapshot(
             Map<Role, CellSample> samples,
             CellSample type19Anchor,
             List<CellSample> type19Scan) {
+        this(samples, type19Anchor, type19Scan, null);
+    }
+
+    public LegacyCollisionNeighborhoodSnapshot(
+            Map<Role, CellSample> samples,
+            CellSample type19Anchor,
+            List<CellSample> type19Scan,
+            List<CellSample> type19ForegroundRun) {
         if (samples == null) {
             throw new IllegalArgumentException("samples must not be null");
         }
@@ -87,6 +96,17 @@ public final class LegacyCollisionNeighborhoodSnapshot {
                 }
             }
         }
+        if (type19ForegroundRun == null) {
+            this.type19ForegroundRun = Collections.emptyList();
+        } else {
+            this.type19ForegroundRun = Collections.unmodifiableList(
+                    new ArrayList<CellSample>(type19ForegroundRun));
+            for (CellSample sample : this.type19ForegroundRun) {
+                if (sample == null) {
+                    throw new IllegalArgumentException("type19 foreground-run samples must not be null");
+                }
+            }
+        }
     }
 
     public CellSample get(Role role) { return samples.get(role); }
@@ -94,4 +114,5 @@ public final class LegacyCollisionNeighborhoodSnapshot {
     public Map<Role, CellSample> getSamples() { return samples; }
     public CellSample getType19Anchor() { return type19Anchor; }
     public List<CellSample> getType19Scan() { return type19Scan; }
+    public List<CellSample> getType19ForegroundRun() { return type19ForegroundRun; }
 }
