@@ -18,12 +18,18 @@ This roadmap belongs exclusively to the new source lineage. Previous RVC milesto
 
 ## DIRU-NA-AUDIT-002 — Gameplay and resource specification
 
-- [ ] Write a resource catalog with offsets, dimensions, encoding, and call sites
-- [ ] Document sprite and animation decoding
-- [ ] Document level/map format and loading
-- [ ] Document player state, movement, collision, and interaction rules
-- [ ] Document audio event mapping
+**Working document:** [DIRU-NA-AUDIT-002 Gameplay and Resource Specification](DIRU-NA-AUDIT-002_GAMEPLAY_RESOURCE_SPEC.md)
+
+- [ ] Write a complete resource catalog with offsets, dimensions, encoding, and call sites (initial resource call-site catalog exists; binary validation remains open)
+- [x] Document sprite and animation decoding at static-source level (binary fixtures and decoder tests remain open)
+- [ ] Document level/map format and loading (outer structure observed; field semantics remain open)
+- [ ] Document player state, movement, collision, and interaction rules (input constants and world anchors recorded; full state/physics map remains open)
+- [x] Document audio event IDs and priority mapping (container header/payload validation remains open)
 - [ ] Define test fixtures from legally usable material
+
+### Language-resource scope decision
+
+Language payload changes are deferred until a Native Android APK is verified playable. Keep the existing candidate language inventory as documentation only. Do not import files from the previous Android build. After playable status, audit original Nokia Diamond Rush language resources read-only, subject to provenance and licensing review, then design language selection.
 
 ## DIRU-NA-DEV-001 — Native Android foundation
 
