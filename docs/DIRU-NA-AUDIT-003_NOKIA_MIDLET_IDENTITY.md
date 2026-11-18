@@ -120,3 +120,15 @@ Do not modify the candidate repository or attempt to reconstruct a purported off
 | Nokia handset/model-specific behavior established | Not established |
 
 No build, APK, handset test, or runtime validation was performed as part of this metadata audit.
+
+
+## 9. Additional interpretation guardrails
+
+The Nokia-specific attribute reference was consulted to avoid over-reading the manifest:
+
+- `Nokia-MIDlet-Category: Game` is a recognized Nokia attribute used to categorize the MIDlet in the device's application/game menu. This is meaningful Nokia deployment metadata.
+- `Nokia-Platform: *` is present in this candidate manifest, but the reviewed attribute reference does not define this field/value. Treat it as an opaque vendor/platform marker; do not infer a handset family, model, firmware, or screen profile from the wildcard.
+- The manifest does **not** contain `Nokia-MIDlet-App-Orientation`, `Nokia-MIDlet-Original-Display-Size`, or `Nokia-MIDlet-Target-Display-Size`. Therefore it does not establish portrait/landscape locking or a physical display resolution.
+- `MIDlet-Vendor: Nokia` is strong evidence that this particular package metadata labels Nokia as vendor. It does not independently authenticate the package, prove Nokia authored the game, or establish whether Nokia was publisher, distributor, carrier partner, or repackager. Keep the separate game-credit question open until original distribution evidence is obtained.
+
+Reference for Nokia MIDlet attributes: https://github.com/Nokia64/J2ME-phone-quirks/blob/main/vendor-specific-MIDlet-attributes.md
