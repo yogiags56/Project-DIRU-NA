@@ -93,6 +93,25 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-026 — Binary world-map extraction and topology validation
+
+**Working document:** [DIRU-NA-AUDIT-026 Binary World Map Extraction & Topology](DIRU-NA-AUDIT-026_BINARY_WORLD_MAP_EXTRACTION_TOPOLOGY.md)
+
+- [x] Decode all three map resources from the pinned read-only source candidate
+- [x] Confirm exact payload lengths and record counts
+- [x] Reconstruct per-world node coordinates, stage IDs, and neighbor lists
+- [x] Validate unique node coordinates and 12×12 grid bounds
+- [x] Validate neighbor references, reciprocal edges, and graph connectivity
+- [x] Correct AUDIT-025 record layout: five fixed bytes per node, not six
+- [ ] Determine semantic meaning of secondary field values, especially value 1
+- [ ] Correlate stage IDs with title mappings and actual stage streams
+- [ ] Complete directional tie-break analysis using real neighbor ordering
+- [ ] Identify node sprite frames and validate visual classes
+- [ ] Add automated parser and topology fixtures/tests
+- [ ] Validate map navigation against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-025 — World-map resource records and node construction
 
 **Working document:** [DIRU-NA-AUDIT-025 World Map Resource & Node Construction](DIRU-NA-AUDIT-025_WORLD_MAP_RESOURCE_NODE_CONSTRUCTION.md)
