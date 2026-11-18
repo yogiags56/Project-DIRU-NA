@@ -19,8 +19,10 @@ The source helper does not return a simple passability boolean. It has two separ
 - raw helper return flag `b2`;
 - raw secondary interaction flag `b3`;
 - whether `aWInt == 0`;
-- whether tile coordinates were committed;
-- whether interpolation progress was initialized;
+- whether the helper's local coordinate delta was applied;
+- whether local interpolation progress was initialized;
+- whether the player snapshot was written back;
+- whether tile coordinates were therefore persisted;
 - whether packed moving bit `0x8` was set;
 - whether an animation was requested;
 - whether a world/map mutation was observed;
@@ -61,27 +63,30 @@ At the end of the source helper, the coordinate/progress block is guarded by:
 When entered, it sets local `jInt = 18` and applies the requested delta to local `crtPlayerX/Y`. The local snapshot is written back only when `probe == false`.
 
 The trace constructor enforces:
-1. probe mode cannot record a committed tile coordinate;
-2. a tile commit requires `b2 == true`;
-3. a tile commit requires `aWInt == 0`;
-4. progress initialization and tile commit occur together in this source branch.
+1. local coordinate delta and local `jInt=18` initialization occur together;
+2. the local update requires `b2 == true` and `aWInt == 0`;
+3. probe mode does not write the player snapshot back;
+4. a normal non-probe helper exit writes the snapshot back;
+5. a persisted tile commit occurs only when the local update is followed by snapshot writeback;
+6. the special early return does not perform final snapshot writeback, even outside probe mode.
 
 It does not infer that a committed coordinate means the destination was ordinarily passable. The stage-bounds branch is a counterexample to that simplification.
 
 ## 5. Probe is not synonymous with side-effect free
 
-The probe flag suppresses many writes guarded by `!probe`, including final player-field writeback and the foreground type-19 scripted map path (that branch exits before its map mutations when `probe == true`). However, the player-layer type 0/8/9/47 path can still request an animation through the `kByte == 4` early-return branch. A future native implementation must classify each call site; probe is not a promise that every observable side effect is suppressed.
+The probe flag suppresses writes guarded by `!probe`, including final player-field writeback and the foreground type-19 scripted map path (that branch exits before its map mutations when `probe == true`). The player-layer type 0/8/9/47 path can still request an animation through the `kByte == 4` early-return branch. Also, the final `b2 && aWInt == 0` block updates local copies of `jInt` and tile coordinates even in probe mode; these local values are not persisted because the method skips final snapshot writeback. A future native implementation must model local calculation, side effects, and persisted state as separate layers.
 
 The trace keeps `worldMutationObserved` and `playerStateMutationObserved` independent from `probeMode` so fixtures can preserve such observations.
 
 ## 6. Synthetic fixture set
 
 The JUnit suite currently records these synthetic observations:
-- bounds branch with `b2=true` and commit when counter is zero;
-- forced-movement branch in probe mode with no commit;
+- non-probe bounds branch with local coordinate/progress update and persisted snapshot;
+- probe branch with local coordinate/progress update but no persisted snapshot;
 - interaction branch with both `b2` and `b3` true;
 - early-return animation request without tile commit;
 - probe-mode early return that requests an animation without committing tile coordinates or mutating the world;
+- non-probe early return that also skips final player snapshot writeback;
 - separate type-5/type-28 and type-2/type-4 branch identities;
 - invalid combinations rejected by trace invariants.
 
