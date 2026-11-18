@@ -89,6 +89,25 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-022 — Stage result flags, route advancement and secret-stage evidence
+
+**Working document:** [DIRU-NA-AUDIT-022 Stage Result Flags, Route & Secret Stages](DIRU-NA-AUDIT-022_STAGE_RESULT_FLAGS_ROUTE_SECRET_STAGES.md)
+
+- [x] Trace stage result flag snapshot and one-time award checks
+- [x] Record result-condition bits 0x04, 0x08, 0x10, and 0x20
+- [x] Trace bit 0x02 use in result commit and stage/map state
+- [x] Trace bit 0x40 writes during progression advancement
+- [x] Distinguish coordinate collectible persistence from result flags
+- [x] Confirm secret-stage title generation
+- [ ] Enumerate all readers/writers of stage flag bits
+- [ ] Decode packed node state and relate it to stage flags
+- [ ] Trace all progression-index transitions and branching paths
+- [ ] Establish exact secret-stage prerequisites
+- [ ] Add deterministic progression and persistence tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-021 — World map, stage selection and stage unlock conditions
 
 **Working document:** [DIRU-NA-AUDIT-021 World Map, Stage Selection & Unlocks](DIRU-NA-AUDIT-021_WORLD_MAP_STAGE_SELECTION_UNLOCKS.md)
