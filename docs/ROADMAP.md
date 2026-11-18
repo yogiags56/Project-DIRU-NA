@@ -23,7 +23,7 @@ This roadmap belongs exclusively to the new source lineage. Previous RVC milesto
 - [ ] Write a complete resource catalog with offsets, dimensions, encoding, and call sites (initial resource call-site catalog exists; binary validation remains open)
 - [x] Document sprite and animation decoding at static-source level (binary fixtures and decoder tests remain open)
 - [x] Document stage-package outer structure and three tile layers at static-source level (field dictionary and binary validation remain open)
-- [ ] Document player state, movement, collision, and interaction rules (spawn marker, direction states, checkpoint/respawn paths, action gating, and partial numeric entity/foreground initialization effects recorded; full state/physics map and semantic tile dictionary remain open)
+- [ ] Document player state, movement, collision, and interaction rules (spawn marker, direction states, action gating, checkpoint snapshot/restore arrays, partial occupancy predicates, and moving-object code 48 behavior recorded; full state/physics map and semantic tile dictionary remain open)
 - [x] Document audio event IDs and priority mapping (container header/payload validation remains open)
 - [ ] Define test fixtures from legally usable material
 - [x] Record partial entity/foreground initialization effects and generated sprite-chunk slot mappings (semantic entity identities remain unresolved)
