@@ -99,6 +99,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-032 — Special encounter sprite and animation resource mapping
+
+**Working document:** [DIRU-NA-AUDIT-032 Special Encounter Sprite & Animation Mapping](DIRU-NA-AUDIT-032_SPECIAL_ENCOUNTER_SPRITE_ANIMATION_MAPPING.md)
+
+- [x] Map Falling Torches sprite animator and texture resources
+- [x] Map Great Anaconda encounter resource chunks and runtime slots
+- [x] Map Evil Teutonic Knight encounter resource chunks and runtime slots
+- [x] Map Yetti encounter resource chunks and runtime slots
+- [x] Record confirmed initial animation selections
+- [x] Identify reused runtime slots and context-dependent asset identities
+- [ ] Extract frame counts, durations, offsets, bounding boxes, and animation tables
+- [ ] Resolve sprite slot 7 resource origin and complete draw-call map
+- [ ] Visually verify encounter entities/effects after provenance review
+- [ ] Add asset-manifest consistency tests
+- [ ] Validate encounter animation behavior against original runtime
+
+
 ## DIRU-NA-AUDIT-031 — Special-stage mechanics and gameplay configuration
 
 **Working document:** [DIRU-NA-AUDIT-031 Special Stage Mechanics](DIRU-NA-AUDIT-031_SPECIAL_STAGE_MECHANICS.md)
