@@ -100,11 +100,12 @@ public final class LegacyCollisionBranchInputValidatorTest {
                                 LegacyCollisionNeighborhoodSnapshot.CellSample>(
                                 LegacyCollisionNeighborhoodSnapshot.Role.class),
                         anchor, scan, run);
+        EnumSet<LegacyCollisionBranchInputValidator.ContextField> context = common();
+        context.add(LegacyCollisionBranchInputValidator.ContextField.L_BOOLEAN);
         LegacyCollisionBranchInputValidator.Validation v =
                 LegacyCollisionBranchInputValidator.validate(
                         LegacyCollisionBranchInputValidator.Branch.FOREGROUND_TYPE_19,
-                        n, common().plus(
-                                LegacyCollisionBranchInputValidator.ContextField.L_BOOLEAN));
+                        n, context);
         assertTrue(v.isComplete());
     }
 
