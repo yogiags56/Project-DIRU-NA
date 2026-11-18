@@ -70,7 +70,7 @@ It does not infer that a committed coordinate means the destination was ordinari
 
 ## 5. Probe is not synonymous with side-effect free
 
-The probe flag suppresses many writes guarded by `!probe`, including final player-field writeback and several map mutations. However, the source contains shared calls/field changes that are not uniformly guarded. A future native implementation must classify each call site, not globally promise that probe is pure.
+The probe flag suppresses many writes guarded by `!probe`, including final player-field writeback and the foreground type-19 scripted map path (that branch exits before its map mutations when `probe == true`). However, the player-layer type 0/8/9/47 path can still request an animation through the `kByte == 4` early-return branch. A future native implementation must classify each call site; probe is not a promise that every observable side effect is suppressed.
 
 The trace keeps `worldMutationObserved` and `playerStateMutationObserved` independent from `probeMode` so fixtures can preserve such observations.
 
@@ -81,7 +81,7 @@ The JUnit suite currently records these synthetic observations:
 - forced-movement branch in probe mode with no commit;
 - interaction branch with both `b2` and `b3` true;
 - early-return animation request without tile commit;
-- scripted-path observation with a world mutation in probe mode;
+- probe-mode early return that requests an animation without committing tile coordinates or mutating the world;
 - separate type-5/type-28 and type-2/type-4 branch identities;
 - invalid combinations rejected by trace invariants.
 

@@ -52,14 +52,16 @@ public final class LegacyCollisionTraceTest {
     }
 
     @Test
-    public void preservesWorldMutationDuringProbe() {
+    public void probeCanStillRequestAnimationOnEarlyReturn() {
         LegacyCollisionTrace trace = trace(
-                LegacyCollisionTrace.Branch.FOREGROUND_TYPE_19_SCRIPTED_PATH,
-                true, false, false, false, false, false,
-                false, false, true, true);
+                LegacyCollisionTrace.Branch.EARLY_RETURN_KBYTE_4,
+                true, false, false, true, false, false,
+                true, true, false, true);
 
         assertTrue(trace.isProbeMode());
-        assertTrue(trace.isWorldMutationObserved());
+        assertTrue(trace.isAnimationRequested());
+        assertFalse(trace.isWorldMutationObserved());
+        assertFalse(trace.isTilePositionCommitted());
     }
 
     @Test
