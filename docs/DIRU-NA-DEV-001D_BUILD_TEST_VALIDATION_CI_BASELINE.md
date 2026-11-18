@@ -19,7 +19,7 @@ Triggers:
 Environment:
 - Ubuntu runner;
 - Temurin JDK 17;
-- Android SDK platform 37;
+- Android SDK platform 36;
 - Android Build Tools 36.0.0;
 - Gradle Wrapper pinned to 9.8.2.
 

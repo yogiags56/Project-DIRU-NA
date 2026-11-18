@@ -21,7 +21,7 @@ This is the project toolchain decision record. The initial Gradle root and launc
 | Core language | **Java 17** | Lowest-friction first implementation; matches the Java source audit and avoids introducing a second language before core contracts stabilize |
 | Android source language | **Java 17 initially** | Keep the first app/core implementation single-language |
 | Build-script DSL | **Groovy DSL** | Conservative, widely documented Gradle convention; no Kotlin DSL requirement for this project |
-| Compile SDK | **API 37** | AGP 9.6.0 supports up to API 37 |
+| Compile SDK | **API 36** | AGP 9.6.0 supports up to API 36 |
 | JVM unit tests | **JUnit 4** | Small, mature dependency for the pure JVM core; handwritten fakes remain the default |
 | Application ID / namespace | `MeongDev.DIRUNA.GloftDIRU` | Exact owner-provided identifier; preserve capitalization |
 | minSdk | **23 (Android 6.0)** | Approved by project owner |
@@ -38,7 +38,7 @@ The official AGP 9.6.0 release notes identify:
 - minimum/default Gradle: 9.8.2;
 - minimum/default JDK: 17;
 - default SDK Build Tools: 36.0.0;
-- maximum supported Android API level: 37.
+- maximum supported Android API level: 37 (API 36 is selected for the current stable SDK package).
 
 Source: [Android Gradle Plugin 9.6.0 release notes](https://developer.android.com/build/releases/agp-9-6-0-release-notes).
 

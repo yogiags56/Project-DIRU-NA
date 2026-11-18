@@ -4,7 +4,7 @@ plugins {
 
 android {
     namespace 'MeongDev.DIRUNA.GloftDIRU'
-    compileSdk 37
+    compileSdk 36
 
     defaultConfig {
         applicationId 'MeongDev.DIRUNA.GloftDIRU'

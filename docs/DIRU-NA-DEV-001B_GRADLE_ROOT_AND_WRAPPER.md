@@ -14,13 +14,13 @@ Create the independent Gradle root, pin a reproducible Gradle Wrapper, and add t
 - Android Gradle Plugin: 9.6.0
 - Gradle runtime JDK: 17
 - Java source/target compatibility: 17
-- Compile SDK: 37
+- Compile SDK: 36
 - minSdk: 23 (Android 6.0)
 - targetSdk: 36 (Android 16)
 - Application label: Diamond Rush
 - Application ID and namespace: `MeongDev.DIRUNA.GloftDIRU`
 
-AGP 9.6.0 requires Gradle 9.8.2, uses JDK 17, and supports up to API 37. The Gradle distribution SHA-256 is pinned in `gradle-wrapper.properties`. Official checksums are published by Gradle.
+AGP 9.6.0 requires Gradle 9.8.2, uses JDK 17, and supports up to API 37; the project currently compiles against the available stable API 36 SDK package. The Gradle distribution SHA-256 is pinned in `gradle-wrapper.properties`. Official checksums are published by Gradle.
 
 ## 3. Files introduced
 

@@ -33,7 +33,7 @@ jobs:
           packages: platform-tools
 
       - name: Install required Android SDK packages
-        run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
 
       - name: Run core JVM tests
         run: ./gradlew --no-daemon --stacktrace :core:test
