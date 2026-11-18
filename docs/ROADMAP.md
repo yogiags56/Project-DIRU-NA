@@ -91,6 +91,26 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-024 — World-map node states, directional selection and route animation
+
+**Working document:** [DIRU-NA-AUDIT-024 Node States, Directional Selection & Route Animation](DIRU-NA-AUDIT-024_NODE_STATES_DIRECTIONAL_SELECTION_ROUTE_ANIMATION.md)
+
+- [x] Record observed values and uses of packed node field bits 0–2
+- [x] Record observed values and uses of secondary field bits 3–5
+- [x] Trace directional candidate filtering over explicit neighbor coordinates
+- [x] Record partial multiple-candidate selection behavior
+- [x] Trace qualifying higher-index neighbor progression and flag 0x40 writes
+- [x] Separate route marker animation state from persistent graph state
+- [ ] Complete semantics for every low-field value
+- [ ] Reconstruct exact directional tie-break algorithm
+- [ ] Trace full lifecycle of stage flag 0x40
+- [ ] Establish secret-stage node encoding and prerequisites
+- [ ] Identify node sprite frames from legally usable resources
+- [ ] Add deterministic direction, graph, and progression tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-023 — Packed world-map format and route graph reconstruction
 
 **Working document:** [DIRU-NA-AUDIT-023 Packed World Map & Route Graph](DIRU-NA-AUDIT-023_PACKED_WORLD_MAP_ROUTE_GRAPH.md)
