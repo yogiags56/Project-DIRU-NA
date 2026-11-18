@@ -83,6 +83,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-016 — Water-related tiles, potion resource flags and environmental damage
+
+**Working document:** [DIRU-NA-AUDIT-016 Water, Potion & Environmental Hazards](DIRU-NA-AUDIT-016_WATER_POTION_ENVIRONMENTAL_HAZARDS.md)
+
+- [x] Trace foreground code-8/code-9 preprocessing distinction
+- [x] Trace water-related stage feature flags
+- [x] Trace conditional chunk-28 loading and texture slots 24/25
+- [x] Record confirmed environmental damage call examples
+- [x] Document unsupported assumptions about swimming, oxygen, and drowning
+- [ ] Trace all feature-flag and texture-slot references
+- [ ] Trace potion pickup, inventory, consumption, and gameplay effect
+- [ ] Trace player movement/collision on foreground codes 8 and 9
+- [ ] Determine whether breathing/underwater timers exist
+- [ ] Validate water tile and potion semantics against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-015 — Object pushing, falling entities and environmental interaction
 
 **Working document:** [DIRU-NA-AUDIT-015 Object Pushing, Falling & Environment](DIRU-NA-AUDIT-015_OBJECT_PUSHING_FALLING_ENVIRONMENT.md)
