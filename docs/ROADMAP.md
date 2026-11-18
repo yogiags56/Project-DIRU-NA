@@ -76,6 +76,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-009 — Damage, death, retry and checkpoint reconstruction
+
+**Working document:** [DIRU-NA-AUDIT-009 Damage, Death, Retry & Checkpoint](DIRU-NA-AUDIT-009_DAMAGE_DEATH_RETRY_CHECKPOINT.md)
+
+- [x] Inspect damage-handler gates, state-bit updates, and animation requests
+- [x] Record observed damage argument patterns without assigning unsupported meanings
+- [x] Trace checkpoint snapshot contents and in-memory persistence boundary
+- [x] Trace checkpoint activation and restore sequence
+- [x] Trace retry-count decrement and exhausted-retry state branch
+- [ ] Trace all writers/readers for damage, retry, and counter fields
+- [ ] Complete death animation and global state-transition graph
+- [ ] Identify exact checkpoint-save trigger conditions
+- [ ] Build deterministic damage/checkpoint/retry tests
+- [ ] Validate behavior against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-008 — Hero animation and movement state reconstruction
 
 **Working document:** [DIRU-NA-AUDIT-008 Hero Animation & Movement State](DIRU-NA-AUDIT-008_HERO_ANIMATION_MOVEMENT_STATE.md)
