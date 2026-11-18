@@ -80,6 +80,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-013 — Player spawn, camera system and movement initialization
+
+**Working document:** [DIRU-NA-AUDIT-013 Player Spawn, Camera & Movement](DIRU-NA-AUDIT-013_PLAYER_SPAWN_CAMERA_MOVEMENT.md)
+
+- [x] Trace player-start marker 79 and initial logical coordinates
+- [x] Record the 24-pixel tile coordinate model
+- [x] Trace normal camera-follow offsets, thresholds, and bounds
+- [x] Trace scripted camera transition interpolation
+- [x] Identify shared keyboard input bitmask
+- [ ] Trace all uses of the spawn marker's retained X coordinate
+- [ ] Complete movement interpolation and key-to-action mapping
+- [ ] Trace camera update cadence and all scripted camera entry points
+- [ ] Define and test small-stage camera bounds
+- [ ] Add deterministic spawn, camera, and input-equivalence tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-012 — Stage loading, gameplay initialization and resource lifecycle
 
 **Working document:** [DIRU-NA-AUDIT-012 Stage Loading & Gameplay Initialization](DIRU-NA-AUDIT-012_STAGE_LOADING_GAMEPLAY_INITIALIZATION.md)
