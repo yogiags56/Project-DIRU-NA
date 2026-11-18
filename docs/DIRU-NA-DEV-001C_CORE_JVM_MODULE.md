@@ -17,7 +17,7 @@ Establish the first platform-independent Java module and its JVM unit-test sourc
 - Android SDK dependency: none in `:core`
 - Android plugin dependency: none in `:core`
 
-The root settings now include `:app` and `:core`. The app remains an Android application module; core remains a plain JVM library.
+The root settings include `:app` and `:core`. The app declares `implementation project(':core')`; the app remains an Android application module and core remains a plain JVM library.
 
 ## 3. Initial core contract
 
@@ -55,10 +55,10 @@ The core module must remain free of Android SDK imports. Future gameplay entitie
 
 ## 6. Validation status
 
-**Source and Gradle configuration committed; tests not yet executed.**
+**Source and Gradle configuration committed; test execution remains pending.**
 
 No claim is made that `./gradlew :core:test`, `:core:build`, Android compilation, or APK assembly has passed. A Gradle/JDK execution environment is still required to validate dependency resolution and actual test results.
 
 ## 7. Next work item
 
-**DIRU-NA-DEV-001D — Build and Test Validation / CI Baseline.** Run the wrapper under JDK 17, resolve any real configuration or compatibility failures, execute `:core:test`, and only then add an independent CI workflow that records the result.
+**DIRU-NA-DEV-001D — Build and Test Validation / CI Baseline.** Execute the wrapper under JDK 17, run `:core:test` and `:app:assembleDebug`, and retain the actual CI result. The workflow must fail on either task failure.

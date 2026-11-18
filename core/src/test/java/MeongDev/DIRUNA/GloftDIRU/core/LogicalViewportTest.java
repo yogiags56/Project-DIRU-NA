@@ -14,7 +14,9 @@ public final class LogicalViewportTest {
 
     @Test
     public void acceptsOtherPositiveLogicalDimensions() {
-        assertEquals(new LogicalViewport(320, 240), new LogicalViewport(320, 240));
+        LogicalViewport viewport = new LogicalViewport(320, 240);
+        assertEquals(320, viewport.width());
+        assertEquals(240, viewport.height());
     }
 
     @Test

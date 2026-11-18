@@ -28,7 +28,7 @@ This is the project toolchain decision record. The initial Gradle root and launc
 | targetSdk | **36 (Android 16)** | Meets Google Play's published minimum for new apps/updates from 2026-08-31 |
 | Build Tools | AGP 9.6.0 default **36.0.0** | Let AGP manage its documented default unless a verified need requires pinning another version |
 
-The proposed version matrix is deliberately narrow. Do not upgrade one component independently: review the AGP/Gradle/JDK compatibility matrix together whenever any of these versions changes.
+The approved initial version matrix is deliberately narrow. Do not upgrade one component independently: review the AGP/Gradle/JDK compatibility matrix together whenever any of these versions changes.
 
 ## 3. Compatibility evidence
 
