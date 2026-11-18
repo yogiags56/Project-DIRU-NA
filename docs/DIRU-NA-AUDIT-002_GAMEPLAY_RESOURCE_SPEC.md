@@ -251,7 +251,9 @@ The candidate's rendering and camera code repeatedly uses a **240 × 320** logic
 - Gameplay UI draws top and bottom bars at 42 pixels high in the 240 × 320 coordinate space.
 - Menu layout calculations also center content using 240 and 320.
 
-This is strong static evidence that the reviewed candidate is configured for a portrait logical canvas of 240 × 320, not the historical 320 × 240 landscape target. However, this does not by itself establish how every original Nokia handset rotated or presented the game. Before choosing Android orientation, compare original Nokia device/build evidence and inspect actual game screenshots or a legally usable original binary. Keep the logical viewport configurable until that verification is complete.
+This is strong static evidence that the reviewed candidate is configured for a portrait logical canvas of 240 × 320. **Project decision for DIRU-NA:** use 240×320 portrait as the initial logical viewport and preserve it in the first Native Android build. This is an explicit baseline for this independent project; it does not inherit the archived Native Android project's 320×240 target. The candidate evidence informs this project decision, but does not prove how every original Nokia handset rotated or presented the game.
+
+Adaptive aspect-ratio support remains a later development goal. It must retain the 240×320 logical gameplay coordinate system and adapt viewport, camera, and UI layout for wider/taller device screens without stretching sprites or changing collision geometry. The initial baseline and later adaptive presentation are separate milestones.
 
 ## 12. Movement and interaction observations — incomplete trace
 
@@ -280,7 +282,7 @@ The source contains multiple hard-coded drawing bounds and animation counters. A
 | Stage package | 4-byte width/height header and three cell layers per stage | Initial section header meaning; exact world package mapping |
 | Grid layout | Serialized row-major order; runtime arrays addressed as `[x][y]` | Full numeric tile/object ID dictionary |
 | Player spawn | Object-layer marker 79; X set to 0 and Y taken from marker row | Whether all worlds/stages use identical spawn convention |
-| Viewport | Multiple 240 × 320 drawing/camera constants; 24 px tile calculations | Original Nokia device orientation/presentation |
+| Viewport | Multiple 240 × 320 drawing/camera constants; 24 px tile calculations; DIRU-NA initial baseline formally set to 240×320 portrait | Adaptive viewport implementation and original Nokia device presentation details |
 | Movement | Direction values, state gating, contextual action/checkpoint/respawn paths | Complete movement, collision, and interaction state machine |
 | Camera | Interpolated/clamped camera helper in `c.java` | All event opcodes and camera timing semantics |
 
