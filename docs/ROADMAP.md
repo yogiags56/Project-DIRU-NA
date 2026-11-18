@@ -84,6 +84,25 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-017 — Collectibles, currency, shop and item progression
+
+**Working document:** [DIRU-NA-AUDIT-017 Collectibles, Currency, Shop & Items](DIRU-NA-AUDIT-017_COLLECTIBLES_CURRENCY_SHOP_ITEMS.md)
+
+- [x] Trace stage-result counters and target comparisons
+- [x] Record selected pickup-to-counter effects
+- [x] Identify red-diamond world-unlock balance at save offsets 6–7
+- [x] Distinguish shop balance at save offsets 4–5
+- [x] Trace four-entry shop selection, affordability, ownership check, and purchase persistence
+- [x] Record unresolved save-byte-9 / blue-potion interpretation
+- [ ] Verify collectible category labels from language resources
+- [ ] Trace all counter writers/readers and pickup visual mappings
+- [ ] Identify all shop items and gameplay effects
+- [ ] Trace potion pickup, inventory, consumption, and effect
+- [ ] Add deterministic inventory, currency, shop, and persistence tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-016 — Water-related tiles, potion resource flags and environmental damage
 
 **Working document:** [DIRU-NA-AUDIT-016 Water, Potion & Environmental Hazards](DIRU-NA-AUDIT-016_WATER_POTION_ENVIRONMENTAL_HAZARDS.md)
