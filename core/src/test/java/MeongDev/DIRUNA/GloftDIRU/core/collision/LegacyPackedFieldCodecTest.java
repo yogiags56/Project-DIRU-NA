@@ -17,9 +17,12 @@ public final class LegacyPackedFieldCodecTest {
         assertEquals(5,LegacyPackedFieldCodec.read(word,13,7));
         assertEquals(9,LegacyPackedFieldCodec.read(word,20,7));
     }
-    @Test public void offset27UsesLegacyIntShiftOverflow() {
+    @Test public void offset27UsesIntOverflowButLongClear() {
         long word=LegacyPackedFieldCodec.write(0L,42,27,7);
         assertEquals(10,LegacyPackedFieldCodec.read(word,27,7));
+        long changed=LegacyPackedFieldCodec.write(word,1,27,7);
+        assertEquals(1,LegacyPackedFieldCodec.read(changed,27,7));
+        assertEquals(0L,changed & (0x7FL<<34));
     }
     @Test public void negativeByteValuePreservesLegacySignExtension() {
         long word=LegacyPackedFieldCodec.write(0L,(byte)0xFF,4,2);

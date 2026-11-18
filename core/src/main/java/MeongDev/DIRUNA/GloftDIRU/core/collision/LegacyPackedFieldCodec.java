@@ -4,19 +4,20 @@ package MeongDev.DIRUNA.GloftDIRU.core.collision;
 public final class LegacyPackedFieldCodec {
     private LegacyPackedFieldCodec(){}
     public static int read(long word,int offset,int width) {
-        if(offset<0 || width<1 || width>31 || offset+width>64)
-            throw new IllegalArgumentException("invalid packed field");
+        validate(offset,width);
         long mask=(1L<<width)-1L;
         return (int)((word>>>offset)&mask);
     }
     public static long write(long word,int value,int offset,int width) {
+        validate(offset,width);
+        int current=read(word,offset,width);
+        // Source: word ^ ((long) current << offset) | (long) (value << offset).
+        // Clearing is a long shift; setting intentionally overflows as an int.
+        long cleared=word ^ ((long)current << offset);
+        return cleared | (long)(value << offset);
+    }
+    private static void validate(int offset,int width) {
         if(offset<0 || width<1 || width>31 || offset+width>64)
             throw new IllegalArgumentException("invalid packed field");
-        int mask=(1<<width)-1;
-        int current=read(word,offset,width);
-        // The legacy helper performs both shifts as 32-bit int operations,
-        // then widens their possibly overflowed/sign-extended results to long.
-        long cleared=word ^ (long)(current<<offset);
-        return cleared | (long)(value<<offset);
     }
 }
