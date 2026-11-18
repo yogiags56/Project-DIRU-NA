@@ -8,9 +8,9 @@ public final class LegacyForegroundPrecedenceTest {
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
                 LegacyForegroundPrecedence.decide(0x0017,false).getPlayerLayerFlow());
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
-                LegacyForegroundPrecedence.decide(0x0027,false).getPlayerLayerFlow());
+                LegacyForegroundPrecedence.decide(0x2007,false).getPlayerLayerFlow());
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
-                LegacyForegroundPrecedence.decide(0x01F7,true).getPlayerLayerFlow());
+                LegacyForegroundPrecedence.decide(0x1007,true).getPlayerLayerFlow());
     }
 
     @Test public void foregroundThreeAlwaysSkipsPlayerLayerWithDifferentCollisionFlag() {
@@ -42,8 +42,8 @@ public final class LegacyForegroundPrecedenceTest {
 
     @Test public void typeSevenThresholdUsesBitsFourThroughSevenNotWholeHighByte() {
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
-                LegacyForegroundPrecedence.decide(0x00F7,false).getPlayerLayerFlow());
+                LegacyForegroundPrecedence.decide(0xF007,false).getPlayerLayerFlow());
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
-                LegacyForegroundPrecedence.decide(0x0107,false).getPlayerLayerFlow());
+                LegacyForegroundPrecedence.decide(0x1007,false).getPlayerLayerFlow());
     }
 }
