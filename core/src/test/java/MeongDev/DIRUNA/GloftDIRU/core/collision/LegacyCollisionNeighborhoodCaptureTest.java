@@ -43,7 +43,7 @@ public final class LegacyCollisionNeighborhoodCaptureTest {
         LegacyCollisionNeighborhoodCapture.Result r=capture(g).capture(
                 LegacyCollisionBranchInputValidator.Branch.PLAYER_LAYER_TYPE_48,g,3,4,1,0);
         assertTrue(r.isComplete());
-        assertEquals(6,r.getSnapshot().get(
+        assertEquals(5,r.getSnapshot().get(
                 LegacyCollisionNeighborhoodSnapshot.Role.TYPE48_DESTINATION_A).getX());
         assertEquals(5,r.getSnapshot().get(
                 LegacyCollisionNeighborhoodSnapshot.Role.TYPE48_DESTINATION_B).getY());

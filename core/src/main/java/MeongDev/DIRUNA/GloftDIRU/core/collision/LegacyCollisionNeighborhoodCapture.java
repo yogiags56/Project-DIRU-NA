@@ -138,9 +138,15 @@ public final class LegacyCollisionNeighborhoodCapture {
                         new ArrayList<LegacyCollisionNeighborhoodSnapshot.CellSample>();
                 int runY = anchor.getY();
                 while (true) {
-                    LegacyCollisionCoordinateResolver.Coordinate next =
-                            LegacyCollisionCoordinateResolver.type19ForegroundRunNext(
-                                    target, runY, bounds);
+                    LegacyCollisionCoordinateResolver.Coordinate next;
+                    try {
+                        next = LegacyCollisionCoordinateResolver.type19ForegroundRunNext(
+                                target, runY, bounds);
+                    } catch (IndexOutOfBoundsException e) {
+                        return incomplete(Status.TYPE19_FOREGROUND_RUN_NOT_TERMINATED,
+                                new LegacyCollisionCoordinateResolver.Coordinate(
+                                        target.getX(), runY));
+                    }
                     LegacyCollisionNeighborhoodSnapshot.CellSample current = read(grid, next);
                     run.add(current);
                     runY = next.getY();

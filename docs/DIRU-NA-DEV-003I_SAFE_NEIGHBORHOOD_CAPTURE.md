@@ -7,7 +7,7 @@
 
 ## 1. CI correction
 
-Run #22 failed at test compilation because `Coordinate(int,int)` was private while same-package tests needed to construct expected values. The constructor is now public. This is an API-only correction; coordinate validation remains centralized in `checked(...)` and the resolver methods.
+Run #22 failed at test compilation because `Coordinate(int,int)` was private while same-package tests needed to construct expected values. The constructor is now public. Run #23 compiled and ran 94 tests, but exposed one incorrect expected coordinate in the type-48 test: with player X=3 and dx=1, the two-step X coordinate is 5, not 6. The fixture expectation is corrected; the resolver formula is unchanged.
 
 ## 2. Capture contract
 
@@ -32,12 +32,12 @@ The capture layer does not execute collision decisions and does not mutate the g
 
 - `OUT_OF_BOUNDS`: any fixed coordinate or type-19 foreground-run successor leaves stage bounds.
 - `TYPE19_ANCHOR_NOT_FOUND`: upward scan reaches the top edge before player-layer value 39.
-- `TYPE19_FOREGROUND_RUN_NOT_TERMINATED`: reserved for a future distinction; current implementation reports bottom-edge failure as OUT_OF_BOUNDS.
+- `TYPE19_FOREGROUND_RUN_NOT_TERMINATED`: the downward scan reaches the stage boundary before observing a non-19 terminator.
 - Incomplete results contain no snapshot, preventing consumers from accidentally using partial samples.
 
 ## 5. Tests
 
-Synthetic tests cover branch-limited capture, type-48 metadata-driven geometry, out-of-bounds two-step rejection, type-19 anchor and terminator capture, type-19 missing-anchor behavior, unterminated run rejection, auxiliary-grid presence/value separation, and dimension mismatch.
+Synthetic tests cover branch-limited capture, type-48 metadata-driven geometry, out-of-bounds two-step rejection, type-19 anchor and terminator capture, type-19 missing-anchor behavior, distinct unterminated-run status, auxiliary-grid presence/value separation, and dimension mismatch.
 
 ## 6. Boundaries and next work
 
