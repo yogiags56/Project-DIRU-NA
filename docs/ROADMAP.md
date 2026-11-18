@@ -1,8 +1,8 @@
 # Project DIRU-NA Roadmap
 
-This roadmap records intended work. A task is not complete until its evidence is recorded.
+This roadmap belongs exclusively to the new source lineage. Previous RVC milestones and build numbers are not carried forward. See [Development Isolation](DEVELOPMENT_ISOLATION.md).
 
-## RVC-046 — Candidate source audit
+## DIRU-NA-AUDIT-001 — Candidate source audit
 
 - [x] Inventory candidate source tree and dependencies
 - [ ] Map resource-loading call sites
@@ -11,11 +11,11 @@ This roadmap records intended work. A task is not complete until its evidence is
 - [ ] Map persistence/save behavior (including RMS usage)
 - [ ] Audit MIDP, Nokia, Siemens, Mascot Micro3D, and M3G APIs actually used
 - [ ] Resolve 320×240 versus 240×320 orientation/viewport discrepancy
-- [x] Classify components as retain, adapt, or rewrite (initial classification; see RVC-046 findings)
-- [x] Record licensing/provenance risks (rights remain unresolved; see RVC-046 findings)
+- [x] Classify components as retain, adapt, or rewrite (initial classification; see DIRU-NA-AUDIT-001 findings)
+- [x] Record licensing/provenance risks (rights remain unresolved; see DIRU-NA-AUDIT-001 findings)
 - [ ] Reproduce the desktop build only if dependencies and rights permit
 
-## RVC-047 — Gameplay and resource specification
+## DIRU-NA-AUDIT-002 — Gameplay and resource specification
 
 - [ ] Write a resource catalog with offsets, dimensions, encoding, and call sites
 - [ ] Document sprite and animation decoding
@@ -24,7 +24,7 @@ This roadmap records intended work. A task is not complete until its evidence is
 - [ ] Document audio event mapping
 - [ ] Define test fixtures from legally usable material
 
-## RVC-048 — Native Android foundation
+## DIRU-NA-DEV-001 — Native Android foundation
 
 - [ ] Establish Android Gradle project and supported SDK/toolchain
 - [ ] Add a platform-independent core module
@@ -34,7 +34,7 @@ This roadmap records intended work. A task is not complete until its evidence is
 - [ ] Add audio and persistence interfaces
 - [ ] Add automated tests and CI checks
 
-## RVC-049 — First gameplay reconstruction
+## DIRU-NA-DEV-002 — First gameplay reconstruction
 
 - [ ] Implement verified game-state model
 - [ ] Implement movement and collision behavior
