@@ -96,10 +96,7 @@ public final class LegacyCollisionBranchInputValidatorTest {
         run.add(new LegacyCollisionNeighborhoodSnapshot.CellSample(2, 3, 19, -1, 0, false, 0));
         LegacyCollisionNeighborhoodSnapshot n =
                 new LegacyCollisionNeighborhoodSnapshot(
-                        new EnumMap<LegacyCollisionNeighborhoodSnapshot.Role,
-                                LegacyCollisionNeighborhoodSnapshot.CellSample>(
-                                LegacyCollisionNeighborhoodSnapshot.Role.class),
-                        anchor, scan, run);
+                        targetSampleMap(anchor), anchor, scan, run);
         EnumSet<LegacyCollisionBranchInputValidator.ContextField> context = common();
         context.add(LegacyCollisionBranchInputValidator.ContextField.L_BOOLEAN);
         LegacyCollisionBranchInputValidator.Validation v =
@@ -107,6 +104,19 @@ public final class LegacyCollisionBranchInputValidatorTest {
                         LegacyCollisionBranchInputValidator.Branch.FOREGROUND_TYPE_19,
                         n, context);
         assertTrue(v.isComplete());
+    }
+
+    private static java.util.Map<LegacyCollisionNeighborhoodSnapshot.Role,
+            LegacyCollisionNeighborhoodSnapshot.CellSample> targetSampleMap(
+            LegacyCollisionNeighborhoodSnapshot.CellSample anchor) {
+        java.util.EnumMap<LegacyCollisionNeighborhoodSnapshot.Role,
+                LegacyCollisionNeighborhoodSnapshot.CellSample> map =
+                new java.util.EnumMap<LegacyCollisionNeighborhoodSnapshot.Role,
+                        LegacyCollisionNeighborhoodSnapshot.CellSample>(
+                        LegacyCollisionNeighborhoodSnapshot.Role.class);
+        map.put(LegacyCollisionNeighborhoodSnapshot.Role.TARGET,
+                new LegacyCollisionNeighborhoodSnapshot.CellSample(2, 3, 19, -1, 0, false, 0));
+        return map;
     }
 
     @Test(expected = IllegalArgumentException.class)
