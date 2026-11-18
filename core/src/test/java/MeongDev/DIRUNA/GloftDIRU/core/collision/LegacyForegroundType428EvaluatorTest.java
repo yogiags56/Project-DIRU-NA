@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 public final class LegacyForegroundType428EvaluatorTest {
     @Test public void checkpointAtOrAboveProgressRequestsSaveAndUpdatesValues() {
         LegacyForegroundType428Evaluator.Decision equal =
-                LegacyForegroundType428Evaluator.evaluate(0x000004, false, 4, 100);
+                LegacyForegroundType428Evaluator.evaluate(0x00000404, false, 4, 100);
         assertTrue(equal.shouldRequestSaveCheckpoint());
         assertTrue(equal.shouldUpdateCheckpointProgress());
         assertEquals(5,equal.getNextCheckpointProgress());
