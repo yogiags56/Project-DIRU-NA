@@ -5,8 +5,9 @@ This roadmap belongs exclusively to the new source lineage. Previous RVC milesto
 ## DIRU-NA-AUDIT-001 — Candidate source audit
 
 - [x] Inventory candidate source tree and dependencies
-- [ ] Map resource-loading call sites
+- [x] Map resource-loading call sites (initial catalog recorded; further binary validation remains open)
 - [ ] Identify binary resource formats (`.f`, `.bin`, map data)
+- [x] Inventory all language resource filenames (14 locale resources + `lang.xx` fallback; see [LANGUAGE_RESOURCE_CATALOG.md](LANGUAGE_RESOURCE_CATALOG.md))
 - [ ] Map game loop, input, collision, animation, and level flow
 - [ ] Map persistence/save behavior (including RMS usage)
 - [ ] Audit MIDP, Nokia, Siemens, Mascot Micro3D, and M3G APIs actually used
