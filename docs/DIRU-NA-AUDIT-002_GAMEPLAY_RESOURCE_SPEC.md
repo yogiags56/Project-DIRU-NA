@@ -446,3 +446,85 @@ The exact visual identity and full state machine remain unresolved. This should 
 3. Map call sites of `dBoolean`, `eBoolean`, and `fBoolean` before defining collision categories.
 4. Enumerate every mutable array included in checkpoint snapshot/restore and identify which are essential versus recomputable.
 5. Trace foreground code 7 and code 17 handling, then correlate generated sprite slots with actual draw calls.
+
+## 18. Demo/event controller format — parser and opcode behavior
+
+Primary source: `src/main/java/c.java`, parsed from `/demo.f` and sprite references from `/demoSpr.bin`, at candidate revision `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 18.1 Event/controller selection
+
+The game stores an array of controller instances (`c[]`) and a parallel byte array of event/demo IDs. The dispatch helper `kVoid(id)` searches the ID array, selects the matching controller, and calls its `aVoid()` update method. This is a lookup by event ID, not by tile ID. A separate `aVoid(id)` method on class `c` parses the corresponding demo record from `demo.f`.
+
+The parsed demo record includes:
+- a list of sprite IDs needed by the event; these are resolved from `demoSpr.bin`,
+- a count of event commands,
+- typed command records with their own payload layouts,
+- one or more command groups that can be nested/packed into a composite command buffer.
+
+The parser reads the demo record from a chunk in `demo.f`, then sorts sprite IDs before loading them. It constructs a sprite cache indexed by the IDs in `demoSpr.bin`. The implementation has unchecked stream reads and should not be copied as a native parser.
+
+### 18.2 Command types observed
+
+The parser recognizes these command opcodes and builds normalized runtime records. The semantic descriptions below are based on the update/render handlers; some are still only partially understood.
+
+| Opcode | Parsed payload (source-level) | Observed runtime role |
+|---:|---|---|
+| 0 | Nested command count, followed by nested command records | Composite/group container; parser flattens children into a packed command list |
+| 1 | X, Y, duration, optional target camera X/Y (16-bit each) | Camera interpolation toward a target; sentinel 10000 means use current camera target |
+| 2 | Text length, Y, text length/data fields | Timed text/dialogue display with vertical placement and scrolling/advance state |
+| 4 | Seven 16-bit fields | Sprite-frame drawing/interpolation command; includes sprite and frame identifiers plus position/timing data |
+| 5 | X, Y, one-byte object code | Writes a player/object-layer value at a grid coordinate |
+| 6 | 32-bit duration/value | Timed wait command |
+| 7 | No payload | Parsed as a short command marker; exact independent behavior unresolved |
+| 8 | X, Y, 16-bit value | Shares the object-layer update path with opcode 9 in the update handler |
+| 9 | X, Y, 16-bit value | Writes a player/object-layer value at a grid coordinate; update switch falls through from 8/9 handling |
+| 10 | One-byte input/action value | Updates current scripted input/action state and calls the game's action/update path |
+| 11 | Two 16-bit values | Timed command; completion is gated by controller tick count |
+| 12 | X, Y (16-bit) | Camera/player-follow visual rectangle effect; renderer interpolates a white rectangle around the player |
+| 13 | X, Y, duration (16-bit) | Camera interpolation between coordinates |
+| 14, 15 | No payload | Short marker commands; update logic treats them as completed/visual state transitions |
+| 16, 17 | 16-bit value + one-byte duration/state | Timed visual/effect commands; update processing occurs on alternating controller ticks |
+| 18 | One-byte state + 24-bit color | Full-screen color overlay/fade |
+| 25 | X, Y, two one-byte values | Writes a packed foreground-layer cell value |
+| 26 | X, Y, 32-bit value | Writes a packed background/object-state cell value |
+| 27 | Text length + text bytes | Timed dialogue/text panel; text is mapped through demo text mapping |
+
+Some command handlers intentionally fall through to subsequent cases in the decompiled switch. The table describes combined observed behavior and is not a guarantee that each opcode is an isolated operation.
+
+### 18.3 Update/render lifecycle
+
+- `aVoid()` advances the active event command(s) according to a wall-clock throttle (static interval initialized to 1000 ms) and controller state.
+- `bVoid()` advances command progression and updates command completion flags.
+- `cVoid(command)` performs per-command tick/update behavior, including timers, input state, map-cell writes, and dialogue progression.
+- `aVoid(Graphics)` renders the active command(s), including camera transitions, sprite animation frames, text/dialogue panels, and color overlays.
+- The event controller can expose completion via `aBoolean()`; composite commands are considered complete only when their child command records are complete.
+
+This helper is therefore a small scripted cutscene/demo interpreter, not simply a camera helper. It combines command parsing, timing, gameplay input, stage mutation, camera movement, and rendering. The native architecture should split these concerns into a validated event bytecode parser, deterministic event runner, stage command interface, camera controller, and presentation layer.
+
+### 18.4 Native implementation constraints
+
+1. Preserve the original 240×320 logical coordinate space for event rendering.
+2. Parse command lengths and nested groups with strict bounds checks; reject unknown opcodes safely or preserve them as opaque records.
+3. Do not trust sprite IDs or text indexes until they are validated against the loaded catalog.
+4. Use a monotonic clock and deterministic tick inputs rather than relying on the original 1000 ms wall-clock gate.
+5. Separate commands that mutate gameplay state from commands that only draw overlays.
+6. Do not copy `demo.f`, `demoSpr.bin`, or proprietary sprite payloads into DIRU-NA until provenance and licensing review allows it.
+
+## 19. Save and preferences storage — confirmed storage mechanism, layout still open
+
+The candidate uses Java ME RMS record stores:
+- `DiamondRush`, record ID 1: main progress/state byte array `iByteArr`.
+- `Preferences`, record ID 1: preferences byte array `jByteArr`.
+
+The main progress buffer is initialized with 1001 bytes in one new-game path, but a separate `cwInt` tracks the number of meaningful bytes written/read. The game updates the main record through `setRecord(1, ...)` or `addRecord(...)`. Preferences use a separate RMS store.
+
+**Native implication:** use Android app-private storage (for example, a versioned database or bounded binary file) with atomic writes and migration support. Do not map RMS record bytes directly into the new format until every offset, field type, version marker, and checksum/length rule has been traced. Preserve independent progress and preferences domains.
+
+## 20. Audit-002 follow-up priorities
+
+1. Trace event ID source and map stage/demo IDs to each controller instance.
+2. Validate every demo command record length against parser consumption and nested group boundaries.
+3. Trace stage mutation opcodes 5, 8, 9, 25, and 26 to establish how scripted events alter gameplay.
+4. Trace all uses of `iByteArr` and `jByteArr` with exact offsets to produce a save/preferences schema.
+5. Determine whether checkpoint snapshots are temporary in-memory state only or are persisted across application restarts.
+6. Keep event/cutscene interpretation independent from the core gameplay state machine.
