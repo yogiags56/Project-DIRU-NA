@@ -90,6 +90,26 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-023 — Packed world-map format and route graph reconstruction
+
+**Working document:** [DIRU-NA-AUDIT-023 Packed World Map & Route Graph](DIRU-NA-AUDIT-023_PACKED_WORLD_MAP_ROUTE_GRAPH.md)
+
+- [x] Confirm 12×12 packed-long node grid and empty-cell convention
+- [x] Identify stage-index field at bits 6–10
+- [x] Identify neighbor-count field at bits 11–13
+- [x] Trace repeated 4-bit neighbor x/y coordinate pairs from bit 14
+- [x] Trace graph-based neighbor traversal and route advancement
+- [x] Record partial low-field state uses and 240×320 map coordinate constants
+- [ ] Determine complete semantics of low fields 0–2 and 3–5
+- [ ] Validate maximum neighbor count and 64-bit packing boundary
+- [ ] Complete directional neighbor selection and tie-breaking analysis
+- [ ] Decode secret-stage node encoding and prerequisites
+- [ ] Identify source/provenance of generated 12×12 node array
+- [ ] Add packed-node parser and graph-validation tests
+- [ ] Validate topology and route rendering against original runtime
+
+
 ## DIRU-NA-AUDIT-022 — Stage result flags, route advancement and secret-stage evidence
 
 **Working document:** [DIRU-NA-AUDIT-022 Stage Result Flags, Route & Secret Stages](DIRU-NA-AUDIT-022_STAGE_RESULT_FLAGS_ROUTE_SECRET_STAGES.md)
