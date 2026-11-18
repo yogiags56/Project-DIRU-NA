@@ -81,6 +81,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-014 — Player movement, collision and tile interaction
+
+**Working document:** [DIRU-NA-AUDIT-014 Player Movement, Collision & Tile Interaction](DIRU-NA-AUDIT-014_PLAYER_MOVEMENT_COLLISION_TILE_INTERACTION.md)
+
+- [x] Record directional input mapping and committed movement direction
+- [x] Document separation of tile coordinates and sub-tile movement progress
+- [x] Record movement eligibility gates and direction-vector use
+- [x] Document examples of metadata-dependent collision behavior
+- [x] Trace checkpoint confirm action and selected context-sensitive interactions
+- [x] Record camera synchronization with interpolated player position
+- [ ] Complete movement helper and all movement-progress transitions
+- [ ] Build full collision and interaction matrix
+- [ ] Trace pushing, climbing, swimming, doors, ladders, and hazards
+- [ ] Add deterministic movement/collision/action tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-013 — Player spawn, camera system and movement initialization
 
 **Working document:** [DIRU-NA-AUDIT-013 Player Spawn, Camera & Movement](DIRU-NA-AUDIT-013_PLAYER_SPAWN_CAMERA_MOVEMENT.md)
