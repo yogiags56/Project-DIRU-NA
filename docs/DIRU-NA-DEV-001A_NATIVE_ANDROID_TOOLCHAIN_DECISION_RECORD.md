@@ -1,6 +1,6 @@
 # DIRU-NA-DEV-001A — Native Android Toolchain Decision Record
 
-**Status:** Proposed baseline; implementation gate remains open  
+**Status:** Project decisions recorded; build execution validation pending  
 **Date:** 2026-11-18  
 **Repository:** `yogiags56/Project-DIRU-NA`
 
@@ -8,7 +8,7 @@
 
 This record establishes a reproducible candidate toolchain for the first Native Android project skeleton and the platform-independent JVM core. It follows AUDIT-044 and uses current official compatibility information checked on 2026-11-18.
 
-This is a decision record, not a build implementation. No Gradle files, wrapper, source code, tests, CI workflow, SDK configuration, or APK are created by this document.
+This is the project toolchain decision record. The initial Gradle root and launcher shell are now recorded in DEV-001B; build execution validation remains pending.
 
 ## 2. Recommended initial toolchain
 
@@ -23,7 +23,7 @@ This is a decision record, not a build implementation. No Gradle files, wrapper,
 | Build-script DSL | **Groovy DSL** | Conservative, widely documented Gradle convention; no Kotlin DSL requirement for this project |
 | Compile SDK | **API 37** | AGP 9.6.0 supports up to API 37 |
 | JVM unit tests | **JUnit 4** | Small, mature dependency for the pure JVM core; handwritten fakes remain the default |
-| Android namespace / application ID | **Pending** | Must be selected deliberately; do not infer one from a GitHub username or project codename |
+| Application ID / namespace | `MeongDev.DIRUNA.GloftDIRU` | Exact owner-provided identifier; preserve capitalization |
 | minSdk | **23 (Android 6.0)** | Approved by project owner |
 | targetSdk | **36 (Android 16)** | Meets Google Play's published minimum for new apps/updates from 2026-08-31 |
 | Build Tools | AGP 9.6.0 default **36.0.0** | Let AGP manage its documented default unless a verified need requires pinning another version |
