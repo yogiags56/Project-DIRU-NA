@@ -9,7 +9,8 @@
 - Reconstruct the original gameplay behavior from audited, legally usable source material.
 - Implement a native Android application rather than embedding FreeJ2ME as an emulator.
 - Separate gameplay logic from Android-specific rendering, input, audio, and persistence.
-- Preserve the original game's visual proportions and behavior before introducing responsive screen adaptation.
+- Establish 240×320 portrait as the initial logical viewport and first-build baseline.
+- Add responsive screen adaptation later without stretching sprites or altering gameplay geometry.
 - Document every reverse-engineering finding, resource format, compatibility decision, and test result.
 
 ## Architecture (planned)
@@ -39,9 +40,9 @@ The structure is a target layout, not a claim that these modules have already be
 
 ## Screen and gameplay compatibility
 
-The historical project target was landscape 320×240. The candidate decompilation also contains 240×320 drawing/configuration evidence. The correct orientation, logical viewport, and rotation behavior must be resolved during source audit before being locked into the implementation.
+**DIRU-NA initial baseline: 240×320 portrait.** The first Native Android implementation and first playable build will retain this logical resolution. This is a deliberate project decision based on the candidate source's repeated 240×320 rendering and camera calculations. It is independent of the archived `Diamond-Rush-Native-Android` project's historical 320×240 target; no build configuration or implementation is inherited from that project.
 
-The eventual adaptive presentation must preserve aspect ratio without stretching gameplay, and should support common shapes including 1:1, 2:1, 3:2, 4:3, 5:4, 16:9, 18:9, and other device ratios.
+Adaptive aspect-ratio support is planned for a later milestone. It must preserve the 240×320 logical gameplay coordinate system and sprite/collision proportions while adapting viewport, camera, and UI layout for 1:1, 2:1, 3:2, 4:3, 5:4, 16:9, 18:9, and other device ratios without stretching gameplay.
 
 ## Reference repositories
 
@@ -58,7 +59,8 @@ The candidate source repository is an audit input only. Its presence does not es
 - [x] Project scope and principles documented
 - [ ] Source and resource audit completed
 - [ ] Original gameplay loop mapped
-- [ ] Logical viewport/orientation verified
+- [x] Initial logical viewport decision recorded: 240×320 portrait
+- [ ] Adaptive viewport behavior implemented and tested
 - [ ] Native Android skeleton implemented
 - [ ] First reproducible gameplay milestone
 
