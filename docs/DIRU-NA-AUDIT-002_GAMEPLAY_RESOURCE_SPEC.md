@@ -390,3 +390,59 @@ This is a resource-loading map, not a confirmed entity-name map. It must be corr
 6. Only then create a versioned tile/entity dictionary; keep unresolved IDs explicitly marked unknown.
 
 No source or asset payload has been copied into Project-DIRU-NA. These are static observations from the read-only candidate revision only.
+
+## 17. Correction and clarification: helper methods and event dispatch
+
+A deeper trace of `i.java` at candidate revision `215c71d04057d66a1b08419b1a4b1043ae3e0881` corrects an earlier interpretation in §15:
+
+- `iVoid(x,y)` is **not** an entity registration routine. It sets feature bit `0x400000L`, clears the low byte of `crtStageForegrondLayer[x][y]`, and writes foreground code `14`. Calls to this method therefore normalize/replace a foreground cell as part of stage setup or gameplay logic.
+- `kVoid(x,y)` is a distinct event/controller dispatch helper. It resets two local state bytes, searches `pByteArr` for the supplied event/demo ID, assigns the corresponding `c` controller instance, then invokes its `aVoid()` method. This is evidence of a stage event/demo controller table, not a generic tile constructor.
+- `iVoid()` with no arguments is a separate method used in seal/world-map navigation logic; it must not be confused with either overload above.
+
+Accordingly, references in §15 to `iVoid(x,y)` as "entity-like registration" are superseded by this correction. The dynamic arrays described in §15.3 are derived during stage initialization, but their exact semantics still require separate tracing.
+
+### 17.1 Checkpoint snapshot and restore
+
+The source contains explicit checkpoint snapshot and restore paths.
+
+Snapshot behavior copies:
+- player coordinates and selected movement/world state,
+- camera and related player state,
+- background/object state array `bIntArrArr`,
+- animation/timer array `bByteArrArr`,
+- object/player layer `crtStagePlayerLayer`,
+- foreground layer `crtStageForegrondLayer`,
+- selected optional stage feature arrays and world-state flags when the corresponding feature is active.
+
+Restore behavior copies those arrays back into the live stage, restores optional feature state, then scans the stage for object code 48 and reinitializes those objects through either `dVoid(48)` or `aiVoid()` depending on a background flag. Some hard-coded special-cell adjustments also occur in the restore path.
+
+This demonstrates that checkpoint state is substantially more than just the player's X/Y position. Native Android persistence/checkpoint design must preserve the relevant mutable stage state, or intentionally reproduce the original checkpoint reconstruction behavior. The exact minimal state set remains to be established.
+
+### 17.2 Collision and occupancy predicates — partial
+
+Three static predicates were identified in the source:
+
+- `dBoolean(x,y)`: checks whether the player/object-layer value and foreground code combination qualifies for one class of traversable/processable cell. It excludes several explicit object and foreground codes.
+- `eBoolean(x,y)`: requires an empty player/object-layer cell and excludes foreground codes 14, 33, 5, and 28.
+- `fBoolean(x,y)`: requires an empty player/object-layer cell and excludes foreground codes 14, 33, 4, and 32; foreground code 7 is conditional on packed background flags.
+
+These are not yet a complete collision system. They are cell-state predicates used by different movement/interaction paths. Do not collapse them into one generic `isWalkable` method until every call site and movement context has been mapped.
+
+### 17.3 Moving object code 48 — partial behavior
+
+The source shows code 48 is a mutable moving-object family rather than a static decorative tile:
+- initialization may pair its coordinate with a neighboring cell based on background flags;
+- runtime handling dispatches either to `dVoid(48)` or `aiVoid()`;
+- `dVoid` may move the code-48 object into the cell below, update packed direction/state bits, set animation bytes, and trigger player damage if the player occupies a hazardous destination;
+- `aiVoid` updates a paired-coordinate record for the moving object based on direction/adjacent-cell state;
+- checkpoint restore reconstructs code-48 objects from their saved state.
+
+The exact visual identity and full state machine remain unresolved. This should be documented as a moving/paired object behavior, not assigned a semantic object name yet.
+
+### 17.4 Updated audit priorities
+
+1. Trace all call sites of `kVoid(x,y)` and map event IDs to controller behaviors.
+2. Trace `dVoid`, `aiVoid`, and related methods for code 48 to complete its state machine.
+3. Map call sites of `dBoolean`, `eBoolean`, and `fBoolean` before defining collision categories.
+4. Enumerate every mutable array included in checkpoint snapshot/restore and identify which are essential versus recomputable.
+5. Trace foreground code 7 and code 17 handling, then correlate generated sprite slots with actual draw calls.
