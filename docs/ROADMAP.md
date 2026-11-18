@@ -4,15 +4,15 @@ This roadmap records intended work. A task is not complete until its evidence is
 
 ## RVC-046 — Candidate source audit
 
-- [ ] Inventory candidate source tree and dependencies
+- [x] Inventory candidate source tree and dependencies
 - [ ] Map resource-loading call sites
 - [ ] Identify binary resource formats (`.f`, `.bin`, map data)
 - [ ] Map game loop, input, collision, animation, and level flow
 - [ ] Map persistence/save behavior (including RMS usage)
 - [ ] Audit MIDP, Nokia, Siemens, Mascot Micro3D, and M3G APIs actually used
 - [ ] Resolve 320×240 versus 240×320 orientation/viewport discrepancy
-- [ ] Classify components as retain, adapt, or rewrite
-- [ ] Record licensing/provenance risks
+- [x] Classify components as retain, adapt, or rewrite (initial classification; see RVC-046 findings)
+- [x] Record licensing/provenance risks (rights remain unresolved; see RVC-046 findings)
 - [ ] Reproduce the desktop build only if dependencies and rights permit
 
 ## RVC-047 — Gameplay and resource specification
