@@ -77,6 +77,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-010 — Game state machine and screen transitions
+
+**Working document:** [DIRU-NA-AUDIT-010 Game State & Screen Transitions](DIRU-NA-AUDIT-010_GAME_STATE_SCREEN_TRANSITIONS.md)
+
+- [x] Identify the global game-flow state field and initialization
+- [x] Record partial state roles supported by inspected update/input/paint paths
+- [x] Trace the incremental world-map/resource preparation state
+- [x] Trace credits screen loading, scrolling, and return path
+- [x] Record selected input and lifecycle state routing
+- [ ] Enumerate all state writes and map every state value
+- [ ] Complete title, world-selection, and stage-selection navigation
+- [ ] Trace terminal game-over presentation and retry transitions
+- [ ] Complete pause/resume and lifecycle behavior
+- [ ] Build deterministic state-transition tests and validate against runtime evidence
+
+
 ## DIRU-NA-AUDIT-009 — Damage, death, retry and checkpoint reconstruction
 
 **Working document:** [DIRU-NA-AUDIT-009 Damage, Death, Retry & Checkpoint](DIRU-NA-AUDIT-009_DAMAGE_DEATH_RETRY_CHECKPOINT.md)
