@@ -94,6 +94,22 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-027 — Stage ID, title mapping and secret-route correlation
+
+**Working document:** [DIRU-NA-AUDIT-027 Stage Title & Secret Route Correlation](DIRU-NA-AUDIT-027_STAGE_TITLE_SECRET_ROUTE_CORRELATION.md)
+
+- [x] Trace generated normal, secret, and intro title ranges
+- [x] Extract per-world stage-title mapping arrays
+- [x] Cross-reference all 40 map nodes with generated localized title numbers
+- [x] Confirm secondary field value 1 maps to Secret stage titles in all three maps
+- [x] Record the unresolved extra Tibet/Siberia mapping entry at stage index 14
+- [ ] Trace exact secret-stage unlock prerequisites and stage flag lifecycle
+- [ ] Reconcile map/title arrays with /w0.bin, /w1.bin, /w2.bin stage streams
+- [ ] Verify localized text indices 66, 62, and 31 against language resources
+- [ ] Validate secret-stage availability and navigation against original runtime
+
+
 ## DIRU-NA-AUDIT-026 — Binary world-map extraction and topology validation
 
 **Working document:** [DIRU-NA-AUDIT-026 Binary World Map Extraction & Topology](DIRU-NA-AUDIT-026_BINARY_WORLD_MAP_EXTRACTION_TOPOLOGY.md)
