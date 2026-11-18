@@ -88,6 +88,26 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-021 — World map, stage selection and stage unlock conditions
+
+**Working document:** [DIRU-NA-AUDIT-021 World Map, Stage Selection & Unlocks](DIRU-NA-AUDIT-021_WORLD_MAP_STAGE_SELECTION_UNLOCKS.md)
+
+- [x] Record per-world stage-title mapping entries and indices
+- [x] Trace regular, secret, and intro-stage title generation
+- [x] Identify 12×12 packed world-map node grid
+- [x] Trace selected node title and current/target counter display
+- [x] Record per-world save offsets and stage-record structure
+- [x] Trace coordinate-pair collection persistence
+- [x] Record observed stage-result flag writes and world-specific stage-index clamping
+- [ ] Decode complete packed world-map node schema
+- [ ] Trace all stage flag bit semantics and secret-stage prerequisites
+- [ ] Reconcile stage-title indices with actual world stage counts
+- [ ] Extract map node coordinates, routes, and marker animation
+- [ ] Add deterministic map, unlock, and persistence tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-020 — World seal menu, unlock conditions and world entry
 
 **Working document:** [DIRU-NA-AUDIT-020 World Seal, Unlock & Stage Progression](DIRU-NA-AUDIT-020_WORLD_SEAL_UNLOCK_STAGE_PROGRESSION.md)
