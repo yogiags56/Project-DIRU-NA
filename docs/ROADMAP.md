@@ -87,6 +87,25 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-020 — World seal menu, unlock conditions and world entry
+
+**Working document:** [DIRU-NA-AUDIT-020 World Seal, Unlock & Stage Progression](DIRU-NA-AUDIT-020_WORLD_SEAL_UNLOCK_STAGE_PROGRESSION.md)
+
+- [x] Record four seal-menu destinations
+- [x] Confirm red-gem requirements: Angkor 0, Bavaria 10, Siberia 25
+- [x] Trace unlock eligibility helper and locked/unlocked prompts
+- [x] Reconstruct directional navigation graph
+- [x] Trace world-entry state transitions and stage reset behavior
+- [x] Record save-byte-1 Bavaria/Siberia unlock flag writes
+- [x] Confirm world entry does not deduct red gems in inspected path
+- [ ] Complete save-byte-1 and per-world stage progression semantics
+- [ ] Confirm Angkor selected-stage retention behavior
+- [ ] Map exact seal menu assets and localization strings
+- [ ] Add deterministic menu/unlock/world-entry tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-019 — Gem counters, jacket palette state and world progression
 
 **Working document:** [DIRU-NA-AUDIT-019 Gem Counters, Jacket Palette & World Progression](DIRU-NA-AUDIT-019_GEM_COUNTERS_JACKET_PALETTE_WORLD_PROGRESSION.md)
