@@ -90,7 +90,8 @@ public final class LegacyCollisionNeighborhoodCaptureTest {
         g.foreground[2][7]=19;
         LegacyCollisionNeighborhoodCapture.Result r=capture(g).capture(
                 LegacyCollisionBranchInputValidator.Branch.FOREGROUND_TYPE_19,g,1,2,1,0);
-        assertEquals(LegacyCollisionNeighborhoodCapture.Status.OUT_OF_BOUNDS,r.getStatus());
+        assertEquals(LegacyCollisionNeighborhoodCapture.Status.TYPE19_FOREGROUND_RUN_NOT_TERMINATED,
+                r.getStatus());
     }
 
     @Test public void capturesAuxiliaryGridPresenceSeparatelyFromValue() {
