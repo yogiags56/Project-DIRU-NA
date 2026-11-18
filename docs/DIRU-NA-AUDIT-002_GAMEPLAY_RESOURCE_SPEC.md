@@ -287,3 +287,106 @@ The source contains multiple hard-coded drawing bounds and animation counters. A
 | Camera | Interpolated/clamped camera helper in `c.java` | All event opcodes and camera timing semantics |
 
 No binary stage package has been extracted or decoded in this pass, and none of these observations has been runtime-tested.
+
+## 15. Stage entity and foreground initialization — additional trace
+
+Primary source: `src/main/java/i.java`, stage initialization scan and follow-up entity registration pass, reviewed at source revision `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+This section records numeric codes only where their initialization effects are visible. It is deliberately **not** a complete semantic tile dictionary: numeric values are not assigned guessed names such as "enemy", "key", or "door" unless the code path provides direct evidence.
+
+### 15.1 Player/object-layer codes with visible initialization effects
+
+| Raw code | Observed initialization effect | Caveat |
+|---:|---|---|
+| 79 | Sets initial player grid X to 0 and Y to marker row; stores marker X separately; clears marker cell; initializes camera offsets | Explicit spawn branch |
+| 48 | Increments a counter; initializes a related cell above; sets feature flags; follow-up may register a paired coordinate when a background bit is set | Identity unknown |
+| 47 | Sets auxiliary animation byte to 48, clears background value, sets feature flag | Identity unknown |
+| 46 | Clears background; sets animation byte 24 and auxiliary byte 0; sets feature flag | Identity unknown |
+| 45 | Clears background; sets animation byte 24; sets feature flag | Identity unknown |
+| 44 | Sets animation byte 24, clears background, sets feature flag | Identity unknown |
+| 43 | Sets world-dependent feature bit, sets one `buInt` bit, modifies background flags, sets animation byte 48 | Identity unknown |
+| 42 | Increments counters, sets feature flags, invokes `iVoid(x,y)` registration | Identity unknown |
+| 41 | Ensures background quantity is at least 1, then adds it to a stage total | Identity unknown |
+| 40 | Sets feature flags, increments counters, enables boolean feature, invokes `iVoid(x,y)` | Identity unknown |
+| 39 | Enables boolean feature and sets feature bit | Identity unknown |
+| 38 | Enables boolean feature, rewrites foreground to 27, sets feature bits | Identity unknown |
+| 36 | Normalizes background value and sets feature bit | Identity unknown |
+| 35 | Preserves object code 35, clears foreground cell, sets feature flag and `crtShouldLoadFanPot` | Rendered identity unresolved |
+| 34 | Clears object-layer cell, writes foreground value 15, sets feature bit | Identity unknown |
+| 30 | Sets feature bit and clears background value | Identity unknown |
+| 28 | Sets feature bit; for some background values scales data and sets background flag; initializes animation byte 24 | Identity unknown |
+| 27, 26, 24 | Registers entity-like entries and increments counters; 26 also sets feature bit | Identity unknown |
+| 23, 22 | Set feature bits and animation byte 48 | Identity unknown |
+| 19 | Sets world-dependent feature bit, sets a `buInt` bit, initializes animation byte 48 | Identity unknown |
+| 18 | Resets two counters and sets feature bits | Identity unknown |
+| 16 | May copy matching tile/background value to cell above and sets feature bit | Identity unknown |
+| 14 | Sets feature bit, conditionally changes background value, initializes animation byte 24 | Identity unknown |
+| 12 | Clears object-layer cell and stores X, Y, and background data in dedicated fields | Semantic identity unresolved |
+| 11 | Sets background based on its current value, animation byte 48, and feature bit | Identity unknown |
+| 10 | Clears background value and sets a stage flag | Identity unknown |
+| 8, 7, 6, 5, 4, 2, 1, 0 | Participate in a fall-through switch sequence initializing counters, per-cell animation state, flags, or calling `iVoid(x,y)` | Must trace combined fall-through behavior |
+| 49 | Sets feature bit and animation byte 48 | Identity unknown |
+| 37 | Clears background value and sets feature bit | Identity unknown |
+| 53, 52, 51 | Explicitly ignored in this initialization switch | Does not prove unused at runtime |
+
+The Java switch contains fall-through. A native port must reproduce the observed combined behavior, not translate each case as an isolated branch without verifying control flow.
+
+### 15.2 Foreground-layer initialization effects
+
+The foreground layer is read as one byte per cell and then packed with background-derived values into an integer.
+
+| Foreground code | Observed effect |
+|---:|---|
+| 8 | Enables a boolean feature, then falls through into code 9 setup |
+| 9 | May request water-breathing-related resource loading depending on neighboring/background state; sets feature bit and counts matching background IDs |
+| 7 | Registers door-coordinate slots using background value as an index; later scans neighboring cells to derive a variant/connection value |
+| 30 | Sets feature bit and increments an object counter |
+| 1, 26 | Preserve foreground code while packing background value |
+| 0 | Preserves code and increments an object counter |
+| 4 | Increments a counter and sets feature bit |
+| 5, 28 | Store background-derived values in dedicated fields |
+| 3 | Initializes per-cell byte to 127 and may adjust packed background value |
+| 6 | Counts background IDs, sets feature bit, packs background and foreground |
+| 34 | Sets feature bit |
+| 20–25 | Special group that can set world-dependent feature flags |
+| Other values below 80 | Some are normalized to `-1`; do not treat every value below 80 as a valid foreground entity |
+
+A second pass builds lookup arrays for foreground codes 0, 30, 4, 5, and 17. Code 7 uses neighboring foreground values to derive additional packed bits and may set animation state. The raw foreground byte alone is not the full runtime state.
+
+### 15.3 Dynamic registration and derived arrays
+
+The initialization pass allocates arrays based on counts gathered during the scan, including entity/event coordinate storage, per-entity byte state, door coordinate pairs, paired/moving-object coordinate triples, and foreground lookup/animation indexes.
+
+The exact class/array names are decompiler artifacts and should not become the Native Android public API. A new implementation may eventually use typed structures such as `StageCell`, `EntitySpawn`, `DoorLink`, and `StageFeatureFlags`, but only after semantics are validated.
+
+### 15.4 Sprite chunk-to-runtime-slot mapping — partial
+
+The stage loader reads sprite chunks from `0.f`, `1.f`, `2.f`, `gen0.f` through `gen4.f`, and `cm.f` according to flags/counts derived from the stage. Examples directly visible in the loader:
+
+| Generated chunk index | Runtime sprite slot |
+|---:|---:|
+| 0 | 33 |
+| 1 | 34 |
+| 30 | 15 |
+| 33 | 22 |
+| 34 | 27 |
+| 35 | 28 |
+| 36 | 35 |
+| 37 | 29 |
+| 38 | 36 |
+| 40 | 2 |
+| 41 | 38 |
+| 42 | 39 |
+
+This is a resource-loading map, not a confirmed entity-name map. It must be correlated with entity update/draw call sites and legally usable asset samples before assigning semantic labels.
+
+## 16. Audit-002 follow-up priorities
+
+1. Trace `iVoid(x,y)` and methods it calls to determine what entity records are created.
+2. Trace per-tick update and draw paths for object codes 0–53, prioritizing frequently registered codes 24, 26, 27, 40, 42, and 48.
+3. Trace foreground code 7 neighbor/door-link logic and code 17 lookup path.
+4. Identify world-package filenames behind `worldFiles` and correlate each world index with map/resource names.
+5. Trace save/checkpoint arrays and their relationship to stage initialization before designing Native Android persistence.
+6. Only then create a versioned tile/entity dictionary; keep unresolved IDs explicitly marked unknown.
+
+No source or asset payload has been copied into Project-DIRU-NA. These are static observations from the read-only candidate revision only.
