@@ -15,18 +15,18 @@ This is the project toolchain decision record. The initial Gradle root and launc
 | Component | Proposed baseline | Rationale / status |
 |---|---|---|
 | Build system | Gradle Wrapper | One pinned build entry point for local and CI use |
-| Gradle | **9.8.2** | Minimum/default required by Android Gradle Plugin 9.6.0 |
+| Gradle | **9.8.2** | Newer than AGP 9.5.1's minimum Gradle 9.6.0 |
 | Android Gradle Plugin | **9.6.0** | Current stable release identified in official Android release notes (2026-11-18) |
-| Gradle runtime JDK | **JDK 17** | AGP 9.6.0 lists JDK 17 as its minimum/default |
+| Gradle runtime JDK | **JDK 17** | AGP 9.5.1 lists JDK 17 as its minimum/default |
 | Core language | **Java 17** | Lowest-friction first implementation; matches the Java source audit and avoids introducing a second language before core contracts stabilize |
 | Android source language | **Java 17 initially** | Keep the first app/core implementation single-language |
 | Build-script DSL | **Groovy DSL** | Conservative, widely documented Gradle convention; no Kotlin DSL requirement for this project |
-| Compile SDK | **API 36** | AGP 9.6.0 supports up to API 36 |
+| Compile SDK | **API 36** | AGP 9.5.1 supports up to API 36 |
 | JVM unit tests | **JUnit 4** | Small, mature dependency for the pure JVM core; handwritten fakes remain the default |
 | Application ID / namespace | `MeongDev.DIRUNA.GloftDIRU` | Exact owner-provided identifier; preserve capitalization |
 | minSdk | **23 (Android 6.0)** | Approved by project owner |
 | targetSdk | **36 (Android 16)** | Meets Google Play's published minimum for new apps/updates from 2026-08-31 |
-| Build Tools | AGP 9.6.0 default **36.0.0** | Let AGP manage its documented default unless a verified need requires pinning another version |
+| Build Tools | AGP 9.5.1 default **36.0.0** | Let AGP manage its documented default unless a verified need requires pinning another version |
 
 The approved initial version matrix is deliberately narrow. Do not upgrade one component independently: review the AGP/Gradle/JDK compatibility matrix together whenever any of these versions changes.
 
@@ -34,17 +34,17 @@ The approved initial version matrix is deliberately narrow. Do not upgrade one c
 
 ### 3.1 Android Gradle Plugin
 
-The official AGP 9.6.0 release notes identify:
-- minimum/default Gradle: 9.8.2;
+The official AGP 9.5.0 release notes (including the 9.5.1 patch line) identify:
+- minimum/default Gradle: 9.6.0;
 - minimum/default JDK: 17;
 - default SDK Build Tools: 36.0.0;
 - maximum supported Android API level: 37 (API 36 is selected for the current stable SDK package).
 
-Source: [Android Gradle Plugin 9.6.0 release notes](https://developer.android.com/build/releases/agp-9-6-0-release-notes).
+Source: [Android Gradle Plugin 9.5.1 release notes](https://developer.android.com/build/releases/agp-9-5-0-release-notes).
 
 ### 3.2 Gradle and Java
 
-AGP 9.6.0's documented runtime baseline is JDK 17. Gradle 9.x requires a JVM from 17 onward; use JDK 17 for the pinned build runtime.
+AGP 9.5.1's documented runtime baseline is JDK 17. Gradle 9.x requires a JVM from 17 onward; use JDK 17 for the pinned build runtime.
 
 Source: [Gradle compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html).
 
@@ -110,7 +110,7 @@ The launcher/display name is **Diamond Rush**. The project owner supplied `Meong
 
 ## 7. Implementation sequence after approval
 
-1. Use Java 17, Groovy DSL, Gradle 9.8.2, AGP 9.6.0, compile SDK 37, minSdk 23, and targetSdk 36 as the initial baseline.
+1. Use Java 17, Groovy DSL, Gradle 9.8.2, AGP 9.5.1, compile SDK 37, minSdk 23, and targetSdk 36 as the initial baseline.
 2. Preserve the approved application name and identifier.
 3. Create the single Gradle root and wrapper.
 4. Add a plain JVM `core` module and a minimal JUnit 4 test.

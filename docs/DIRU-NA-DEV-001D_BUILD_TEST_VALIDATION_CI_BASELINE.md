@@ -1,6 +1,6 @@
 # DIRU-NA-DEV-001D — Build and Test Validation / CI Baseline
 
-**Status:** CI workflow committed; first hosted execution pending  
+**Status:** CI workflow committed; hosted validation blocked by an AGP plugin version-resolution error, fix in progress  
 **Date:** 2026-11-18  
 **Repository:** `yogiags56/Project-DIRU-NA`
 

@@ -11,7 +11,7 @@ Create the independent Gradle root, pin a reproducible Gradle Wrapper, and add t
 ## 2. Pinned build configuration
 
 - Gradle Wrapper: 9.8.2
-- Android Gradle Plugin: 9.6.0
+- Android Gradle Plugin: 9.5.1
 - Gradle runtime JDK: 17
 - Java source/target compatibility: 17
 - Compile SDK: 36
@@ -20,7 +20,7 @@ Create the independent Gradle root, pin a reproducible Gradle Wrapper, and add t
 - Application label: Diamond Rush
 - Application ID and namespace: `MeongDev.DIRUNA.GloftDIRU`
 
-AGP 9.6.0 requires Gradle 9.8.2, uses JDK 17, and supports up to API 37; the project currently compiles against the available stable API 36 SDK package. The Gradle distribution SHA-256 is pinned in `gradle-wrapper.properties`. Official checksums are published by Gradle.
+AGP 9.5.1 requires at least Gradle 9.6.0; the project pins Gradle 9.8.2, uses JDK 17, and supports up to API 37; the project currently compiles against the stable API 36 SDK package. The Gradle distribution SHA-256 is pinned in `gradle-wrapper.properties`. Official checksums are published by Gradle.
 
 ## 3. Files introduced
 
@@ -46,8 +46,8 @@ AGP 9.6.0 requires Gradle 9.8.2, uses JDK 17, and supports up to API 37; the pro
 
 **Committed, not yet executed.**
 
-The repository now contains the wrapper and Android app configuration. A successful `./gradlew tasks`, `./gradlew :app:assembleDebug`, or device launch has not yet been observed in this work item. SDK 37 and JDK 17 must be installed in the execution environment before Android compilation can be verified.
+The repository now contains the wrapper and Android app configuration. A successful `./gradlew tasks`, `./gradlew :app:assembleDebug`, or device launch has not yet been observed in this work item. SDK 36 and JDK 17 must be installed in the execution environment before Android compilation can be verified.
 
 ## 6. Next work item
 
-**DIRU-NA-DEV-001C — Platform-independent Core JVM Module.** Add a plain Java library module, pin Java 17 toolchain behavior, add JUnit 4, and prove the core unit-test task runs independently of Android instrumentation.
+**DIRU-NA-DEV-001D — Build and Test Validation / CI Baseline.** Execute the wrapper, run core JVM tests, and assemble the Android debug APK.
