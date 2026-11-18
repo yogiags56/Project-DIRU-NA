@@ -60,3 +60,15 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - **v2.0:** adaptive aspect ratios and full-screen presentation without stretching gameplay, while preserving the 240×320 logical coordinate system and adapting the viewport/layout around it.
 
 **DIRU-NA baseline decision:** the first implementation and first playable build retain a 240×320 portrait logical resolution. This is an explicit decision for this independent project, informed by the candidate source's repeated 240×320 drawing/camera constants. It does not inherit the archived Native Android project's 320×240 target or build lineage. Future adaptive aspect-ratio support is a later enhancement: preserve the 240×320 gameplay coordinate system, maintain sprite/collision proportions, and adapt viewport/camera/UI for 1:1, 2:1, 3:2, 4:3, 5:4, 16:9, 18:9, and other screen ratios without stretching gameplay.
+
+## DIRU-NA-AUDIT-003 — Nokia MIDlet identity and platform metadata
+
+**Working document:** [DIRU-NA-AUDIT-003 Nokia MIDlet Identity](DIRU-NA-AUDIT-003_NOKIA_MIDLET_IDENTITY.md)
+
+- [x] Inspect candidate resource manifest and compiled-output manifest
+- [x] Confirm MIDlet name, vendor, version, profile/configuration, and Nokia-specific attributes
+- [x] Inspect MIDlet entry point and Nokia API compatibility namespaces
+- [x] Record evidence-based classification as a Nokia-identified J2ME MIDlet package, version 1.1.7
+- [ ] Obtain independently sourced original JAR/JAD and compare hashes/manifest for provenance authentication
+- [ ] Trace actual Nokia-specific API call sites and determine whether any are required by gameplay
+- [ ] Confirm original handset model, physical display characteristics, and distribution channel (not established by manifest alone)
