@@ -59,7 +59,7 @@ For active direction values 1–4, the source:
 - otherwise calls the movement/collision helper `aBoolean(-gByteArr[lByte], -gByteArr[lByte + 8], false)`;
 - may update animation and movement-related timers according to the helper result and packed state flags.
 
-The helper M07 snapshots movement fields, derives direction from the requested delta, checks destination bounds and layered map/object metadata, and may commit the new logical tile coordinate. When its accepted-move branch is reached with `aWInt == 0`, it sets `jInt = 18` and adds the requested tile delta to `crtPlayerX/Y`. It writes its updated movement fields back only on its non-probe path.
+The helper M07 snapshots movement fields, derives direction from the requested delta, checks destination bounds and layered map/object metadata, and may commit a logical tile-coordinate delta. In the branch where its local `b2` flag is true and `aWInt == 0`, it sets `jInt = 18` and adds the requested tile delta to `crtPlayerX/Y`. It writes its updated movement fields back only on its non-probe path. The helper's boolean return must not yet be named `canMove` or `blocked`: `b2` is set by several different bounds, foreground, and object-layer branches, and the caller has additional state-dependent handling.
 
 **Important:** logical tile position can be committed at movement start while the rendered/camera position remains interpolated. Do not treat the tile coordinate as the complete visual position.
 
@@ -104,7 +104,7 @@ This supports the 24-pixel logical tile unit and proves that the camera uses `jI
 ## 7. Regression cases required before implementation is considered complete
 
 - Requested direction while movement is already active is not consumed as a second simultaneous tile move.
-- Accepted ordinary move commits exactly one logical tile delta and initializes progress to 18.
+- A normal move branch that commits a logical tile delta initializes progress to 18; the boolean helper result must be tested separately from destination passability.
 - Blocked destination does not commit the logical tile delta.
 - Progress decrements by 6 per applicable update and reaches zero without becoming negative.
 - Progress 72 remains exclusive to the separately traced direction-6/object-push path.
