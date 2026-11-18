@@ -96,7 +96,7 @@ Rules:
 
 | Item | Why it remains open | Gate before implementation |
 |---|---|---|
-| Namespace and application ID | Must be unique and intentionally owned by the project | Approve exact reverse-domain identifier |
+| Application name | Fixed by project owner | **Diamond Rush** (launcher/display name) |\n| Application ID / namespace | Provided by project owner | `MeongDev.DIRUNA.GloftDIRU` (preserve exact spelling and capitalization) |
 | minSdk | Depends on intended oldest device / Android release | State minimum supported Android version |
 | targetSdk | Affects runtime behavior and release compliance | Decide distribution channel and validate current target requirements |
 | Resource packaging | Legal provenance of original game assets is unresolved | Complete resource-rights review |
@@ -105,7 +105,7 @@ Rules:
 
 Do not set `targetSdk` equal to `compileSdk` automatically. They serve different purposes and require separate decisions.
 
-## 6. Implementation sequence after approval
+## 6. Application identity\n\nThe launcher/display name is **Diamond Rush**. The project owner supplied the identifier `MeongDev.DIRUNA.GloftDIRU`; preserve its exact capitalization when writing the Android application configuration. The identifier is recorded as both the proposed application ID and namespace, consistent with the prior project decision. Do not silently normalize it to lowercase. Before generating build files, verify that Android tooling accepts the exact identifier and that it does not conflict with an existing installed application identity.\n\n## 7. Implementation sequence after approval
 
 1. Confirm Java 17, Groovy DSL, Gradle 9.6.0, AGP 9.4.0, and compile SDK 37 as the initial baseline.
 2. Approve namespace/application ID, minSdk, and targetSdk.
@@ -116,7 +116,7 @@ Do not set `targetSdk` equal to `compileSdk` automatically. They serve different
 7. Add an independent CI workflow that runs core JVM tests and validates the Android app configuration.
 8. Only then implement the Great Anaconda fake harness and regression suite GA-001..GA-028.
 
-## 7. Acceptance criteria for DEV-001A
+## 8. Acceptance criteria for DEV-001A
 
 - [x] Current official AGP/Gradle/JDK compatibility checked.
 - [x] Current Kotlin/AGP compatibility checked; Kotlin excluded from the first baseline.
@@ -127,6 +127,6 @@ Do not set `targetSdk` equal to `compileSdk` automatically. They serve different
 
 **Status: decision record drafted; not yet an implemented or approved build configuration.**
 
-## 8. Next work item
+## 9. Next work item
 
 After the remaining project-level choices are approved, proceed to **DIRU-NA-DEV-001B — Gradle Root and Wrapper**. Do not create build files or claim a successful build before that work item is authorized and actually verified.
