@@ -47,7 +47,7 @@ public final class LegacyCollisionCaptureValidationTest {
 
     @Test public void propagatesOutOfBoundsCaptureWithoutSnapshot() {
         LegacyCollisionCaptureValidation.Result r =
-                LegacyCollisionCaptureValidation.validate(capture(-1,2),
+                LegacyCollisionCaptureValidation.validate(capture(-2,2),
                         LegacyCollisionBranchInputValidator.Branch.FOREGROUND_TYPE_7,
                         EnumSet.of(LegacyCollisionBranchInputValidator.ContextField.PROBE_MODE,
                                 LegacyCollisionBranchInputValidator.ContextField.A_W_INT));
