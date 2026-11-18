@@ -72,3 +72,21 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - [ ] Obtain independently sourced original JAR/JAD and compare hashes/manifest for provenance authentication
 - [ ] Trace actual Nokia-specific API call sites and determine whether any are required by gameplay
 - [ ] Confirm original handset model, physical display characteristics, and distribution channel (not established by manifest alone)
+
+## DIRU-NA-AUDIT-004 — Gameplay state machine and movement reconstruction
+
+**Working document:** [DIRU-NA-AUDIT-004 Gameplay State & Movement](DIRU-NA-AUDIT-004_GAMEPLAY_STATE_MOVEMENT.md)
+
+- [x] Document main loop timing and input bitmask capture at static-source level
+- [x] Document four-direction input mapping and 24-unit tile coordinate model
+- [x] Trace movement interpolation and animation selection paths
+- [x] Record partial foreground/object-layer collision and push behavior
+- [x] Trace damage handler, manual respawn, retry transition, and checkpoint snapshot boundary
+- [x] Record camera-follow coordinate relationship
+- [ ] Complete direction vector and animation-index dictionary
+- [ ] Trace status/retry counters to UI and save/load call sites before assigning semantic labels
+- [ ] Complete tile-code dictionary using legally usable visual/resource fixtures
+- [ ] Trace all damage sources, scripted exits, and special movement states
+- [ ] Create deterministic movement/collision/checkpoint test fixtures
+- [ ] Validate gameplay timing and behavior against original handset/runtime evidence
+
