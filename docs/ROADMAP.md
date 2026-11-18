@@ -97,6 +97,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-030 — Special-stage identification and cross-resource reconciliation
+
+**Working document:** [DIRU-NA-AUDIT-030 Special Stage Identification & Cross-Resource Reconciliation](DIRU-NA-AUDIT-030_SPECIAL_STAGE_IDENTIFICATION_CROSS_RESOURCE.md)
+
+- [x] Identify source-declared special-stage constants
+- [x] Confirm Angkor stage index 13 is a demo stage via constant, launch flow, and dedicated initialization
+- [x] Reconcile Angkor stage stream (14) against map/title catalog (13)
+- [x] Confirm named special gameplay stages within normal stage ranges
+- [x] Keep Siberia/Tibet title mapping entry 14 unresolved; do not synthesize a stage
+- [x] Define Native catalog handling for demo-only and special gameplay metadata
+- [ ] Verify demo-stage presence/role in the exact target Nokia JAR variant
+- [ ] Resolve Siberia stage-index-14 mapping against independent package/runtime evidence
+- [ ] Trace world-specific save bounds and demo-stage inclusion
+- [ ] Build stage-specific mechanic profiles and runtime validation
+
+
 ## DIRU-NA-AUDIT-029 — World stage-stream binary extraction and inventory
 
 **Working document:** [DIRU-NA-AUDIT-029 World Stage-Stream Binary Inventory](DIRU-NA-AUDIT-029_WORLD_STAGE_STREAM_BINARY_INVENTORY.md)
