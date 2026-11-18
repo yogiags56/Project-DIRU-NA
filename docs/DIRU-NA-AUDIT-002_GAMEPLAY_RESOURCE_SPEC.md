@@ -528,3 +528,62 @@ The main progress buffer is initialized with 1001 bytes in one new-game path, bu
 4. Trace all uses of `iByteArr` and `jByteArr` with exact offsets to produce a save/preferences schema.
 5. Determine whether checkpoint snapshots are temporary in-memory state only or are persisted across application restarts.
 6. Keep event/cutscene interpretation independent from the core gameplay state machine.
+
+## 21. Main save record — partial byte-layout reconstruction
+
+Source trace: `i.java` at candidate revision `215c71d04057d66a1b08419b1a4b1043ae3e0881`. This section records only fields whose use is visible in the current static trace; it is not yet a complete compatibility specification.
+
+### 21.1 Record envelope and header
+
+The main save is RMS store `DiamondRush`, record 1. New-game initialization allocates a 1001-byte buffer, initializes bytes 3, 8, and 9, and sets a separate meaningful-length counter. The buffer is not necessarily 1001 bytes of meaningful data.
+
+| Offset | Observed use | Confidence / caveat |
+|---:|---|---|
+| 0 | Incremented while scanning map tiles whose map byte equals 2; used as a count/header value during save construction | High for count behavior; semantic label provisional |
+| 1 | Bit field during world/unlock initialization; bit 0 is set when a world unlock condition is met | High for bit-field behavior; exact mapping still open |
+| 2 | Bit field: low bits feed gameplay configuration; bits 3 and 4 are checked/set in item/shop progression; bits 5–7 encode a tier/value | High for bitfield use; exact names and masks still open |
+| 3 | Current/selected progression index copied from/to `azInt` | High |
+| 4–5 | Little-endian 16-bit value `aZInt`; read/written by shop logic | High for storage; UI label/units need confirmation |
+| 6–7 | Little-endian 16-bit secondary value `bbInt`; shop code increments it and checks world-price thresholds | High for storage; semantic label provisional |
+| 8 | Hero progression value: initialized to 4, used as hero palette offset (`value - 4`), and passed to damage handling | High for behavior; do not assume this is simply health |
+| 9 | Progression/unlock tier: values 1, 2, and 8 assigned at story/seal milestones and used to gate features | High |
+| 10 | Boolean-like state used by gameplay and checkpoint restore; initialized to 0 and toggled in gameplay | High for flag behavior; semantic name open |
+| 11 | Small state byte `rByte`, persisted by `wVoid()`/`xVoid()` | High |
+| 12 | Small progression counter incremented and clamped to 3 in a story flow | High |
+| 13 | Boolean-like tutorial/first-run flag set to 1 by `bVoid(boolean)` | High |
+| 14–19 | Three little-endian 16-bit offsets, one per world data block | High |
+
+### 21.2 World and stage subrecords
+
+The game has three world resources (Angkor, Scotland, Tibet). Header offsets at bytes 14, 16, and 18 point to each world's block. Each world block contains:
+- a world header/progress byte,
+- a maximum/current stage progress byte,
+- a stage-offset table (16-bit little-endian entries),
+- per-stage records.
+
+The stage record base is resolved from the selected world's offset table plus a stage index multiplied by two. A stage record exposes at least:
+- a stage flag byte (offset +2),
+- a completion/collected counter (offset +3),
+- a required/target count (offset +4),
+- coordinate pairs beginning at offset +5, two bytes per pair.
+
+The coordinate pairs track map locations for a stage. Matching a coordinate can clear that pair and increment the stage record's counter. The source uses this structure for map/seal-like collectible tracking. Exact coordinate meaning and the first two bytes' full semantics remain under audit.
+
+### 21.3 Save construction and migration implications
+
+During new-save construction, the game reads each world map, scans dimensions and map layers, counts cells with marker value 2, and records coordinates for marker values 14 or 33. It writes per-stage offsets into the world's stage-offset table. This is a generated index over map content, not a simple fixed list of stage completion booleans.
+
+Native DIRU-NA should not import this byte layout as its own storage model. Recommended approach:
+- Define a typed, versioned native save schema.
+- Store world/stage progress and collected coordinate identities as explicit records.
+- Preserve source mapping only in a migration/import adapter if lawful and technically necessary.
+- Add integrity checks, bounded parsing, atomic writes, and forward-compatible unknown-field handling.
+- Do not use the old candidate's 1001-byte allocation as a native schema requirement.
+
+### 21.4 Remaining open questions
+
+1. Trace all reads/writes of header bytes 0–13 to give stable semantic names.
+2. Confirm exact world block layout and stage table bounds for all three worlds.
+3. Determine whether the coordinate list represents seals, map pickups, or multiple object classes.
+4. Confirm whether `jByteArr` preferences remain one byte for all source configurations; visible initialization uses one byte and only explicitly writes index 0.
+5. Trace save write timing and failure recovery around RMS operations.
