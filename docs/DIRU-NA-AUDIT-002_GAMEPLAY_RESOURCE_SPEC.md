@@ -587,3 +587,19 @@ Native DIRU-NA should not import this byte layout as its own storage model. Reco
 3. Determine whether the coordinate list represents seals, map pickups, or multiple object classes.
 4. Confirm whether `jByteArr` preferences remain one byte for all source configurations; visible initialization uses one byte and only explicitly writes index 0.
 5. Trace save write timing and failure recovery around RMS operations.
+
+## 22. Checkpoint persistence boundary — in-memory snapshot confirmed
+
+The source methods `saveCheckpoint()` and `restoreCheckpoint()` were inspected directly.
+
+Observed snapshot contents include:
+- selected player/game counters and player grid coordinates,
+- currency/score-like counters and selected gameplay state bytes,
+- copies of the active stage's background/object state, animation/timer bytes, player layer, and foreground layer,
+- optional feature-specific arrays and moving-object state when the corresponding mode is active.
+
+Restore copies those arrays back into the active stage and rebuilds selected transient effects/animation state. It also resets some transient input/animation fields and recenters the camera around the saved player coordinates.
+
+**Persistence conclusion:** the checkpoint snapshot is held in static arrays and instance fields in memory. The inspected `saveCheckpoint()` and `restoreCheckpoint()` methods do not serialize the snapshot into RMS or call the save-record writer. Therefore, this checkpoint is a gameplay respawn snapshot, not evidence of a durable checkpoint across application termination. The ordinary progress save and the temporary checkpoint snapshot must remain separate concepts in DIRU-NA.
+
+Native implication: model checkpoint snapshots as an in-memory stage-state snapshot with explicit copy/restore semantics. App termination should reload durable progress and stage initialization, not silently promise resuming the last temporary checkpoint, unless a later product decision deliberately adds a new native feature.
