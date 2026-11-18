@@ -199,3 +199,89 @@ See [LANGUAGE_RESOURCE_CATALOG.md](LANGUAGE_RESOURCE_CATALOG.md).
 | Localization | Existing loader/fallback behavior documented | Defer original Nokia resource audit until APK is playable |
 
 No APK, build, decoded asset, gameplay test, or Android runtime test is produced by this audit pass. The milestone remains **in progress**.
+
+
+## 9. Stage package and tile-layer loading — additional static findings
+
+Primary source: `src/main/java/i.java`, stage initialization path (the decompiled `jVoid()` state sequence).
+
+The source selects a world package using `worldFiles[crtWorldIndex]`. The exact filename mapping behind `worldFiles` still needs to be confirmed from its static initialization, but the selected package is parsed as a sequence of stages.
+
+Observed package traversal:
+
+1. One initial byte is read before the stage traversal loop.
+2. A stage-count byte is read for the current world/package section.
+3. Each stage begins with a 4-byte header: unsigned little-endian 16-bit width followed by unsigned little-endian 16-bit height.
+4. For the requested stage, the loader allocates three grid layers, each with `width * height` cells:
+   - player/object layer (`byte[][]`)
+   - background layer (`int[][]`, populated from one byte per cell)
+   - foreground layer (`int[][]`, populated from one byte per cell)
+5. The three raw layers are each read as `width * height` bytes.
+6. If a stage is not the requested stage, the loader skips `width * height * 3` bytes after its header.
+
+The byte stream is traversed in row-major order using source index `x + y * width`, then stored in arrays indexed as `[x][y]`. A native port should preserve this coordinate convention explicitly and should not assume the source arrays are contiguous in the same order as the serialized bytes.
+
+**Robustness concern:** the candidate uses single `read(byte[])` calls for stage headers and layer buffers, and `skip(width * height * 3)` for non-target stages. These calls are not guaranteed to consume the full requested amount. The native parser must use read-fully and skip-fully loops, validate dimensions/counts before allocation, cap memory use, and detect truncated packages or impossible stage indexes. The current source's loop can continue indefinitely when a requested stage does not exist; the native implementation must fail with a structured load error instead.
+
+## 10. Grid semantics and player spawn — partially established
+
+The stage loader and subsequent initialization pass reveal these runtime structures:
+
+| Structure | Observed role |
+|---|---|
+| `crtStagePlayerLayer[x][y]` | Dynamic/object/entity tile codes, including the player spawn marker |
+| `bIntArrArr[x][y]` | Background tile/property values; later processing also packs auxiliary bits/IDs into integer values |
+| `crtStageForegrondLayer[x][y]` | Foreground tile/object values; later processing packs background-derived data into upper bits |
+| `bByteArrArr[x][y]` | Auxiliary per-cell byte state initialized during stage setup |
+| `cByteArrArr[x][y]` | Auxiliary per-cell animation/timing/state byte layer |
+
+The player spawn marker observed in the object layer is value `79`. During stage initialization, the loader sets `crtPlayerX = 0`, `crtPlayerY = y` for that marker, records the marker's original X in `ayInt`, clears the marker cell, and initializes camera positions around the spawn row.
+
+Other object-layer values trigger setup behavior for entities and level mechanics (examples include moving/animated objects, water-related elements, doors, checkpoints, collectibles, and enemies). Their complete mapping is not yet established. Do not assign friendly names to every numeric tile ID until each code is traced through update and render call sites.
+
+The initialization pass scans every cell, counts or records certain object types, normalizes some foreground values, builds door-coordinate arrays, and allocates per-object/per-cell state arrays. This confirms that the stage package is not just a flat image: it is a multi-layer logical grid with runtime entities and derived metadata.
+
+## 11. Logical coordinate system and viewport evidence
+
+The candidate's rendering and camera code repeatedly uses a **240 × 320** logical drawing area:
+
+- Stage cell size is treated as 24 logical pixels in camera/player-position calculations.
+- Camera clamping uses `stageWidth * 24 - 240` horizontally and `stageHeight * 24 - 320 + 80` vertically.
+- The demo/event renderer fills or clips against 240 × 320.
+- Gameplay UI draws top and bottom bars at 42 pixels high in the 240 × 320 coordinate space.
+- Menu layout calculations also center content using 240 and 320.
+
+This is strong static evidence that the reviewed candidate is configured for a portrait logical canvas of 240 × 320, not the historical 320 × 240 landscape target. However, this does not by itself establish how every original Nokia handset rotated or presented the game. Before choosing Android orientation, compare original Nokia device/build evidence and inspect actual game screenshots or a legally usable original binary. Keep the logical viewport configurable until that verification is complete.
+
+## 12. Movement and interaction observations — incomplete trace
+
+The in-stage input branch confirms the following high-level behavior:
+
+- Directional actions are mapped to four movement intents; the source's direction-state values are 1 (up), 2 (right), 3 (down), and 4 (left).
+- The source stores player grid coordinates separately from pixel/camera offsets.
+- Some movement is temporarily blocked while an interaction/animation timer is active, while a transition flag is set, while a scripted event is active, while the player is in a non-alive state, or during a specific animation.
+- During a temporary hurt/stun state, directional input changes small velocity/offset values rather than immediately issuing a normal grid step.
+- Confirm/OK can activate nearby interactables, use a checkpoint when the player is on a checkpoint tile, or select an adjacent object/action depending on inventory/ability state.
+- Respawn/star handling can restore a checkpoint or trigger death/game-over behavior depending on the current animation and foreground cell.
+- The source uses neighboring grid cells and per-cell bit fields to determine whether a contextual action can be performed. Some special actions scan up to three cells horizontally or inspect a defined set of nearby offsets.
+
+The current code excerpt is not enough to reconstruct all movement timing, collision response, push/pull rules, climbing, swimming, hazards, or object-specific interaction rules. The full state/update methods and entity handlers must be mapped before native gameplay implementation. For now, these are behavioral anchors, not a completed physics specification.
+
+## 13. Camera and transition behavior — partial evidence
+
+A separate event/transition helper class `c.java` contains camera interpolation logic. It interpolates camera target coordinates over a configured duration and clamps the result against the stage dimensions in 24-pixel tile units. It also handles scripted visual overlays and event sequences. This helper appears to combine camera behavior with demo/cutscene/script rendering; its responsibilities should be separated in the native design.
+
+The source contains multiple hard-coded drawing bounds and animation counters. A native implementation should model camera target, interpolation progress, clamping, and scripted events as separate testable systems rather than porting the helper class as one unit.
+
+## 14. Additional validation status
+
+| Area | New static evidence | Remaining uncertainty |
+|---|---|---|
+| Stage package | 4-byte width/height header and three cell layers per stage | Initial section header meaning; exact world package mapping |
+| Grid layout | Serialized row-major order; runtime arrays addressed as `[x][y]` | Full numeric tile/object ID dictionary |
+| Player spawn | Object-layer marker 79; X set to 0 and Y taken from marker row | Whether all worlds/stages use identical spawn convention |
+| Viewport | Multiple 240 × 320 drawing/camera constants; 24 px tile calculations | Original Nokia device orientation/presentation |
+| Movement | Direction values, state gating, contextual action/checkpoint/respawn paths | Complete movement, collision, and interaction state machine |
+| Camera | Interpolated/clamped camera helper in `c.java` | All event opcodes and camera timing semantics |
+
+No binary stage package has been extracted or decoded in this pass, and none of these observations has been runtime-tested.
