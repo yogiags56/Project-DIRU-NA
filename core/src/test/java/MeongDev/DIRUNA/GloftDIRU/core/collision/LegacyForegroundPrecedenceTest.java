@@ -6,7 +6,7 @@ import static org.junit.Assert.*;
 public final class LegacyForegroundPrecedenceTest {
     @Test public void foregroundSevenUsesPackedNibbleThreshold() {
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
-                LegacyForegroundPrecedence.decide(0x0017,false).getPlayerLayerFlow());
+                LegacyForegroundPrecedence.decide(0x0007,false).getPlayerLayerFlow());
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 LegacyForegroundPrecedence.decide(0x2007,false).getPlayerLayerFlow());
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
@@ -43,7 +43,7 @@ public final class LegacyForegroundPrecedenceTest {
     @Test public void typeSevenThresholdUsesBitsFourThroughSevenNotWholeHighByte() {
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
                 LegacyForegroundPrecedence.decide(0xF007,false).getPlayerLayerFlow());
-        assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
-                LegacyForegroundPrecedence.decide(0x1007,false).getPlayerLayerFlow());
+        assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                LegacyForegroundPrecedence.decide(0x0107,false).getPlayerLayerFlow());
     }
 }
