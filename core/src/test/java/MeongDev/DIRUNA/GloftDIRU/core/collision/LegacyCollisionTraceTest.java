@@ -7,8 +7,8 @@ public final class LegacyCollisionTraceTest {
     @Test public void nonProbeBoundsPathCanCommitLocalAndPersistedTileDelta() {
         LegacyCollisionTrace trace = trace(
                 LegacyCollisionTrace.Branch.STAGE_BOUNDS,
-                false, true, true, false, true, true, true, true,
-                true, false, false, true);
+                false, true, true, false, true, true, true, true, true,
+                false, false, false, true);
         assertTrue(trace.isReturnFlagB2());
         assertTrue(trace.isLocalTileDeltaApplied());
         assertTrue(trace.isLocalProgressInitialized());
@@ -19,7 +19,7 @@ public final class LegacyCollisionTraceTest {
     @Test public void probeCanCalculateLocalDeltaWithoutPersistingSnapshot() {
         LegacyCollisionTrace trace = trace(
                 LegacyCollisionTrace.Branch.FOREGROUND_TYPE_5_FORCED_MOVEMENT,
-                true, true, true, false, true, true, false, false,
+                true, true, true, false, true, true, true, false, false,
                 false, false, false, false);
         assertTrue(trace.isProbeMode());
         assertTrue(trace.isReturnFlagB2());
@@ -32,7 +32,7 @@ public final class LegacyCollisionTraceTest {
     @Test public void probeEarlyReturnCanRequestAnimationWithoutWriteback() {
         LegacyCollisionTrace trace = trace(
                 LegacyCollisionTrace.Branch.EARLY_RETURN_KBYTE_4,
-                true, false, false, false, false, false, false, false,
+                true, false, false, false, false, false, false, false, false,
                 true, true, false, true);
         assertTrue(trace.isAnimationRequested());
         assertFalse(trace.isHelperReturnedNormally());
@@ -43,7 +43,7 @@ public final class LegacyCollisionTraceTest {
     @Test public void interactionFlagIsIndependentFromReturnFlag() {
         LegacyCollisionTrace trace = trace(
                 LegacyCollisionTrace.Branch.FOREGROUND_TYPE_2_INTERACTION,
-                false, true, true, true, true, true, true, true,
+                false, true, true, true, true, true, true, true, true,
                 true, true, true, true);
         assertTrue(trace.isReturnFlagB2());
         assertTrue(trace.isInteractionFlagB3());
@@ -52,7 +52,7 @@ public final class LegacyCollisionTraceTest {
     @Test public void foregroundType19ProbeExitsWithoutScriptedWorldMutation() {
         LegacyCollisionTrace trace = trace(
                 LegacyCollisionTrace.Branch.FOREGROUND_TYPE_19_SCRIPTED_PATH,
-                true, true, false, false, true, true, false, false,
+                true, true, false, false, true, false, false, false, false,
                 false, false, false, false);
         assertFalse(trace.isWorldMutationObserved());
         assertFalse(trace.isTilePositionCommitted());
@@ -61,7 +61,7 @@ public final class LegacyCollisionTraceTest {
     @Test public void nonProbeEarlyReturnDoesNotWriteBackSnapshot() {
         LegacyCollisionTrace trace = trace(
                 LegacyCollisionTrace.Branch.EARLY_RETURN_KBYTE_4,
-                false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false,
                 true, true, false, true);
         assertFalse(trace.isPlayerSnapshotWrittenBack());
     }
@@ -69,35 +69,35 @@ public final class LegacyCollisionTraceTest {
     @Test(expected = IllegalArgumentException.class)
     public void rejectsLocalUpdateWithoutB2() {
         trace(LegacyCollisionTrace.Branch.PLAYER_LAYER_EMPTY,
-                false, true, false, false, true, true, true, true,
+                false, true, false, false, true, true, true, true, true,
                 false, false, false, false);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void rejectsLocalUpdateWhenMovementCounterNonzero() {
         trace(LegacyCollisionTrace.Branch.PLAYER_LAYER_EMPTY,
-                false, true, true, false, false, true, true, true,
+                false, true, true, false, false, true, true, true, true,
                 false, false, false, false);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void rejectsProbeWriteback() {
         trace(LegacyCollisionTrace.Branch.PLAYER_LAYER_EMPTY,
-                true, true, true, false, true, true, true, true,
+                true, true, true, false, true, true, true, true, true,
                 false, false, false, false);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void rejectsCommitWithoutLocalCoordinateUpdate() {
         trace(LegacyCollisionTrace.Branch.PLAYER_LAYER_EMPTY,
-                false, true, true, false, false, false, false, true,
+                false, true, true, false, true, false, false, true, true,
                 false, false, false, false);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void rejectsMismatchedLocalCoordinateAndProgressUpdates() {
         trace(LegacyCollisionTrace.Branch.PLAYER_LAYER_EMPTY,
-                true, true, true, false, true, false, false, false,
+                true, true, true, false, true, true, false, false, false,
                 false, false, false, false);
     }
 
