@@ -90,3 +90,20 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - [ ] Create deterministic movement/collision/checkpoint test fixtures
 - [ ] Validate gameplay timing and behavior against original handset/runtime evidence
 
+
+## DIRU-NA-AUDIT-005 — Tile and entity dictionary reconstruction
+
+**Working document:** [DIRU-NA-AUDIT-005 Tile & Entity Dictionary](DIRU-NA-AUDIT-005_TILE_ENTITY_DICTIONARY.md)
+
+- [x] Confirm three world map resources and stage header/layer layout
+- [x] Document player/object, background, and foreground layer roles
+- [x] Record partial foreground code catalog from initialization, collision, and rendering branches
+- [x] Record partial object/entity code catalog and confirmed player-start/checkpoint/door/multi-cell behaviors
+- [x] Document sprite parser structure and animation composition model
+- [ ] Complete sprite-slot to file/chunk/palette mapping
+- [ ] Validate all image decoder formats and malformed-input behavior
+- [ ] Correlate tile/entity codes with visual sprite frames using permitted fixtures
+- [ ] Trace dynamic entity updates and remaining puzzle/hazard/collectible behaviors
+- [ ] Build synthetic map and sprite parser fixtures
+- [ ] Validate against original Nokia package/runtime evidence
+
