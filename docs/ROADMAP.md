@@ -96,6 +96,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-029 — World stage-stream binary extraction and inventory
+
+**Working document:** [DIRU-NA-AUDIT-029 World Stage-Stream Binary Inventory](DIRU-NA-AUDIT-029_WORLD_STAGE_STREAM_BINARY_INVENTORY.md)
+
+- [x] Decode /w0.bin, /w1.bin, and /w2.bin
+- [x] Reconstruct container prefix, stage count, dimensions, and three-layer payload format
+- [x] Inventory all 41 stage records and dimensions
+- [x] Verify exact byte consumption with no truncation or trailing bytes
+- [x] Reconcile stage-stream counts against map-node and title-mapping counts
+- [x] Isolate Angkor extra stage record index 13
+- [x] Isolate Tibet/Siberia extra title mapping entry index 14
+- [ ] Determine semantic meaning of the leading 0x01 byte
+- [ ] Resolve both cross-resource count anomalies
+- [ ] Add bounded native parser and malformed-input tests
+- [ ] Validate selected stages against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-028 — Secret-node availability and progression flags
 
 **Working document:** [DIRU-NA-AUDIT-028 Secret Node Availability & Progression Flags](DIRU-NA-AUDIT-028_SECRET_NODE_AVAILABILITY_PROGRESSION_FLAGS.md)
