@@ -13,7 +13,7 @@ public final class LegacyType19ScriptScanPlannerTest {
         public int foregroundRawAt(int x,int y){return foreground[x][y];}
     }
     @Test public void plansAnchorAndOnlyRowsAfterAnchorForClearing(){
-        Grid g=new Grid(10,8); g.player[5][3]=39; g.foreground[2][4]=19; g.foreground[2][5]=0x1213;
+        Grid g=new Grid(10,8); g.player[5][3]=39; g.foreground[2][4]=19; g.foreground[2][5]=0x1200;
         LegacyType19ScriptScanPlanner.Plan p=LegacyType19ScriptScanPlanner.plan(2,5,19,false,g);
         assertTrue(p.isReady()); assertEquals(5,p.getAnchorX()); assertEquals(3,p.getAnchorY());
         assertEquals(1,p.getForegroundRowsToClear().size()); assertEquals(Integer.valueOf(4),p.getForegroundRowsToClear().get(0));
