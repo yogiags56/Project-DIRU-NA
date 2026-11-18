@@ -74,6 +74,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - [ ] Confirm original handset model, physical display characteristics, and distribution channel (not established by manifest alone)
 
 
+
+## DIRU-NA-AUDIT-007 — Entity animation and state mapping
+
+**Working document:** [DIRU-NA-AUDIT-007 Entity Animation & State Mapping](DIRU-NA-AUDIT-007_ENTITY_ANIMATION_STATE_MAPPING.md)
+
+- [x] Record multi-pass stage rendering structure at static-source level
+- [x] Map selected foreground codes to sprite slots and animation/frame selection
+- [x] Map selected object-layer codes to sprite slots and animation/frame selection
+- [x] Record examples of per-cell animation progression and completion side effects
+- [ ] Complete hero animation state mapping
+- [ ] Complete enemy AI and animation mapping
+- [ ] Complete object/entity codes 0–79 state and animation mapping
+- [ ] Trace all per-cell state arrays and reset/restore behavior
+- [ ] Create deterministic synthetic animation/state tests
+- [ ] Validate render ordering and behavior against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-006 — Sprite resource mapping and animation reconstruction
 
 **Working document:** [DIRU-NA-AUDIT-006 Sprite Resource Mapping](DIRU-NA-AUDIT-006_SPRITE_RESOURCE_MAPPING.md)
