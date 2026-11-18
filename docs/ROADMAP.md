@@ -85,6 +85,25 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-018 — Shop jackets, hero palette and progression-item state
+
+**Working document:** [DIRU-NA-AUDIT-018 Shop Jackets, Hero Palette & Progression](DIRU-NA-AUDIT-018_SHOP_JACKETS_HERO_PALETTE_PROGRESSION.md)
+
+- [x] Confirm four shop entries are documented as jackets
+- [x] Record configured violet-gem prices: 150, 400, 1,000, 3,000
+- [x] Trace ownership threshold written to save byte 8
+- [x] Trace save byte 8 into hero palette selection
+- [x] Distinguish jacket currency from red-gem world-unlock currency
+- [x] Record save-byte-9 ambiguity and progression writes
+- [ ] Identify visible colors/names of all four jacket palettes
+- [ ] Complete save-byte-8 and save-byte-9 reader/writer trace
+- [ ] Trace potion pickup, consumption, duration, and effect
+- [ ] Map violet-gem pickup IDs and counter increments
+- [ ] Add deterministic shop, palette, and persistence tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-017 — Collectibles, currency, shop and item progression
 
 **Working document:** [DIRU-NA-AUDIT-017 Collectibles, Currency, Shop & Items](DIRU-NA-AUDIT-017_COLLECTIBLES_CURRENCY_SHOP_ITEMS.md)
