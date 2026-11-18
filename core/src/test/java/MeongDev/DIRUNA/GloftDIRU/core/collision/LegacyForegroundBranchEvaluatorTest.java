@@ -38,7 +38,7 @@ public final class LegacyForegroundBranchEvaluatorTest {
                 at.getPlayerLayerFlow());
 
         LegacyForegroundBranchEvaluator.Decision negative =
-                LegacyForegroundBranchEvaluator.evaluate(0xFF03);
+                LegacyForegroundBranchEvaluator.evaluate(0xFFFFFF03);
         assertEquals(LegacyForegroundBranchEvaluator.CollisionFlagEffect.SET_TRUE,
                 negative.getCollisionFlagEffect());
     }

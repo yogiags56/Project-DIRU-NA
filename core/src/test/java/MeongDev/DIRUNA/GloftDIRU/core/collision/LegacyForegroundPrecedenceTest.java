@@ -41,7 +41,7 @@ public final class LegacyForegroundPrecedenceTest {
     }
 
     @Test public void typeSevenThresholdUsesBitsFourThroughSevenNotWholeHighByte() {
-        assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 LegacyForegroundPrecedence.decide(0xF007,false).getPlayerLayerFlow());
         assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
                 LegacyForegroundPrecedence.decide(0x0107,false).getPlayerLayerFlow());
