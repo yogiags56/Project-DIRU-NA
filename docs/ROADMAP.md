@@ -95,6 +95,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-028 — Secret-node availability and progression flags
+
+**Working document:** [DIRU-NA-AUDIT-028 Secret Node Availability & Progression Flags](DIRU-NA-AUDIT-028_SECRET_NODE_AVAILABILITY_PROGRESSION_FLAGS.md)
+
+- [x] Separate secret-node classification from runtime availability
+- [x] Trace node availability initialization from stage flag 0x40
+- [x] Trace active route advancement writer of flag 0x40
+- [x] Distinguish flag 0x02 from flag 0x40 and result-condition flags
+- [x] Trace stage-stream loading structure and its separation from map/title data
+- [ ] Decode /w0.bin, /w1.bin, and /w2.bin stage inventories
+- [ ] Resolve Tibet/Siberia stage-index-14 mapping anomaly
+- [ ] Enumerate all active readers/writers and clear paths for flags 0x40 and 0x02
+- [ ] Determine exact prerequisites for every secret node
+- [ ] Add progression and stage-stream validation tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-027 — Stage ID, title mapping and secret-route correlation
 
 **Working document:** [DIRU-NA-AUDIT-027 Stage Title & Secret Route Correlation](DIRU-NA-AUDIT-027_STAGE_TITLE_SECRET_ROUTE_CORRELATION.md)
