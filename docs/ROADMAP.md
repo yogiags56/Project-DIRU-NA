@@ -11,7 +11,7 @@ This roadmap belongs exclusively to the new source lineage. Previous RVC milesto
 - [ ] Map game loop, input, collision, animation, and level flow
 - [ ] Map persistence/save behavior (including RMS usage)
 - [ ] Audit MIDP, Nokia, Siemens, Mascot Micro3D, and M3G APIs actually used
-- [ ] Resolve 320×240 versus 240×320 orientation/viewport discrepancy
+- [x] Set DIRU-NA initial logical viewport baseline to 240×320 portrait (project decision; separate from the archived project's 320×240 target)
 - [x] Classify components as retain, adapt, or rewrite (initial classification; see DIRU-NA-AUDIT-001 findings)
 - [x] Record licensing/provenance risks (rights remain unresolved; see DIRU-NA-AUDIT-001 findings)
 - [ ] Reproduce the desktop build only if dependencies and rights permit
@@ -36,7 +36,7 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 - [ ] Establish Android Gradle project and supported SDK/toolchain
 - [ ] Add a platform-independent core module
-- [ ] Add application lifecycle and landscape presentation shell
+- [ ] Add application lifecycle and 240×320 portrait presentation shell
 - [ ] Add renderer abstraction and logical viewport
 - [ ] Add input abstraction
 - [ ] Add audio and persistence interfaces
@@ -52,10 +52,10 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 ## Later release direction
 
-- **v1.0:** first playable Native Android release with basic touchscreen controls.
+- **v1.0:** first playable Native Android release with basic touchscreen controls, retaining the 240×320 portrait logical viewport.
 - **v1.1:** About screen, appropriate game attribution, and “Porting by MeongDev” credit, subject to rights review.
 - **v1.2:** language selection.
 - **v2.0-alpha:** touchscreen UI adaptation while preserving the original visual identity.
-- **v2.0:** adaptive aspect ratios and full-screen presentation without stretching gameplay.
+- **v2.0:** adaptive aspect ratios and full-screen presentation without stretching gameplay, while preserving the 240×320 logical coordinate system and adapting the viewport/layout around it.
 
-Responsive aspect-ratio work must preserve the logical game coordinate system and must not distort sprites or collision geometry.
+**DIRU-NA baseline decision:** the first implementation and first playable build retain a 240×320 portrait logical resolution. This is an explicit decision for this independent project, informed by the candidate source's repeated 240×320 drawing/camera constants. It does not inherit the archived Native Android project's 320×240 target or build lineage. Future adaptive aspect-ratio support is a later enhancement: preserve the 240×320 gameplay coordinate system, maintain sprite/collision proportions, and adapt viewport/camera/UI for 1:1, 2:1, 3:2, 4:3, 5:4, 16:9, 18:9, and other screen ratios without stretching gameplay.
