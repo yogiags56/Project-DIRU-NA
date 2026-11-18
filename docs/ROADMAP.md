@@ -98,6 +98,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-031 — Special-stage mechanics and gameplay configuration
+
+**Working document:** [DIRU-NA-AUDIT-031 Special Stage Mechanics](DIRU-NA-AUDIT-031_SPECIAL_STAGE_MECHANICS.md)
+
+- [x] Extract Falling Torches stage initialization and hazard/update behavior
+- [x] Extract Great Anaconda encounter parameters and state-machine behavior
+- [x] Extract Evil Teutonic Knight encounter parameters and state-machine behavior
+- [x] Extract Yetti encounter parameters and timed stage-layout mutation
+- [x] Keep Angkor demo mode separate from regular special encounters
+- [ ] Map encounter sprite slots and animation tables
+- [ ] Trace exact encounter completion/failure and save-progression effects
+- [ ] Resolve undocumented counters and trigger conditions
+- [ ] Add deterministic state-machine and collision tests
+- [ ] Validate against original runtime and exact target JAR variant
+
+
 ## DIRU-NA-AUDIT-030 — Special-stage identification and cross-resource reconciliation
 
 **Working document:** [DIRU-NA-AUDIT-030 Special Stage Identification & Cross-Resource Reconciliation](DIRU-NA-AUDIT-030_SPECIAL_STAGE_IDENTIFICATION_CROSS_RESOURCE.md)
