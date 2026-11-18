@@ -26,9 +26,9 @@ The files are binary-encoded resources, not ordinary UTF-8 text. The GitHub text
 | `lang.sl-SI` | `sl-SI` | Slovenian (Slovenia) |
 | `lang.sq` | `sq` | Albanian |
 | `lang.sr-YU` | `sr-YU` | Serbian (legacy Yugoslavia locale identifier) |
-| `lang.xx` | fallback | Unknown/default fallback resource; not counted as a selectable language |
+| `lang.xx` | fallback | Fallback resource; conventionally English in Diamond Rush JAR variants, pending payload verification for this exact candidate |
 
-**Current inventory: 14 locale-specific resources + 1 fallback resource.**
+**Current inventory: 14 locale-specific resources + 1 fallback resource.**\n\n## Default-language interpretation\n\nIn Diamond Rush JAR versions, `lang.xx` is commonly used as the default English language resource. This is a useful and plausible interpretation for the candidate package, and English should be treated as the leading hypothesis for the Native project's default-language behavior. However, the exact `lang.xx` payload in the pinned candidate revision has not yet been decoded or compared against known English strings. Therefore the catalog records this as a convention-based expectation, not a verified fact about this specific binary.\n\n**Implementation rule:** keep `lang.xx` as an internal fallback resource, not a selectable locale named `xx`. Before finalizing the default locale or exposing an English selection, decode and inspect the candidate payload and verify representative UI strings. If confirmed, document it as English and decide whether it should also appear as an explicit English option in the Native Android language menu.
 
 ## Existing loader behavior
 
@@ -52,7 +52,7 @@ Requirements:
 - Show every available locale in the language menu.
 - Keep the fallback resource as a fallback only; do not present `xx` as a language choice.
 - Persist the user's selected locale independently of the Android system locale.
-- On first launch, choose a deterministic default: use the Android/device locale if an exact supported locale exists; otherwise use the project's documented default locale, with fallback text available for missing entries.
+- On first launch, choose a deterministic default: use the Android/device locale if an exact supported locale exists; otherwise use English as the provisional project default (subject to confirmation of the candidate's `lang.xx` payload), with fallback text available for missing entries.
 - Allow the user to change language without losing game progress.
 - Reload localized strings safely when the selection changes.
 - Preserve the original resource-to-string index mapping unless a verified migration is documented.
