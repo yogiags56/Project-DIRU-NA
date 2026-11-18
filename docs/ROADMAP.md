@@ -82,6 +82,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-015 — Object pushing, falling entities and environmental interaction
+
+**Working document:** [DIRU-NA-AUDIT-015 Object Pushing, Falling & Environment](DIRU-NA-AUDIT-015_OBJECT_PUSHING_FALLING_ENVIRONMENT.md)
+
+- [x] Trace code-48 multi-cell object initialization
+- [x] Record selected ordinary object push branches
+- [x] Trace two-cell code-48 push destination and occupancy checks
+- [x] Record code-46 timed downward movement and state transitions
+- [x] Record foreground code-3 timed interaction with player/entities
+- [x] Document native atomic multi-cell movement requirements
+- [ ] Trace code-48 helper methods and complete lifecycle
+- [ ] Complete movable/falling entity update catalog
+- [ ] Map per-cell timer arrays and metadata semantics
+- [ ] Build complete pushability/support/collision matrix
+- [ ] Add deterministic object-physics tests and runtime validation
+
+
 ## DIRU-NA-AUDIT-014 — Player movement, collision and tile interaction
 
 **Working document:** [DIRU-NA-AUDIT-014 Player Movement, Collision & Tile Interaction](DIRU-NA-AUDIT-014_PLAYER_MOVEMENT_COLLISION_TILE_INTERACTION.md)
