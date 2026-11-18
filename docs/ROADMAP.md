@@ -86,6 +86,25 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-019 — Gem counters, jacket palette state and world progression
+
+**Working document:** [DIRU-NA-AUDIT-019 Gem Counters, Jacket Palette & World Progression](DIRU-NA-AUDIT-019_GEM_COUNTERS_JACKET_PALETTE_WORLD_PROGRESSION.md)
+
+- [x] Confirm separate violet-gem and red-gem balances
+- [x] Trace code-2 counter into red-gem balance
+- [x] Trace code-41 quantity counter into violet-gem balance
+- [x] Trace shop and world-price configuration
+- [x] Trace save-byte-8 into jacket progression and hero palette
+- [x] Trace save-byte-9 world/story progression thresholds
+- [ ] Decode and identify visible jacket palette variants
+- [ ] Distinguish jacket ownership from equipped selection
+- [ ] Complete save-byte-9 state mapping and special-object semantics
+- [ ] Identify exact pickup visuals and remaining collectible counters
+- [ ] Add deterministic economy, jacket and progression tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-018 — Shop jackets, hero palette and progression-item state
 
 **Working document:** [DIRU-NA-AUDIT-018 Shop Jackets, Hero Palette & Progression](DIRU-NA-AUDIT-018_SHOP_JACKETS_HERO_PALETTE_PROGRESSION.md)
