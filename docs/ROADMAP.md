@@ -92,6 +92,25 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-025 — World-map resource records and node construction
+
+**Working document:** [DIRU-NA-AUDIT-025 World Map Resource & Node Construction](DIRU-NA-AUDIT-025_WORLD_MAP_RESOURCE_NODE_CONSTRUCTION.md)
+
+- [x] Identify three world-map resource paths
+- [x] Trace binary envelope: 16-bit little-endian payload length and 1-byte record count
+- [x] Reconstruct node record field order and widths
+- [x] Trace record fields into packed-long node bits
+- [x] Confirm 12×12 grid allocation and direct X/Y indexing
+- [x] Separate map topology from stage gameplay resources and save records
+- [ ] Decode each binary map resource and publish node/edge inventories
+- [ ] Validate coordinates, neighbor counts, graph references, duplicates, and connectivity
+- [ ] Determine full semantics of packed classification fields
+- [ ] Identify secret-stage nodes and prerequisites
+- [ ] Add robust map parser tests
+- [ ] Validate against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-024 — World-map node states, directional selection and route animation
 
 **Working document:** [DIRU-NA-AUDIT-024 Node States, Directional Selection & Route Animation](DIRU-NA-AUDIT-024_NODE_STATES_DIRECTIONAL_SELECTION_ROUTE_ANIMATION.md)
