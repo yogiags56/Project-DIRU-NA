@@ -78,6 +78,23 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-011 — Main menu, world selection and stage selection
+
+**Working document:** [DIRU-NA-AUDIT-011 Main Menu, World & Stage Selection](DIRU-NA-AUDIT-011_MAIN_MENU_WORLD_STAGE_SELECTION.md)
+
+- [x] Trace title/menu input routine and confirm/cancel behavior
+- [x] Identify three world indices and corresponding map resource filenames
+- [x] Trace seal/world unlock threshold checks
+- [x] Trace transition into world-map preparation states 15 and 21
+- [x] Record map-node and stage-progress reconciliation fields
+- [ ] Complete menu layout/options and cursor movement
+- [ ] Trace exact map-node selection and stage-launch route
+- [ ] Resolve world seal names versus map resource names
+- [ ] Decode stage flag bits and progression helper semantics
+- [ ] Add deterministic selection/unlock tests and runtime validation
+
+
 ## DIRU-NA-AUDIT-010 — Game state machine and screen transitions
 
 **Working document:** [DIRU-NA-AUDIT-010 Game State & Screen Transitions](DIRU-NA-AUDIT-010_GAME_STATE_SCREEN_TRANSITIONS.md)
