@@ -79,6 +79,24 @@ Language payload changes are deferred until a Native Android APK is verified pla
 
 
 
+
+## DIRU-NA-AUDIT-012 — Stage loading, gameplay initialization and resource lifecycle
+
+**Working document:** [DIRU-NA-AUDIT-012 Stage Loading & Gameplay Initialization](DIRU-NA-AUDIT-012_STAGE_LOADING_GAMEPLAY_INITIALIZATION.md)
+
+- [x] Trace incremental initialization steps 7–10
+- [x] Record world stage-file selection and binary stage header
+- [x] Document extraction of player/object, background, and foreground layers
+- [x] Record selected tile preprocessing transformations
+- [x] Record selected resource loading and world-map cleanup paths
+- [x] Identify parser robustness risks in single read/skip calls and unchecked dimensions
+- [ ] Complete all initialization steps and conditional branches
+- [ ] Complete tile preprocessing and spawn/camera ordering
+- [ ] Map resource load masks, ownership, and all unload paths
+- [ ] Add synthetic parser and lifecycle tests
+- [ ] Validate stage entry against original runtime evidence
+
+
 ## DIRU-NA-AUDIT-011 — Main menu, world selection and stage selection
 
 **Working document:** [DIRU-NA-AUDIT-011 Main Menu, World & Stage Selection](DIRU-NA-AUDIT-011_MAIN_MENU_WORLD_STAGE_SELECTION.md)
