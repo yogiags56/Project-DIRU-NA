@@ -15,7 +15,7 @@ This is a decision record, not a build implementation. No Gradle files, wrapper,
 | Component | Proposed baseline | Rationale / status |
 |---|---|---|
 | Build system | Gradle Wrapper | One pinned build entry point for local and CI use |
-| Gradle | **9.6.0** | Minimum required by Android Gradle Plugin 9.6 |
+| Gradle | **9.8.2** | Minimum/default required by Android Gradle Plugin 9.6.0 |
 | Android Gradle Plugin | **9.6.0** | Current stable release identified in official Android release notes (2026-11-18) |
 | Gradle runtime JDK | **JDK 17** | AGP 9.6.0 lists JDK 17 as its minimum/default |
 | Core language | **Java 17** | Lowest-friction first implementation; matches the Java source audit and avoids introducing a second language before core contracts stabilize |
@@ -35,12 +35,12 @@ The proposed version matrix is deliberately narrow. Do not upgrade one component
 ### 3.1 Android Gradle Plugin
 
 The official AGP 9.6.0 release notes identify:
-- minimum/default Gradle: 9.6.0;
+- minimum/default Gradle: 9.8.2;
 - minimum/default JDK: 17;
 - default SDK Build Tools: 36.0.0;
 - maximum supported Android API level: 37.
 
-Source: [Android Gradle Plugin 9.6.0 release notes](https://developer.android.com/build/releases/agp-9-4-0-release-notes).
+Source: [Android Gradle Plugin 9.6.0 release notes](https://developer.android.com/build/releases/agp-9-6-0-release-notes).
 
 ### 3.2 Gradle and Java
 
@@ -133,4 +133,4 @@ The launcher/display name is **Diamond Rush**. The project owner supplied `Meong
 
 ## 9. Next work item
 
-After the remaining project-level choices are approved, proceed to **DIRU-NA-DEV-001B — Gradle Root and Wrapper**. Do not create build files or claim a successful build before that work item is authorized and actually verified.
+Proceed to **DIRU-NA-DEV-001B — Gradle Root and Wrapper** using the approved SDK levels and pinned toolchain. Verify the Gradle configuration and Android package identifier before marking the build baseline complete.
