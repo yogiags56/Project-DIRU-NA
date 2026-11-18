@@ -1,6 +1,6 @@
 # DIRU-NA-DEV-001C — Platform-independent Core JVM Module
 
-**Status:** Core module and initial test source committed; execution validation pending  
+**Status:** Core module committed; initial JVM tests passed in CI  
 **Date:** 2026-11-18  
 **Repository:** `yogiags56/Project-DIRU-NA`
 
@@ -55,10 +55,10 @@ The core module must remain free of Android SDK imports. Future gameplay entitie
 
 ## 6. Validation status
 
-**Source and Gradle configuration committed; test execution remains pending.**
+**Validated:** GitHub Actions run #5 passed `:core:test`; the four current JUnit test methods passed. The same run also passed `:app:assembleDebug`.
 
 No claim is made that `./gradlew :core:test`, `:core:build`, Android compilation, or APK assembly has passed. A Gradle/JDK execution environment is still required to validate dependency resolution and actual test results.
 
 ## 7. Next work item
 
-**DIRU-NA-DEV-001D — Build and Test Validation / CI Baseline.** Execute the wrapper under JDK 17, run `:core:test` and `:app:assembleDebug`, and retain the actual CI result. The workflow must fail on either task failure.
+Next: **DIRU-NA-DEV-002 — Core Game Loop and Platform Ports.** Begin the platform-independent update loop and port contracts only after reconciling the audited game-loop, animation, input, and encounter call sites. The workflow must fail on either task failure.

@@ -53,7 +53,7 @@ The candidate source repository is an audit input only. Its presence does not es
 
 ## Current status
 
-**Stage:** Core JVM foundation
+**Stage:** Initial build and core validation passed
 
 - [x] Independent repository created
 - [x] Project scope and principles documented
@@ -62,8 +62,9 @@ The candidate source repository is an audit input only. Its presence does not es
 - [x] Initial logical viewport decision recorded: 240×320 portrait
 - [ ] Adaptive viewport behavior implemented and tested
 - [x] Initial Gradle root, wrapper, and launcher shell committed (execution validation pending)
-- [x] Platform-independent Java core module and initial viewport contract added (test execution pending)
-- [ ] Automated core-test and Android debug-build validation passed
+- [x] Platform-independent Java core module and initial viewport contract added
+- [x] Core JVM tests and Android debug APK assembly passed in GitHub Actions run #5
+- [x] Automated core-test and Android debug-build validation passed
 - [ ] First reproducible gameplay milestone
 
 See [docs/DIRU-NA-DEV-001A_NATIVE_ANDROID_TOOLCHAIN_DECISION_RECORD.md](docs/DIRU-NA-DEV-001A_NATIVE_ANDROID_TOOLCHAIN_DECISION_RECORD.md), [docs/DIRU-NA-DEV-001B_GRADLE_ROOT_AND_WRAPPER.md](docs/DIRU-NA-DEV-001B_GRADLE_ROOT_AND_WRAPPER.md), [docs/DIRU-NA-DEV-001C_CORE_JVM_MODULE.md](docs/DIRU-NA-DEV-001C_CORE_JVM_MODULE.md), [docs/ROADMAP.md](docs/ROADMAP.md), [docs/DEVELOPMENT_ISOLATION.md](docs/DEVELOPMENT_ISOLATION.md), [docs/DIRU-NA-AUDIT-001_FINDINGS.md](docs/DIRU-NA-AUDIT-001_FINDINGS.md), and [docs/DIRU-NA-AUDIT-006_SPRITE_RESOURCE_MAPPING.md](docs/DIRU-NA-AUDIT-006_SPRITE_RESOURCE_MAPPING.md), and [docs/DIRU-NA-AUDIT-007_ENTITY_ANIMATION_STATE_MAPPING.md](docs/DIRU-NA-AUDIT-007_ENTITY_ANIMATION_STATE_MAPPING.md), and [docs/DIRU-NA-AUDIT-008_HERO_ANIMATION_MOVEMENT_STATE.md](docs/DIRU-NA-AUDIT-008_HERO_ANIMATION_MOVEMENT_STATE.md), and [docs/DIRU-NA-AUDIT-009_DAMAGE_DEATH_RETRY_CHECKPOINT.md](docs/DIRU-NA-AUDIT-009_DAMAGE_DEATH_RETRY_CHECKPOINT.md), and [docs/DIRU-NA-AUDIT-010_GAME_STATE_SCREEN_TRANSITIONS.md](docs/DIRU-NA-AUDIT-010_GAME_STATE_SCREEN_TRANSITIONS.md), and [docs/DIRU-NA-AUDIT-011_MAIN_MENU_WORLD_STAGE_SELECTION.md](docs/DIRU-NA-AUDIT-011_MAIN_MENU_WORLD_STAGE_SELECTION.md), and [docs/DIRU-NA-AUDIT-012_STAGE_LOADING_GAMEPLAY_INITIALIZATION.md](docs/DIRU-NA-AUDIT-012_STAGE_LOADING_GAMEPLAY_INITIALIZATION.md), and [docs/DIRU-NA-AUDIT-013_PLAYER_SPAWN_CAMERA_MOVEMENT.md](docs/DIRU-NA-AUDIT-013_PLAYER_SPAWN_CAMERA_MOVEMENT.md), and [docs/DIRU-NA-AUDIT-014_PLAYER_MOVEMENT_COLLISION_TILE_INTERACTION.md](docs/DIRU-NA-AUDIT-014_PLAYER_MOVEMENT_COLLISION_TILE_INTERACTION.md).

@@ -1,6 +1,6 @@
 # DIRU-NA-DEV-001D — Build and Test Validation / CI Baseline
 
-**Status:** CI workflow committed; hosted validation blocked by an AGP plugin version-resolution error, fix in progress  
+**Status:** Initial CI baseline passed  
 **Date:** 2026-11-18  
 **Repository:** `yogiags56/Project-DIRU-NA`
 
@@ -48,13 +48,24 @@ Four deterministic tests remain:
 
 ## 5. Validation status
 
-**Workflow committed; hosted run not yet observed.**
+**Passed:** GitHub Actions run #5 completed successfully on 2026-11-18.
 
-Do not mark validation complete until the workflow has:
-- completed successfully on the commit;
-- passed `:core:test`;
-- passed `:app:assembleDebug`;
-- uploaded the expected debug APK artifact.
+Successful run details:
+- Run: [Android Build and Core Tests #5](https://github.com/yogiags56/Project-DIRU-NA/actions/runs/44279526108)
+- Commit: `b9d995e71b6c1e7db6e6015f841216b62bb047b9`
+- `:core:test`: passed (four current JUnit test methods)
+- `:app:assembleDebug`: passed
+- Artifact: `diamond-rush-debug` (875,685 bytes; seven-day retention)
+
+The workflow was corrected during validation to use the installed stable Android SDK platform 36, a supported `platform-tools` setup package, and the published stable AGP 9.5.1 rather than the unavailable 9.6.0 release.
+
+Do not treat this baseline APK as a release-ready game. The launcher is still a temporary shell.
+
+The acceptance criteria that were satisfied by this run were:
+- [x] completed successfully on the commit;
+- [x] passed `:core:test`;
+- [x] passed `:app:assembleDebug`;
+- [x] uploaded the expected debug APK artifact.
 
 A successful debug build is not a release-ready game. The launcher remains a temporary shell; gameplay, rendering, input, audio, persistence, and resource integration are not implemented.
 

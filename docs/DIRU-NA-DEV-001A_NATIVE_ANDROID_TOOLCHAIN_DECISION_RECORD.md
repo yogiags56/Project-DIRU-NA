@@ -1,6 +1,6 @@
 # DIRU-NA-DEV-001A — Native Android Toolchain Decision Record
 
-**Status:** Project decisions recorded; build execution validation pending  
+**Status:** Initial toolchain and Android debug build validated by GitHub Actions  
 **Date:** 2026-11-18  
 **Repository:** `yogiags56/Project-DIRU-NA`
 
@@ -16,12 +16,12 @@ This is the project toolchain decision record. The initial Gradle root and launc
 |---|---|---|
 | Build system | Gradle Wrapper | One pinned build entry point for local and CI use |
 | Gradle | **9.8.2** | Newer than AGP 9.5.1's minimum Gradle 9.6.0 |
-| Android Gradle Plugin | **9.6.0** | Current stable release identified in official Android release notes (2026-11-18) |
+| Android Gradle Plugin | **9.5.1** | Stable patch release in the AGP 9.5 line |
 | Gradle runtime JDK | **JDK 17** | AGP 9.5.1 lists JDK 17 as its minimum/default |
 | Core language | **Java 17** | Lowest-friction first implementation; matches the Java source audit and avoids introducing a second language before core contracts stabilize |
 | Android source language | **Java 17 initially** | Keep the first app/core implementation single-language |
 | Build-script DSL | **Groovy DSL** | Conservative, widely documented Gradle convention; no Kotlin DSL requirement for this project |
-| Compile SDK | **API 36** | AGP 9.5.1 supports up to API 36 |
+| Compile SDK | **API 36** | AGP 9.5 supports up to API 37; API 36 is the installed stable SDK used by CI |
 | JVM unit tests | **JUnit 4** | Small, mature dependency for the pure JVM core; handwritten fakes remain the default |
 | Application ID / namespace | `MeongDev.DIRUNA.GloftDIRU` | Exact owner-provided identifier; preserve capitalization |
 | minSdk | **23 (Android 6.0)** | Approved by project owner |
@@ -40,7 +40,7 @@ The official AGP 9.5.0 release notes (including the 9.5.1 patch line) identify:
 - default SDK Build Tools: 36.0.0;
 - maximum supported Android API level: 37 (API 36 is selected for the current stable SDK package).
 
-Source: [Android Gradle Plugin 9.5.1 release notes](https://developer.android.com/build/releases/agp-9-5-0-release-notes).
+Source: [Android Gradle Plugin 9.5 release notes](https://developer.android.com/build/releases/agp-9-5-0-release-notes).
 
 ### 3.2 Gradle and Java
 
