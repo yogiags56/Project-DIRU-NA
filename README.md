@@ -64,7 +64,7 @@ The candidate source repository is an audit input only. Its presence does not es
 - [ ] Native Android skeleton implemented
 - [ ] First reproducible gameplay milestone
 
-See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/DEVELOPMENT_ISOLATION.md](docs/DEVELOPMENT_ISOLATION.md), and [docs/DIRU-NA-AUDIT-001_FINDINGS.md](docs/DIRU-NA-AUDIT-001_FINDINGS.md).
+See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/DEVELOPMENT_ISOLATION.md](docs/DEVELOPMENT_ISOLATION.md), [docs/DIRU-NA-AUDIT-001_FINDINGS.md](docs/DIRU-NA-AUDIT-001_FINDINGS.md), and [docs/DIRU-NA-AUDIT-006_SPRITE_RESOURCE_MAPPING.md](docs/DIRU-NA-AUDIT-006_SPRITE_RESOURCE_MAPPING.md).
 
 ## License and rights
 
