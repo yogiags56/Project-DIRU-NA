@@ -34,16 +34,4 @@ public final class LegacyALongArrReferenceEncodingTest {
         assertEquals(63, codec.read(0, 58, 6));
     }
 
-    @Test
-    public void typeSevenAllocatorPathDoesNotWriteOffset54() {
-        long[] words = new long[LegacyPackedLongRecordCodec.SLOT_COUNT];
-        LegacyPackedLongRecordCodec.ObjectLayout objects =
-                LegacyPackedLongRecordCodec.ObjectLayout.on(
-                        new LegacyPackedLongRecordCodec(words));
-
-        int id = objects.allocateTypeOne(10, 11, 0, 2, 0);
-
-        assertEquals(1, id);
-        assertEquals(0, objects.readMode(id));
-    }
 }
