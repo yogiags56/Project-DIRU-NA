@@ -51,12 +51,14 @@ public final class LegacyTypeTwoThreeFiveTransitionTest {
     }
 
     @Test
-    public void aLongArrTypeFiveRecordCanBeReusedByFirstFreeAllocator() {
+    public void typeFiveRemainsOccupiedInTheObjectAllocatorScan() {
         long[] words = new long[15];
         LegacyPackedLongRecordCodec objects = new LegacyPackedLongRecordCodec(words);
         objects.write(0, 5, 28, 3);
         objects.write(1, 1, 28, 3);
-        assertEquals(2, objects.read(0, 28, 3));
+        assertEquals(5, objects.read(0, 28, 3));
         assertEquals(1, objects.read(1, 28, 3));
+        assertEquals(3, LegacyPackedLongRecordCodec.ObjectLayout.on(objects)
+                .findFirstFreeRecordId());
     }
 }
