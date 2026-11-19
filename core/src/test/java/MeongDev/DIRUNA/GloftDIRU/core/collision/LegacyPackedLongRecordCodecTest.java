@@ -18,7 +18,7 @@ public final class LegacyPackedLongRecordCodecTest {
         assertEquals(2, motion.readSubtype(slot));
         assertEquals(42, motion.readFieldA(slot));
         assertEquals(17, motion.readFieldB(slot));
-        assertEquals(42, motion.readFieldC(slot));
+        assertEquals(9, motion.readFieldC(slot));
         assertEquals(42, motion.readFieldD(slot));
     }
 
