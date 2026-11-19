@@ -19,7 +19,7 @@ Allocator: four-argument `aByte(byte, byte, byte, byte)`, source lines 15863–1
 | 4 | 2 | Subtype argument |
 | 6 | 7 | First byte argument |
 | 13 | 7 | Third byte argument |
-| 20 | 7 | First byte argument |
+| 20 | 7 | Third byte argument |
 | 27 | 7 | First byte argument |
 
 Slots are scanned from index 0 through 14. The first record whose 4-bit type field at offset 0 is zero is selected. If none is free, this allocator returns -1.
