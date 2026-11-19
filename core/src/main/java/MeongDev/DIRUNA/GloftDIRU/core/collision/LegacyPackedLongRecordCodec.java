@@ -63,9 +63,9 @@ public final class LegacyPackedLongRecordCodec {
             owner.write(slot, 1, 0, 4);
             owner.write(slot, subtype, 4, 2);
             owner.write(slot, valueA, 6, 7);
-            owner.write(slot, valueB, 27, 7);
-            owner.write(slot, valueC, 13, 7);
-            owner.write(slot, valueA, 20, 7);
+            owner.write(slot, valueC, 20, 7);
+            owner.write(slot, valueB, 13, 7);
+            owner.write(slot, valueA, 27, 7);
             return slot;
         }
 
