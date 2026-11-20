@@ -130,6 +130,19 @@ public final class ObjectRecordTable {
 
     public synchronized AllocationResult allocate(RecordType type, int anchorX,
                                                   int anchorY, int anchorGroup) {
+        if (type == RecordType.TYPE_7)
+            return new AllocationResult(Status.INVALID_TRANSITION, null, 0);
+        return allocateRecord(type, anchorX, anchorY, anchorGroup);
+    }
+
+    /** Dedicated Type-7 allocator branch; a fresh record starts with no link bits. */
+    public synchronized AllocationResult allocateType7(int anchorX, int anchorY,
+                                                        int anchorGroup) {
+        return allocateRecord(RecordType.TYPE_7, anchorX, anchorY, anchorGroup);
+    }
+
+    private AllocationResult allocateRecord(RecordType type, int anchorX,
+                                             int anchorY, int anchorGroup) {
         if (type == null || anchorX < 0 || anchorY < 0
                 || anchorGroup < 0 || anchorGroup >= TILE_GROUP_COUNT)
             return new AllocationResult(Status.INVALID_ARGUMENT, null, 0);
@@ -197,12 +210,6 @@ public final class ObjectRecordTable {
         record.rawLegacyPayload = (record.rawLegacyPayload & ~LEGACY_TYPE_MASK)
                 | legacyTypeBits(newType);
         return Status.OK;
-    }
-
-    /** Dedicated counterpart of the legacy allocator's Type-7 special branch. */
-    public synchronized AllocationResult allocateType7(int anchorX, int anchorY,
-                                                        int anchorGroup) {
-        return allocate(RecordType.TYPE_7, anchorX, anchorY, anchorGroup);
     }
 
     /**
@@ -382,7 +389,9 @@ public final class ObjectRecordTable {
             candidate.slots[index] = new Record(item.generation(), item.type(),
                     item.anchorX(), item.anchorY(), item.anchorGroup());
             candidate.slots[index].rawLegacyPayload = item.rawLegacyPayload();
-            if ((item.rawLegacyPayload() & LEGACY_TYPE_MASK) != legacyTypeBits(item.type()))
+            if ((item.rawLegacyPayload() & LEGACY_TYPE_MASK) != legacyTypeBits(item.type())
+                    || (item.type() == RecordType.TYPE_7
+                    && (item.rawLegacyPayload() & LegacyObjectRecordLinkCodec.LINK_MASK) != 0L))
                 return null;
         }
 
