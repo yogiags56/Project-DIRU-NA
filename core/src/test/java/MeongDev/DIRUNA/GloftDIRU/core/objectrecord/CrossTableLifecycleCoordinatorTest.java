@@ -224,4 +224,143 @@ public final class CrossTableLifecycleCoordinatorTest {
         assertEquals(2, coordinator.objects().readAuxiliaryLink(
                 attached.objectHandle()).auxiliarySlot());
     }
+
+    @Test
+    public void replacementTransfersAssociationToMetadataResolvedTarget() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        TileGroup sourceTile = tile(1, 1, 0);
+        TileGroup targetTile = tile(8, 9, 2);
+        CrossTableLifecycleCoordinator.AttachResult source = coordinator.attach(
+                RecordType.TYPE_6, 1, 1, 0, sourceTile, 4,
+                stateOne(1, 0, 1, 1));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, source.status());
+
+        ObjectRecordTable.AllocationResult targetAllocation =
+                coordinator.objects().allocateType7(8, 9, 2);
+        assertEquals(ObjectRecordTable.Status.OK, targetAllocation.status());
+        assertEquals(ObjectRecordTable.Status.OK,
+                coordinator.objects().link(targetTile, targetAllocation.handle()));
+        assertEquals(ObjectRecordTable.Status.OK,
+                coordinator.objects().unlink(sourceTile));
+
+        CrossTableLifecycleCoordinator.OperationResult replaced =
+                coordinator.replaceFromTileMetadata(source.objectHandle(), targetTile);
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, replaced.status());
+        assertEquals(-1, coordinator.associatedSlot(source.objectHandle()));
+        assertEquals(4, coordinator.associatedSlot(targetAllocation.handle()));
+        assertEquals(RecordType.TYPE_2,
+                coordinator.objects().typeOf(targetAllocation.handle()).orElseThrow());
+        assertEquals(4, coordinator.objects().readAuxiliaryLink(
+                targetAllocation.handle()).auxiliarySlot());
+        assertEquals(3, AuxiliaryEntryStateMachine.state(
+                coordinator.markReady(targetAllocation.handle()).auxiliaryRaw()));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                coordinator.consume(targetAllocation.handle()).status());
+    }
+
+    @Test
+    public void replacementRejectsTargetWithIndependentAssociation() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        TileGroup sourceTile = tile(1, 1, 0);
+        TileGroup targetTile = tile(2, 2, 1);
+        CrossTableLifecycleCoordinator.AttachResult source = coordinator.attach(
+                RecordType.TYPE_1, 1, 1, 0, sourceTile, 1,
+                stateOne(0, 0, 1, 1));
+        CrossTableLifecycleCoordinator.AttachResult target = coordinator.attach(
+                RecordType.TYPE_2, 2, 2, 1, targetTile, 2,
+                stateOne(0, 0, 2, 2));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, source.status());
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, target.status());
+        assertEquals(ObjectRecordTable.Status.OK,
+                coordinator.objects().unlink(sourceTile));
+
+        CrossTableLifecycleCoordinator.OperationResult result =
+                coordinator.replaceFromTileMetadata(source.objectHandle(), targetTile);
+        assertEquals(CrossTableLifecycleCoordinator.Status.TARGET_ALREADY_ASSOCIATED,
+                result.status());
+        assertEquals(1, coordinator.associatedSlot(source.objectHandle()));
+        assertEquals(2, coordinator.associatedSlot(target.objectHandle()));
+        assertEquals(RecordType.TYPE_2,
+                coordinator.objects().typeOf(source.objectHandle()).orElseThrow());
+    }
+
+    @Test
+    public void replacementWithRemainingSourceReferenceRollsBackAllCoordinatorState() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        TileGroup sourceTile = tile(3, 3, 0);
+        TileGroup sourceSecondTile = tile(3, 4, 0);
+        TileGroup targetTile = tile(7, 7, 1);
+        CrossTableLifecycleCoordinator.AttachResult source = coordinator.attach(
+                RecordType.TYPE_6, 3, 3, 0, sourceTile, 5,
+                stateOne(2, 0, 3, 3));
+        ObjectRecordTable.AllocationResult target =
+                coordinator.objects().allocateType7(7, 7, 1);
+        assertEquals(ObjectRecordTable.Status.OK,
+                coordinator.objects().link(targetTile, target.handle()));
+        assertEquals(ObjectRecordTable.Status.OK,
+                coordinator.objects().link(sourceSecondTile, source.objectHandle()));
+        assertEquals(ObjectRecordTable.Status.OK,
+                coordinator.objects().unlink(sourceTile));
+        long targetBefore = coordinator.objects().rawLegacyPayload(target.handle());
+        long auxiliaryBefore = coordinator.objects().auxiliaryEntryRaw(5);
+
+        CrossTableLifecycleCoordinator.OperationResult result =
+                coordinator.replaceFromTileMetadata(source.objectHandle(), targetTile);
+        assertEquals(CrossTableLifecycleCoordinator.Status.TRANSITION_REJECTED,
+                result.status());
+        assertEquals(5, coordinator.associatedSlot(source.objectHandle()));
+        assertEquals(-1, coordinator.associatedSlot(target.handle()));
+        assertEquals(targetBefore, coordinator.objects().rawLegacyPayload(target.handle()));
+        assertEquals(auxiliaryBefore, coordinator.objects().auxiliaryEntryRaw(5));
+        assertEquals(1, coordinator.objects().referenceCount(source.objectHandle()));
+        assertEquals(RecordType.TYPE_6,
+                coordinator.objects().typeOf(source.objectHandle()).orElseThrow());
+    }
+
+    @Test
+    public void replacementRejectsMissingTargetAndSourcePackedLinkMismatch() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        TileGroup sourceTile = tile(1, 2, 0);
+        TileGroup missingTarget = tile(9, 9, 2);
+        CrossTableLifecycleCoordinator.AttachResult source = coordinator.attach(
+                RecordType.TYPE_1, 1, 2, 0, sourceTile, 3,
+                stateOne(0, 0, 1, 2));
+        assertEquals(CrossTableLifecycleCoordinator.Status.TRANSITION_REJECTED,
+                coordinator.replaceFromTileMetadata(source.objectHandle(), missingTarget).status());
+        assertEquals(3, coordinator.associatedSlot(source.objectHandle()));
+
+        assertEquals(ObjectRecordTable.Status.OK,
+                coordinator.objects().writeAuxiliaryLink(source.objectHandle(), 4));
+        assertEquals(CrossTableLifecycleCoordinator.Status.SOURCE_ASSOCIATION_MISMATCH,
+                coordinator.replaceFromTileMetadata(source.objectHandle(), missingTarget).status());
+        assertEquals(3, coordinator.associatedSlot(source.objectHandle()));
+    }
+
+    @Test
+    public void replacementAssociationSurvivesCoordinatorCheckpointRestore() {
+        CrossTableLifecycleCoordinator sourceCoordinator = new CrossTableLifecycleCoordinator();
+        TileGroup sourceTile = tile(4, 4, 0);
+        TileGroup targetTile = tile(6, 6, 1);
+        CrossTableLifecycleCoordinator.AttachResult source = sourceCoordinator.attach(
+                RecordType.TYPE_6, 4, 4, 0, sourceTile, 6,
+                stateOne(1, 0, 4, 4));
+        ObjectRecordTable.AllocationResult target =
+                sourceCoordinator.objects().allocateType7(6, 6, 1);
+        assertEquals(ObjectRecordTable.Status.OK,
+                sourceCoordinator.objects().link(targetTile, target.handle()));
+        assertEquals(ObjectRecordTable.Status.OK,
+                sourceCoordinator.objects().unlink(sourceTile));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                sourceCoordinator.replaceFromTileMetadata(source.objectHandle(), targetTile).status());
+
+        CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                restored.restore(sourceCoordinator.snapshot()));
+        assertEquals(6, restored.associatedSlot(target.handle()));
+        assertEquals(RecordType.TYPE_2, restored.objects().typeOf(target.handle()).orElseThrow());
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                restored.markReady(target.handle()).status());
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                restored.consume(target.handle()).status());
+    }
 }
