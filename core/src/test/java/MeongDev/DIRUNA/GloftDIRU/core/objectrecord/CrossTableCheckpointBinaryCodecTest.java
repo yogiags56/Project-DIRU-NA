@@ -250,7 +250,12 @@ public class CrossTableCheckpointBinaryCodecTest {
         assertEquals(CrossTableLifecycleCoordinator.Status.OK,
                 CrossTableCheckpointBinaryCodec.decodeInto(encoded, destination));
         assertEquals(ObjectRecordTable.Status.NO_LINK, destination.objects().lookup(liveTile).status());
-        assertEquals(-1, destination.associatedSlot(live.objectHandle()));
+        assertEquals(source.lifecycleSnapshot().objectSnapshot().records(),
+                destination.snapshot().objectSnapshot().records());
+        assertEquals(source.lifecycleSnapshot().objectSnapshot().tileLinks(),
+                destination.snapshot().objectSnapshot().tileLinks());
+        assertEquals(source.lifecycleSnapshot().associations(),
+                destination.snapshot().associations());
         for (ObjectRecordTable.TileGroup expectedTile :
                 source.lifecycleSnapshot().objectSnapshot().tileLinks().keySet()) {
             assertEquals(ObjectRecordTable.Status.OK, destination.objects().lookup(expectedTile).status());
