@@ -175,4 +175,53 @@ public final class CrossTableLifecycleCoordinatorTest {
         assertEquals(1, AuxiliaryEntryStateMachine.state(
                 coordinator.objects().auxiliaryEntryRaw(1)));
     }
+
+    @Test
+    public void coordinatorStoresPackedLinkAndUsesItAsAssociationGuard() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        CrossTableLifecycleCoordinator.AttachResult attached = coordinator.attach(
+                RecordType.TYPE_5, 9, 10, 0, tile(9, 10, 0), 5,
+                stateOne(1, 0, 9, 10));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, attached.status());
+        assertEquals(5, coordinator.objects().readAuxiliaryLink(
+                attached.objectHandle()).auxiliarySlot());
+        assertEquals(5, coordinator.associatedSlot(attached.objectHandle()));
+
+        long raw = coordinator.objects().rawLegacyPayload(attached.objectHandle());
+        coordinator.objects().writeAuxiliaryLink(attached.objectHandle(), 4);
+        assertEquals(CrossTableLifecycleCoordinator.Status.NO_ASSOCIATION,
+                coordinator.markReady(attached.objectHandle()).status());
+        assertEquals(raw & ~LegacyObjectRecordLinkCodec.LINK_MASK,
+                coordinator.objects().rawLegacyPayload(attached.objectHandle())
+                        & ~LegacyObjectRecordLinkCodec.LINK_MASK);
+    }
+
+    @Test
+    public void coordinatorRestoreRejectsSidecarAndPackedLinkDisagreementAtomically() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        CrossTableLifecycleCoordinator.AttachResult attached = coordinator.attach(
+                RecordType.TYPE_2, 11, 12, 0, tile(11, 12, 0), 2,
+                stateOne(0, 0, 11, 12));
+        CrossTableLifecycleCoordinator.Snapshot valid = coordinator.snapshot();
+        java.util.List<ObjectRecordTable.RecordSnapshot> records =
+                new java.util.ArrayList<>(valid.objectSnapshot().records());
+        ObjectRecordTable.RecordSnapshot item = records.get(0);
+        long changedLink = LegacyObjectRecordLinkCodec.write(item.rawLegacyPayload(),
+                RecordType.TYPE_2, 3).rawRecord();
+        records.set(0, new ObjectRecordTable.RecordSnapshot(item.slotId(), item.generation(),
+                item.type(), item.anchorX(), item.anchorY(), item.anchorGroup(), changedLink));
+        ObjectRecordTable.Snapshot mismatchedObjects = new ObjectRecordTable.Snapshot(
+                valid.objectSnapshot().schemaVersion(), records,
+                valid.objectSnapshot().generations(), valid.objectSnapshot().tileLinks(),
+                valid.objectSnapshot().auxiliaryEntries());
+        CrossTableLifecycleCoordinator.Snapshot corrupted =
+                new CrossTableLifecycleCoordinator.Snapshot(
+                        mismatchedObjects, valid.associations());
+
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                coordinator.restore(corrupted));
+        assertEquals(2, coordinator.associatedSlot(attached.objectHandle()));
+        assertEquals(2, coordinator.objects().readAuxiliaryLink(
+                attached.objectHandle()).auxiliarySlot());
+    }
 }
