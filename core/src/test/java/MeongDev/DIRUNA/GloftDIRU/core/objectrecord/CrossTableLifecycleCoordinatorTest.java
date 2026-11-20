@@ -395,4 +395,75 @@ public final class CrossTableLifecycleCoordinatorTest {
         assertEquals(CrossTableLifecycleCoordinator.Status.OK,
                 restored.consume(target.handle()).status());
     }
+
+    @Test
+    public void restoreRejectsNonzeroPackedLinkWithoutSidecarAssociation() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        CrossTableLifecycleCoordinator.AttachResult attached = coordinator.attach(
+                RecordType.TYPE_1, 2, 3, 0, tile(2, 3, 0), 2,
+                stateOne(0, 0, 2, 3));
+        CrossTableLifecycleCoordinator.Snapshot valid = coordinator.snapshot();
+        java.util.Map<Long, Integer> missing = new java.util.HashMap<>();
+        CrossTableLifecycleCoordinator.Snapshot corrupted =
+                new CrossTableLifecycleCoordinator.Snapshot(valid.objectSnapshot(), missing);
+
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                coordinator.restore(corrupted));
+        assertEquals(2, coordinator.associatedSlot(attached.objectHandle()));
+    }
+
+    @Test
+    public void restoreRejectsDuplicatePackedLinkOwnershipEvenWithUniqueSidecarSlots() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        CrossTableLifecycleCoordinator.AttachResult first = coordinator.attach(
+                RecordType.TYPE_1, 1, 1, 0, tile(1, 1, 0), 2,
+                stateOne(0, 0, 1, 1));
+        CrossTableLifecycleCoordinator.AttachResult second = coordinator.attach(
+                RecordType.TYPE_2, 2, 2, 1, tile(2, 2, 1), 3,
+                stateOne(0, 0, 2, 2));
+        CrossTableLifecycleCoordinator.Snapshot valid = coordinator.snapshot();
+        java.util.Map<Long, Integer> swapped = new java.util.HashMap<>();
+        swapped.put(first.objectHandle().value(), 3);
+        swapped.put(second.objectHandle().value(), 2);
+        CrossTableLifecycleCoordinator.Snapshot corrupted =
+                new CrossTableLifecycleCoordinator.Snapshot(valid.objectSnapshot(), swapped);
+
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                coordinator.restore(corrupted));
+        assertEquals(2, coordinator.associatedSlot(first.objectHandle()));
+        assertEquals(3, coordinator.associatedSlot(second.objectHandle()));
+    }
+
+    @Test
+    public void restoreAllowsUnassociatedDefaultZeroLinkRecord() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        ObjectRecordTable.AllocationResult plain = coordinator.objects().allocate(
+                RecordType.TYPE_1, 5, 6, 0);
+        assertEquals(ObjectRecordTable.Status.OK, plain.status());
+        CrossTableLifecycleCoordinator.Snapshot checkpoint = coordinator.snapshot();
+
+        CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, restored.restore(checkpoint));
+        assertEquals(-1, restored.associatedSlot(plain.handle()));
+    }
+
+    @Test
+    public void restoreStillRejectsAssociationToEmptyAuxiliaryEntry() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        CrossTableLifecycleCoordinator.AttachResult attached = coordinator.attach(
+                RecordType.TYPE_2, 7, 8, 0, tile(7, 8, 0), 4,
+                stateOne(0, 0, 7, 8));
+        CrossTableLifecycleCoordinator.Snapshot valid = coordinator.snapshot();
+        long[] entries = valid.objectSnapshot().auxiliaryEntries();
+        entries[4] = 0L;
+        ObjectRecordTable.Snapshot objects = new ObjectRecordTable.Snapshot(
+                valid.objectSnapshot().schemaVersion(), valid.objectSnapshot().records(),
+                valid.objectSnapshot().generations(), valid.objectSnapshot().tileLinks(), entries);
+        CrossTableLifecycleCoordinator.Snapshot corrupted =
+                new CrossTableLifecycleCoordinator.Snapshot(objects, valid.associations());
+
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                coordinator.restore(corrupted));
+        assertEquals(4, coordinator.associatedSlot(attached.objectHandle()));
+    }
 }
