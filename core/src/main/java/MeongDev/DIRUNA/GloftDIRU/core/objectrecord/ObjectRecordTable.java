@@ -228,9 +228,10 @@ public final class ObjectRecordTable {
         Record source = resolve(sourceHandle);
         Record target = resolve(targetHandle);
         if (source == null || target == null) return Status.STALE_HANDLE;
-        if ((source.type != RecordType.TYPE_1 && source.type != RecordType.TYPE_6)
-                || target.type == RecordType.TYPE_7)
+        if (source.type != RecordType.TYPE_1 && source.type != RecordType.TYPE_6)
             return Status.INVALID_TRANSITION;
+        // The legacy branch overwrites the resolved target's type field with
+        // Type-2 without first branching on that target's previous type.
 
         Snapshot before = snapshot();
         long transferredLink = source.rawLegacyPayload & LegacyObjectRecordLinkCodec.LINK_MASK;
