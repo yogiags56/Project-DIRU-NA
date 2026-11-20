@@ -155,4 +155,86 @@ public final class CrossTableCheckpointTest {
                 checkpoint.restoreInto(destination));
         assertEquals(Status.NO_LINK, destination.objects().lookup(tile).status());
     }
+
+    @Test
+    public void legacySnapshotWithoutTileLinksCanBeAdaptedExplicitly() {
+        CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
+        CrossTableCheckpoint checkpoint = CrossTableCheckpoint.fromLegacySnapshot(
+                source.snapshot(), null);
+        assertEquals(CrossTableCheckpoint.CURRENT_SCHEMA_VERSION, checkpoint.schemaVersion());
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, checkpoint.restoreInto(destination));
+    }
+
+    @Test
+    public void legacySnapshotWithTileLinksRequiresExplicitPackedMetadata() {
+        CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
+        TileGroup tile = tile(7, 8, 1);
+        source.attach(RecordType.TYPE_2, 7, 8, 1, tile, 2, stateOne(7, 8));
+        try {
+            CrossTableCheckpoint.fromLegacySnapshot(source.snapshot(), null);
+            fail("legacy tile links must not be guessed");
+        } catch (IllegalArgumentException expected) {
+            // expected
+        }
+    }
+
+    @Test
+    public void legacySnapshotWithExplicitPackedMetadataCanBeAdapted() {
+        CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
+        TileGroup tile = tile(9, 10, 2);
+        source.attach(RecordType.TYPE_5, 9, 10, 2, tile, 4, stateOne(9, 10));
+        int id = source.snapshot().objectSnapshot().tileLinks().get(tile);
+        Map<TileGroup, Integer> words = Map.of(tile,
+                PackedTileMetadataCodec.writeObjectId(0, 2, id).rawWord());
+        CrossTableCheckpoint checkpoint =
+                CrossTableCheckpoint.fromLegacySnapshot(source.snapshot(), words);
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, checkpoint.restoreInto(destination));
+        assertEquals(id, destination.objects().lookup(tile).handle().value() & 0x0F);
+    }
+
+    @Test
+    public void emptyWorldCheckpointWithEmptyMetadataRestores() {
+        CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(
+                new CrossTableLifecycleCoordinator().snapshot(), Map.of());
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, checkpoint.restoreInto(destination));
+        assertTrue(destination.objects().snapshot().records().isEmpty());
+        assertTrue(destination.objects().snapshot().tileLinks().isEmpty());
+    }
+
+    @Test
+    public void duplicateTileLinkKeyIsRejectedByObjectSnapshotRestore() {
+        TileGroup tile = tile(11, 12, 0);
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectRecordTable.AllocationResult allocation =
+                table.allocate(RecordType.TYPE_2, 11, 12, 0);
+        assertEquals(Status.OK, table.link(tile, allocation.handle()));
+        ObjectRecordTable.Snapshot valid = table.snapshot();
+        Map<TileGroup, Integer> duplicated = new HashMap<>(valid.tileLinks());
+        duplicated.put(tile, allocation.slotId());
+        ObjectRecordTable.Snapshot malformed = new ObjectRecordTable.Snapshot(
+                valid.schemaVersion(), valid.records(), valid.generations(), duplicated,
+                valid.auxiliaryEntries());
+        ObjectRecordTable destination = new ObjectRecordTable();
+        assertEquals(Status.INVALID_SNAPSHOT, destination.restore(malformed));
+        assertEquals(Status.NO_LINK, destination.lookup(tile).status());
+    }
+
+    @Test
+    public void unknownInnerObjectSnapshotSchemaIsRejectedAtomically() {
+        CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
+        ObjectRecordTable.Snapshot valid = source.snapshot().objectSnapshot();
+        ObjectRecordTable.Snapshot unknown = new ObjectRecordTable.Snapshot(
+                valid.schemaVersion() + 1, valid.records(), valid.generations(),
+                valid.tileLinks(), valid.auxiliaryEntries());
+        CrossTableLifecycleCoordinator.Snapshot outer =
+                new CrossTableLifecycleCoordinator.Snapshot(unknown, Map.of());
+        CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(outer, Map.of());
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                checkpoint.restoreInto(destination));
+        assertTrue(destination.objects().snapshot().records().isEmpty());
+    }
 }
