@@ -623,6 +623,7 @@ public final class ObjectRecordTableTest {
 
         for (int group = 0; group < ObjectRecordTable.TILE_GROUP_COUNT; group++) {
             TileGroup tile = tile(20 + group, 30, group);
+            int beforeClear = raw;
             PackedTileMetadataCodec.WriteResult cleared =
                     PackedTileMetadataCodec.clearGroup(raw, group);
             assertEquals(PackedTileMetadataCodec.Status.OK, cleared.status());
@@ -633,7 +634,9 @@ public final class ObjectRecordTableTest {
                     raw, group, 0, 9).value());
             for (int other = 0; other < ObjectRecordTable.TILE_GROUP_COUNT; other++) {
                 if (other == group) continue;
-                assertNotEquals(0, PackedTileMetadataCodec.readObjectId(raw, other).value());
+                assertEquals(PackedTileMetadataCodec.readField(
+                                beforeClear, other, 0, 9).value(),
+                        PackedTileMetadataCodec.readField(raw, other, 0, 9).value());
             }
         }
     }
