@@ -354,4 +354,85 @@ public final class ObjectRecordTableTest {
         assertEquals(before, table.rawLegacyPayload(live));
         assertEquals(3, table.readAuxiliaryLink(live).auxiliarySlot());
     }
+
+    @Test
+    public void replacementTransfersPackedLinkThenReleasesOldRecord() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_6, 1, 1, 0).handle();
+        ObjectHandle target = table.allocate(RecordType.TYPE_1, 2, 2, 0).handle();
+        TileGroup targetTile = tile(2, 2, 0);
+        assertEquals(Status.OK, table.link(targetTile, target));
+        assertEquals(Status.OK, table.writeAuxiliaryLink(source, 7));
+
+        assertEquals(Status.OK,
+                table.replaceAndTransferLink(source, target, RecordType.TYPE_2));
+        assertEquals(Status.STALE_HANDLE, table.release(source));
+        assertEquals(RecordType.TYPE_2, table.typeOf(target).orElseThrow());
+        assertEquals(7, table.readAuxiliaryLink(target).auxiliarySlot());
+        assertEquals(Status.OK, table.lookup(targetTile).status());
+        assertEquals(1, table.referenceCount(target));
+    }
+
+    @Test
+    public void failedReplacementRollsBackTargetAndKeepsSourceWhenStillReferenced() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_1, 1, 1, 0).handle();
+        ObjectHandle target = table.allocate(RecordType.TYPE_6, 2, 2, 0).handle();
+        assertEquals(Status.OK, table.writeAuxiliaryLink(source, 4));
+        assertEquals(Status.OK, table.link(tile(1, 1, 0), source));
+        long targetBefore = table.rawLegacyPayload(target);
+
+        assertEquals(Status.OBJECT_STILL_REFERENCED,
+                table.replaceAndTransferLink(source, target, RecordType.TYPE_2));
+        assertEquals(RecordType.TYPE_6, table.typeOf(target).orElseThrow());
+        assertEquals(targetBefore, table.rawLegacyPayload(target));
+        assertEquals(4, table.readAuxiliaryLink(source).auxiliarySlot());
+        assertEquals(1, table.referenceCount(source));
+    }
+
+    @Test
+    public void replacementRejectsTypeSevenAndSelfReplacement() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_2, 1, 1, 0).handle();
+        ObjectHandle target = table.allocate(RecordType.TYPE_1, 2, 2, 0).handle();
+        ObjectHandle typeSeven = table.allocateType7(3, 3, 0).handle();
+
+        assertEquals(Status.INVALID_TRANSITION,
+                table.replaceAndTransferLink(source, target, RecordType.TYPE_7));
+        assertEquals(Status.INVALID_TRANSITION,
+                table.replaceAndTransferLink(source, source, RecordType.TYPE_2));
+        assertEquals(Status.INVALID_TRANSITION,
+                table.replaceAndTransferLink(typeSeven, target, RecordType.TYPE_2));
+        assertEquals(RecordType.TYPE_7, table.typeOf(typeSeven).orElseThrow());
+    }
+
+    @Test
+    public void typeSevenHasDedicatedAllocationAndCannotBeReclassified() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle handle = table.allocateType7(4, 5, 0).handle();
+        assertEquals(RecordType.TYPE_7, table.typeOf(handle).orElseThrow());
+        assertEquals(0L, table.rawLegacyPayload(handle)
+                & LegacyObjectRecordLinkCodec.LINK_MASK);
+        assertEquals(Status.INVALID_TRANSITION,
+                table.reclassify(handle, RecordType.TYPE_2));
+        assertEquals(Status.INVALID_TRANSITION,
+                table.reclassify(table.allocate(RecordType.TYPE_2, 6, 7, 0).handle(),
+                        RecordType.TYPE_7));
+    }
+
+    @Test
+    public void replacementAndTransferSurviveCheckpointRestore() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_1, 1, 1, 0).handle();
+        ObjectHandle target = table.allocate(RecordType.TYPE_6, 2, 2, 0).handle();
+        assertEquals(Status.OK, table.writeAuxiliaryLink(source, 2));
+        assertEquals(Status.OK,
+                table.replaceAndTransferLink(source, target, RecordType.TYPE_2));
+
+        ObjectRecordTable restored = new ObjectRecordTable();
+        assertEquals(Status.OK, restored.restore(table.snapshot()));
+        assertEquals(RecordType.TYPE_2, restored.typeOf(target).orElseThrow());
+        assertEquals(2, restored.readAuxiliaryLink(target).auxiliarySlot());
+        assertEquals(Status.STALE_HANDLE, restored.release(source));
+    }
 }
