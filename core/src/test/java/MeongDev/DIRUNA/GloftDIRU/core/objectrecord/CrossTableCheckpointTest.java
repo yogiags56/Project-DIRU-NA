@@ -205,17 +205,18 @@ public final class CrossTableCheckpointTest {
     }
 
     @Test
-    public void duplicateTileLinkKeyIsRejectedByObjectSnapshotRestore() {
+    public void duplicateRecordSlotIsRejectedByObjectSnapshotRestore() {
         TileGroup tile = tile(11, 12, 0);
         ObjectRecordTable table = new ObjectRecordTable();
         ObjectRecordTable.AllocationResult allocation =
                 table.allocate(RecordType.TYPE_2, 11, 12, 0);
         assertEquals(Status.OK, table.link(tile, allocation.handle()));
         ObjectRecordTable.Snapshot valid = table.snapshot();
-        Map<TileGroup, Integer> duplicated = new HashMap<>(valid.tileLinks());
-        duplicated.put(tile, allocation.slotId());
+        java.util.List<ObjectRecordTable.RecordSnapshot> duplicated =
+                new java.util.ArrayList<>(valid.records());
+        duplicated.add(valid.records().get(0));
         ObjectRecordTable.Snapshot malformed = new ObjectRecordTable.Snapshot(
-                valid.schemaVersion(), valid.records(), valid.generations(), duplicated,
+                valid.schemaVersion(), duplicated, valid.generations(), valid.tileLinks(),
                 valid.auxiliaryEntries());
         ObjectRecordTable destination = new ObjectRecordTable();
         assertEquals(Status.INVALID_SNAPSHOT, destination.restore(malformed));
