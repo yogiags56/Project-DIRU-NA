@@ -30,10 +30,12 @@ public final class CrossTableCheckpointTest {
         assertEquals(CrossTableLifecycleCoordinator.Status.OK, second.status());
 
         Map<TileGroup, Integer> words = new HashMap<>();
+        Map<TileGroup, Integer> serializedLinks =
+                source.snapshot().objectSnapshot().tileLinks();
         words.put(a, PackedTileMetadataCodec.writeObjectId(0, 0,
-                (int) (first.objectHandle().value() & 0x0F)).rawWord());
+                serializedLinks.get(a)).rawWord());
         words.put(b, PackedTileMetadataCodec.writeObjectId(0, 1,
-                (int) (second.objectHandle().value() & 0x0F)).rawWord());
+                serializedLinks.get(b)).rawWord());
         CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(source.snapshot(), words);
 
         CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
