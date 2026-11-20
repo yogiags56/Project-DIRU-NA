@@ -435,4 +435,36 @@ public final class ObjectRecordTableTest {
         assertEquals(2, restored.readAuxiliaryLink(target).auxiliarySlot());
         assertEquals(Status.STALE_HANDLE, restored.release(source));
     }
+
+    @Test
+    public void genericAllocatorCannotCreateTypeSeven() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        assertEquals(Status.INVALID_TRANSITION,
+                table.allocate(RecordType.TYPE_7, 1, 2, 0).status());
+        assertEquals(RecordType.TYPE_7,
+                table.typeOf(table.allocateType7(1, 2, 0).handle()).orElseThrow());
+    }
+
+    @Test
+    public void restoreRejectsTypeSevenSnapshotWithNonzeroPackedLinkBits() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle live = table.allocateType7(1, 2, 0).handle();
+        ObjectRecordTable.Snapshot valid = table.snapshot();
+        ObjectRecordTable.RecordSnapshot item = valid.records().get(0);
+        long corruptedPayload = item.rawLegacyPayload()
+                | (3L << LegacyObjectRecordLinkCodec.LINK_BIT_OFFSET);
+        java.util.List<ObjectRecordTable.RecordSnapshot> records =
+                new java.util.ArrayList<>(valid.records());
+        records.set(0, new ObjectRecordTable.RecordSnapshot(item.slotId(),
+                item.generation(), item.type(), item.anchorX(), item.anchorY(),
+                item.anchorGroup(), corruptedPayload));
+        ObjectRecordTable.Snapshot corrupted = new ObjectRecordTable.Snapshot(
+                valid.schemaVersion(), records, valid.generations(),
+                valid.tileLinks(), valid.auxiliaryEntries());
+
+        assertEquals(Status.INVALID_SNAPSHOT, table.restore(corrupted));
+        assertEquals(0L, table.rawLegacyPayload(live)
+                & LegacyObjectRecordLinkCodec.LINK_MASK);
+        assertEquals(RecordType.TYPE_7, table.typeOf(live).orElseThrow());
+    }
 }
