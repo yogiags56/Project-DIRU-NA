@@ -249,6 +249,23 @@ public final class ObjectRecordTable {
         return Status.OK;
     }
 
+    /**
+     * Resolves the replacement target from the exact tile metadata group,
+     * then applies the source-observed Type-1/Type-6 -> Type-2 transfer.
+     * The source must already be unlinked, matching the legacy caller's
+     * metadata-update ordering before whole-record release.
+     */
+    public synchronized Status replaceFromTileMetadata(ObjectHandle sourceHandle,
+                                                        TileGroup targetTile) {
+        if (sourceHandle == null || targetTile == null) return Status.INVALID_ARGUMENT;
+        Record source = resolve(sourceHandle);
+        if (source == null) return Status.STALE_HANDLE;
+        LookupResult target = lookup(targetTile);
+        if (!target.succeeded()) return target.status();
+        if (sourceHandle.equals(target.handle())) return Status.INVALID_TRANSITION;
+        return replaceAndTransferLink(sourceHandle, target.handle(), RecordType.TYPE_2);
+    }
+
     private static final long LEGACY_TYPE_MASK = 0x7L << 28;
 
     private static long legacyTypeBits(RecordType type) {
