@@ -94,19 +94,59 @@ public class CheckpointPersistenceServiceTest {
     }
 
     @Test
-    public void failedAtomicReplacementLeavesNoTemporaryFiles() throws Exception {
-        Path directory = temporaryFolder.getRoot().toPath().resolve("folder-target");
-        Files.createDirectories(directory);
-        Path target = directory.resolve("checkpoint.bin");
-        AtomicFileCheckpointStore store = new AtomicFileCheckpointStore(target);
-        byte[] valid = CrossTableCheckpointBinaryCodec.encode(emptyCheckpoint());
+    public void failedAtomicReplacementLeavesOldFileAndCleansTemporaryFile() throws Exception {
+        Path target = temporaryFolder.getRoot().toPath().resolve("checkpoint.bin");
+        byte[] knownGood = CrossTableCheckpointBinaryCodec.encode(emptyCheckpoint());
+        AtomicFileCheckpointStore initial = new AtomicFileCheckpointStore(target);
+        initial.write(knownGood);
+
+        AtomicFileCheckpointStore failing = new AtomicFileCheckpointStore(target,
+                (source, destination) -> {
+                    throw new IOException("simulated failure before atomic replacement");
+                });
         try {
-            store.write(valid);
-            fail("replacing a non-empty directory target must fail");
+            failing.write(new byte[] { 1, 2, 3, 4 });
+            fail("simulated replacement failure must be reported");
         } catch (IOException expected) {
-            try (java.util.stream.Stream<Path> children = Files.list(directory)) {
-                assertEquals(0L, children.count());
+            assertArrayEquals(knownGood, initial.read());
+            try (java.util.stream.Stream<Path> children = Files.list(target.getParent())) {
+                assertEquals(1L, children.count());
             }
         }
+    }
+
+    @Test
+    public void unsupportedAtomicMoveFailsClosedAndPreservesOldFile() throws Exception {
+        Path target = temporaryFolder.getRoot().toPath().resolve("checkpoint.bin");
+        byte[] knownGood = CrossTableCheckpointBinaryCodec.encode(emptyCheckpoint());
+        AtomicFileCheckpointStore initial = new AtomicFileCheckpointStore(target);
+        initial.write(knownGood);
+
+        AtomicFileCheckpointStore unsupported = new AtomicFileCheckpointStore(target,
+                (source, destination) -> {
+                    throw new java.nio.file.AtomicMoveNotSupportedException(
+                            source.toString(), destination.toString(), "simulated filesystem");
+                });
+        try {
+            unsupported.write(new byte[] { 9, 8, 7 });
+            fail("unsupported atomic move must fail");
+        } catch (IOException expected) {
+            assertArrayEquals(knownGood, initial.read());
+            try (java.util.stream.Stream<Path> children = Files.list(target.getParent())) {
+                assertEquals(1L, children.count());
+            }
+        }
+    }
+
+    @Test
+    public void successfulReplacementChangesFileToNewCompleteCheckpoint() throws Exception {
+        Path target = temporaryFolder.getRoot().toPath().resolve("checkpoint.bin");
+        AtomicFileCheckpointStore store = new AtomicFileCheckpointStore(target);
+        byte[] first = CrossTableCheckpointBinaryCodec.encode(emptyCheckpoint());
+        store.write(first);
+        byte[] second = first.clone();
+        second[second.length - 1] ^= 0x01;
+        store.write(second);
+        assertArrayEquals(second, store.read());
     }
 }
