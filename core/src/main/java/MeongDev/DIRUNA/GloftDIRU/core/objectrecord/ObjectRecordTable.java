@@ -25,7 +25,8 @@ public final class ObjectRecordTable {
     public enum Status {
         OK, NO_CAPACITY, INVALID_ARGUMENT, STALE_HANDLE, NO_LINK,
         INVALID_TILE_ID, UNREPRESENTABLE_TILE_ID, TILE_GROUP_OCCUPIED,
-        OBJECT_STILL_REFERENCED, ALREADY_LINKED, INVALID_SNAPSHOT, INVALID_TRANSITION
+        OBJECT_STILL_REFERENCED, ALREADY_LINKED, INVALID_SNAPSHOT, INVALID_TRANSITION,
+        TILE_METADATA_MISMATCH
     }
 
     public record ObjectHandle(long value) {
@@ -183,6 +184,32 @@ public final class ObjectRecordTable {
             return new LookupResult(Status.INVALID_TILE_ID, null, null);
         Record record = slots[tileId - 1];
         if (record == null) return new LookupResult(Status.STALE_HANDLE, null, null);
+        return new LookupResult(Status.OK, encodeHandle(tileId, record.generation), record.type);
+    }
+
+    /**
+     * Resolves a tile reference from the actual packed nine-bit metadata word.
+     * The raw three-bit ID is interpreted semantically before any array access:
+     * zero is NO_LINK, and nonzero IDs must agree with the model's tile-link map.
+     */
+    public synchronized LookupResult lookup(TileGroup tile, int rawMetadataWord) {
+        if (tile == null) return new LookupResult(Status.INVALID_ARGUMENT, null, null);
+        PackedTileMetadataCodec.ReadResult reference =
+                PackedTileMetadataCodec.readObjectReference(rawMetadataWord, tile.group());
+        if (reference.status() == PackedTileMetadataCodec.Status.NO_OBJECT_REFERENCE)
+            return new LookupResult(Status.NO_LINK, null, null);
+        if (!reference.succeeded())
+            return new LookupResult(Status.INVALID_TILE_ID, null, null);
+
+        int tileId = reference.value();
+        Integer mappedId = tileLinks.get(tile);
+        if (mappedId == null || mappedId != tileId)
+            return new LookupResult(Status.TILE_METADATA_MISMATCH, null, null);
+        if (tileId < 1 || tileId > TILE_RECORD_ID_MAX)
+            return new LookupResult(Status.INVALID_TILE_ID, null, null);
+        Record record = slots[tileId - 1];
+        if (record == null)
+            return new LookupResult(Status.STALE_HANDLE, null, null);
         return new LookupResult(Status.OK, encodeHandle(tileId, record.generation), record.type);
     }
 
