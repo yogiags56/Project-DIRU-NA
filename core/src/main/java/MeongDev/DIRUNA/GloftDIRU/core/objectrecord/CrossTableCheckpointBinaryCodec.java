@@ -105,6 +105,19 @@ public final class CrossTableCheckpointBinaryCodec {
         return encoded;
     }
 
+    /**
+     * Decodes and validates a checkpoint before attempting to restore the destination.
+     * Malformed bytes throw IOException; semantically invalid snapshots return
+     * INVALID_SNAPSHOT. The destination is not touched unless full validation succeeds.
+     */
+    public static CrossTableLifecycleCoordinator.Status decodeInto(
+            byte[] encoded, CrossTableLifecycleCoordinator destination) throws IOException {
+        if (destination == null)
+            return CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT;
+        CrossTableCheckpoint checkpoint = decode(encoded);
+        return checkpoint.restoreInto(destination);
+    }
+
     public static CrossTableCheckpoint decode(byte[] encoded) throws IOException {
         if (encoded == null || encoded.length == 0 || encoded.length > MAX_ENCODED_BYTES)
             throw new IOException("invalid checkpoint byte length");
