@@ -18,6 +18,7 @@ import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpointBinaryCod
  */
 public final class AndroidAtomicCheckpointStore implements CheckpointStore {
     private final AtomicFile atomicFile;
+    private final File baseFile;
 
     public AndroidAtomicCheckpointStore(File filesDirectory, String fileName) {
         if (filesDirectory == null || fileName == null || fileName.isEmpty()
@@ -29,7 +30,7 @@ public final class AndroidAtomicCheckpointStore implements CheckpointStore {
                 && !filesDirectory.isDirectory()) {
             throw new IllegalArgumentException("cannot create app-private files directory");
         }
-        File baseFile = new File(filesDirectory, fileName);
+        this.baseFile = new File(filesDirectory, fileName);
         this.atomicFile = new AtomicFile(baseFile);
     }
 
@@ -70,6 +71,11 @@ public final class AndroidAtomicCheckpointStore implements CheckpointStore {
             if (total == 0) throw new IOException("checkpoint file is empty");
             return output.toByteArray();
         }
+    }
+
+    /** True when either the primary file or AtomicFile backup is present. */
+    public synchronized boolean hasRecoverableFile() {
+        return baseFile.exists() || new File(baseFile.getPath() + ".bak").exists();
     }
 
     /** Removes the primary checkpoint and any AtomicFile backup. */
