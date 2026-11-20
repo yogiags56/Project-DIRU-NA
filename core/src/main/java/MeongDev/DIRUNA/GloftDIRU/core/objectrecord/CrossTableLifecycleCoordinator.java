@@ -159,9 +159,11 @@ public final class CrossTableLifecycleCoordinator {
             } catch (IllegalArgumentException ex) {
                 return Status.INVALID_SNAPSHOT;
             }
+            int auxiliaryState = AuxiliaryEntryStateMachine.state(
+                    candidate.auxiliaryEntryRaw(slot));
             if (candidate.typeOf(handle).isEmpty()
-                    || AuxiliaryEntryStateMachine.state(candidate.auxiliaryEntryRaw(slot))
-                    == AuxiliaryEntryStateMachine.STATE_EMPTY
+                    || (auxiliaryState != AuxiliaryEntryStateMachine.STATE_ALLOCATED
+                    && auxiliaryState != AuxiliaryEntryStateMachine.STATE_READY)
                     || validated.containsValue(slot))
                 return Status.INVALID_SNAPSHOT;
             validated.put(handleValue, slot);
