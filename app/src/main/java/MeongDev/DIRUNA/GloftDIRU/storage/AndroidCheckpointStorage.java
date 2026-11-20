@@ -34,16 +34,10 @@ public final class AndroidCheckpointStorage {
     }
 
     /**
-     * Loads without silently resetting state. A missing file is distinct from
-     * corrupt bytes, invalid model data, and an underlying storage read error.
+     * Reads and decodes a checkpoint without mutating a game-state coordinator.
+     * The returned candidate can be applied later on the owning game thread.
      */
-    public AndroidCheckpointLoadResult loadSafelyInto(
-            CrossTableLifecycleCoordinator destination) {
-        if (destination == null) {
-            return AndroidCheckpointLoadResult.of(
-                    AndroidCheckpointLoadResult.Status.INVALID_SNAPSHOT,
-                    "destination coordinator is required");
-        }
+    public AndroidCheckpointLoadResult loadCandidate() {
         if (!store.hasRecoverableFile()) {
             return AndroidCheckpointLoadResult.of(
                     AndroidCheckpointLoadResult.Status.MISSING, "no checkpoint file exists");
@@ -59,19 +53,39 @@ public final class AndroidCheckpointStorage {
         }
 
         try {
-            CrossTableLifecycleCoordinator.Status restored =
-                    CrossTableCheckpointBinaryCodec.decodeInto(encoded, destination);
-            if (restored == CrossTableLifecycleCoordinator.Status.OK) {
-                return AndroidCheckpointLoadResult.of(
-                        AndroidCheckpointLoadResult.Status.RESTORED, "checkpoint restored");
-            }
-            return AndroidCheckpointLoadResult.of(
-                    AndroidCheckpointLoadResult.Status.INVALID_SNAPSHOT,
-                    "checkpoint failed semantic validation: " + restored);
+            CrossTableCheckpoint checkpoint = CrossTableCheckpointBinaryCodec.decode(encoded);
+            return AndroidCheckpointLoadResult.restored(checkpoint);
         } catch (IOException malformed) {
             return AndroidCheckpointLoadResult.of(
                     AndroidCheckpointLoadResult.Status.CORRUPT, malformed.getMessage());
+        } catch (RuntimeException invalid) {
+            return AndroidCheckpointLoadResult.of(
+                    AndroidCheckpointLoadResult.Status.INVALID_SNAPSHOT,
+                    invalid.getMessage());
         }
+    }
+
+    /**
+     * Compatibility helper for synchronous callers. The candidate is decoded
+     * first and only then applied to the supplied coordinator.
+     */
+    public AndroidCheckpointLoadResult loadSafelyInto(
+            CrossTableLifecycleCoordinator destination) {
+        if (destination == null) {
+            return AndroidCheckpointLoadResult.of(
+                    AndroidCheckpointLoadResult.Status.INVALID_SNAPSHOT,
+                    "destination coordinator is required");
+        }
+        AndroidCheckpointLoadResult candidate = loadCandidate();
+        if (!candidate.restored()) return candidate;
+        CrossTableLifecycleCoordinator.Status restored = candidate.applyTo(destination);
+        if (restored == CrossTableLifecycleCoordinator.Status.OK) {
+            return AndroidCheckpointLoadResult.of(
+                    AndroidCheckpointLoadResult.Status.RESTORED, "checkpoint restored");
+        }
+        return AndroidCheckpointLoadResult.of(
+                AndroidCheckpointLoadResult.Status.INVALID_SNAPSHOT,
+                "checkpoint failed semantic validation: " + restored);
     }
 
     /** Legacy throwing API retained for callers that need strict propagation. */
