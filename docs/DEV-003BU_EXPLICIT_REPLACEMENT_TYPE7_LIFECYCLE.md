@@ -27,7 +27,7 @@ The API is deliberately constrained to the observed transition:
 - source record must be Type-1 or Type-6;
 - target type must be Type-2;
 - source and target must be distinct live handles;
-- Type-7 source/target is rejected;
+- Type-7 source is rejected because the source branch releases it without transferring a link. The resolved target may itself currently be Type-7: the legacy code writes the transferred link and overwrites its type field with Type-2 without first checking the target's prior type.
 - bits 54..56 are copied from source to target;
 - target type bits 28..30 are set to Type-2;
 - source is released only after the target has been updated;
@@ -58,7 +58,7 @@ Two additional invariant tests:
 6. generic allocator rejects Type-7 while dedicated allocator succeeds;
 7. restore rejects a Type-7 record snapshot with nonzero link bits without changing live state.
 
-The focused object-record suite is now 58 test methods by source count (51 previously plus seven). This count does not substitute for an executed test result.
+The focused object-record suite is now 59 test methods by source count (51 previously plus eight). This count does not substitute for an executed test result.
 
 ## Known boundaries
 
@@ -89,4 +89,4 @@ The workflows triggered by this milestone must be checked after completion. No p
 5. Check CI for every DEV-003BU commit.
 6. Keep runtime/gameplay integration blocked pending original-JAR provenance and parity evidence.
 
-No passing CI, APK artifact, runtime parity, or gameplay integration is claimed here.
+## CI correction and latest validation\n\nAn early DEV-003BU workflow exposed one outdated Type-7 test still calling the generic allocator after the dedicated Type-7 entry point was enforced. The failing test produced a null-handle NPE; this was a test fixture mismatch, not a production-code runtime failure. The fixture was corrected to call \`allocateType7()\`.\n\nA subsequent source review also refined replacement semantics: the source branch rejects Type-7 as the record being released, but it does not check the resolved target's prior type before writing Type-2. The native replacement API therefore permits a Type-7 target to be overwritten as Type-2. This correction and its regression test are included in commits \`74e475603b643f0b23fe460852feade70a92bd38\` and \`5d731e1f2a7ac020f8469810981eba8e80723892\`.\n\nThe corrected workflow for the current HEAD must complete before CI is claimed.\n\nNo shipping-JAR parity or gameplay integration is claimed here.
