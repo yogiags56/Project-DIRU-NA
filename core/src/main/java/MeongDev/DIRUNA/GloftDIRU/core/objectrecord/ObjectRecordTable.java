@@ -51,7 +51,15 @@ public final class ObjectRecordTable {
 
     /** Immutable serialized record data; slotId is one-based. */
     public record RecordSnapshot(int slotId, int generation, RecordType type,
-                                 int anchorX, int anchorY, int anchorGroup) { }
+                                 int anchorX, int anchorY, int anchorGroup,
+                                 long rawLegacyPayload) {
+        /** Backward-compatible constructor for schema-1 test fixtures. */
+        public RecordSnapshot(int slotId, int generation, RecordType type,
+                              int anchorX, int anchorY, int anchorGroup) {
+            this(slotId, generation, type, anchorX, anchorY, anchorGroup,
+                    legacyTypeBits(type));
+        }
+    }
 
     /**
      * Immutable checkpoint payload. Reverse references are intentionally
@@ -97,6 +105,7 @@ public final class ObjectRecordTable {
         private final int anchorX;
         private final int anchorY;
         private final int anchorGroup;
+        private long rawLegacyPayload;
         private final Set<TileGroup> references = new LinkedHashSet<>();
 
         private Record(int generation, RecordType type, int anchorX, int anchorY, int anchorGroup) {
@@ -105,6 +114,7 @@ public final class ObjectRecordTable {
             this.anchorX = anchorX;
             this.anchorY = anchorY;
             this.anchorGroup = anchorGroup;
+            this.rawLegacyPayload = legacyTypeBits(type);
         }
     }
 
@@ -179,7 +189,45 @@ public final class ObjectRecordTable {
         Record record = resolve(handle);
         if (record == null) return Status.STALE_HANDLE;
         record.type = newType;
+        // Update only legacy type bits; retain auxiliary link and opaque payload.
+        record.rawLegacyPayload = (record.rawLegacyPayload & ~LEGACY_TYPE_MASK)
+                | legacyTypeBits(newType);
         return Status.OK;
+    }
+
+    private static final long LEGACY_TYPE_MASK = 0x7L << 28;
+
+    private static long legacyTypeBits(RecordType type) {
+        if (type == null) return 0L;
+        return ((long) (type.ordinal() + 1) & 0x7L) << 28;
+    }
+
+    /** Returns the packed legacy aLongArr payload for forensic/native integration. */
+    public synchronized long rawLegacyPayload(ObjectHandle handle) {
+        Record record = resolve(handle);
+        if (record == null) throw new IllegalArgumentException("stale object handle");
+        return record.rawLegacyPayload;
+    }
+
+    /** Writes the packed auxiliary link field while preserving all other bits. */
+    public synchronized Status writeAuxiliaryLink(ObjectHandle handle, int auxiliarySlot) {
+        Record record = resolve(handle);
+        if (record == null) return Status.STALE_HANDLE;
+        LegacyObjectRecordLinkCodec.WriteResult result = LegacyObjectRecordLinkCodec.write(
+                record.rawLegacyPayload, record.type, auxiliarySlot);
+        if (!result.succeeded()) return Status.INVALID_ARGUMENT;
+        record.rawLegacyPayload = result.rawRecord();
+        return Status.OK;
+    }
+
+    /** Reads the semantic auxiliary link from the packed legacy payload. */
+    public synchronized LegacyObjectRecordLinkCodec.ReadResult readAuxiliaryLink(
+            ObjectHandle handle) {
+        Record record = resolve(handle);
+        if (record == null)
+            return new LegacyObjectRecordLinkCodec.ReadResult(
+                    LegacyObjectRecordLinkCodec.Status.INVALID_TYPE, -1);
+        return LegacyObjectRecordLinkCodec.read(record.rawLegacyPayload, record.type);
     }
 
     public synchronized boolean matchesAnchor(ObjectHandle handle, int x, int y, int group) {
@@ -236,7 +284,8 @@ public final class ObjectRecordTable {
             Record record = slots[i];
             if (record != null) {
                 recordSnapshots.add(new RecordSnapshot(i + 1, record.generation, record.type,
-                        record.anchorX, record.anchorY, record.anchorGroup));
+                        record.anchorX, record.anchorY, record.anchorGroup,
+                        record.rawLegacyPayload));
             }
         }
         return new Snapshot(SNAPSHOT_SCHEMA_VERSION, recordSnapshots, generations,
@@ -287,6 +336,9 @@ public final class ObjectRecordTable {
             seen[index] = true;
             candidate.slots[index] = new Record(item.generation(), item.type(),
                     item.anchorX(), item.anchorY(), item.anchorGroup());
+            candidate.slots[index].rawLegacyPayload = item.rawLegacyPayload();
+            if ((item.rawLegacyPayload() & LEGACY_TYPE_MASK) != legacyTypeBits(item.type()))
+                return null;
         }
 
         for (Map.Entry<TileGroup, Integer> entry : snapshot.tileLinks.entrySet()) {
