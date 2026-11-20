@@ -25,7 +25,7 @@ public final class ObjectRecordTable {
     public enum Status {
         OK, NO_CAPACITY, INVALID_ARGUMENT, STALE_HANDLE, NO_LINK,
         INVALID_TILE_ID, UNREPRESENTABLE_TILE_ID, TILE_GROUP_OCCUPIED,
-        OBJECT_STILL_REFERENCED, ALREADY_LINKED, INVALID_SNAPSHOT
+        OBJECT_STILL_REFERENCED, ALREADY_LINKED, INVALID_SNAPSHOT, INVALID_TRANSITION
     }
 
     public record ObjectHandle(long value) {
@@ -188,10 +188,55 @@ public final class ObjectRecordTable {
         if (newType == null) return Status.INVALID_ARGUMENT;
         Record record = resolve(handle);
         if (record == null) return Status.STALE_HANDLE;
+        // Type-7 is a dedicated allocator path and terminal source path, not a
+        // generic in-place reclassification target or source.
+        if (record.type == RecordType.TYPE_7 || newType == RecordType.TYPE_7)
+            return Status.INVALID_TRANSITION;
         record.type = newType;
-        // Update only legacy type bits; retain auxiliary link and opaque payload.
+        // Source type-field writes are field-local: retain bits 54..56.
         record.rawLegacyPayload = (record.rawLegacyPayload & ~LEGACY_TYPE_MASK)
                 | legacyTypeBits(newType);
+        return Status.OK;
+    }
+
+    /** Dedicated counterpart of the legacy allocator's Type-7 special branch. */
+    public synchronized AllocationResult allocateType7(int anchorX, int anchorY,
+                                                        int anchorGroup) {
+        return allocate(RecordType.TYPE_7, anchorX, anchorY, anchorGroup);
+    }
+
+    /**
+     * Models the source's explicit replacement path: transfer the three-bit
+     * auxiliary link from a live non-Type-7 source to an existing target,
+     * reclassify that target, then release the source. All changes roll back
+     * if the source cannot be released.
+     */
+    public synchronized Status replaceAndTransferLink(ObjectHandle sourceHandle,
+                                                       ObjectHandle targetHandle,
+                                                       RecordType targetType) {
+        if (sourceHandle == null || targetHandle == null || targetType == null)
+            return Status.INVALID_ARGUMENT;
+        if (sourceHandle.equals(targetHandle) || targetType == RecordType.TYPE_7)
+            return Status.INVALID_TRANSITION;
+        Record source = resolve(sourceHandle);
+        Record target = resolve(targetHandle);
+        if (source == null || target == null) return Status.STALE_HANDLE;
+        if (source.type == RecordType.TYPE_7 || target.type == RecordType.TYPE_7)
+            return Status.INVALID_TRANSITION;
+
+        Snapshot before = snapshot();
+        long transferredLink = source.rawLegacyPayload & LegacyObjectRecordLinkCodec.LINK_MASK;
+        target.rawLegacyPayload = (target.rawLegacyPayload
+                & ~LegacyObjectRecordLinkCodec.LINK_MASK) | transferredLink;
+        target.type = targetType;
+        target.rawLegacyPayload = (target.rawLegacyPayload & ~LEGACY_TYPE_MASK)
+                | legacyTypeBits(targetType);
+
+        Status releaseStatus = release(sourceHandle);
+        if (releaseStatus != Status.OK) {
+            restore(before);
+            return releaseStatus;
+        }
         return Status.OK;
     }
 
