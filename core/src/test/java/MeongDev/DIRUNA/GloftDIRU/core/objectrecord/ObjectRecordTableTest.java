@@ -129,4 +129,100 @@ public final class ObjectRecordTableTest {
         assertEquals(Status.OK, table.release(handle));
         assertEquals(Status.STALE_HANDLE, table.release(handle));
     }
+
+    @Test
+    public void checkpointRoundTripRestoresRecordsLinksAndReferenceOwnership() {
+        ObjectRecordTable source = new ObjectRecordTable();
+        ObjectHandle shared = source.allocate(RecordType.TYPE_5, 2, 3, 0).handle();
+        ObjectHandle other = source.allocate(RecordType.TYPE_2, 8, 9, 2).handle();
+        TileGroup first = tile(2, 3, 0);
+        TileGroup second = tile(3, 3, 0);
+        TileGroup third = tile(8, 9, 2);
+        assertEquals(Status.OK, source.link(first, shared));
+        assertEquals(Status.OK, source.link(second, shared));
+        assertEquals(Status.OK, source.link(third, other));
+
+        ObjectRecordTable restored = new ObjectRecordTable();
+        assertEquals(Status.OK, restored.restore(source.snapshot()));
+        assertEquals(2, restored.referenceCount(shared));
+        assertEquals(1, restored.referenceCount(other));
+        assertEquals(RecordType.TYPE_5, restored.lookup(second).type());
+        assertEquals(RecordType.TYPE_2, restored.lookup(third).type());
+        assertEquals(Status.OBJECT_STILL_REFERENCED, restored.release(shared));
+    }
+
+    @Test
+    public void restoreRebuildsReverseReferencesAfterLinksWereRemoved() {
+        ObjectRecordTable source = new ObjectRecordTable();
+        ObjectHandle handle = source.allocate(RecordType.TYPE_5, 0, 0, 0).handle();
+        TileGroup a = tile(0, 0, 0);
+        TileGroup b = tile(1, 0, 0);
+        assertEquals(Status.OK, source.link(a, handle));
+        assertEquals(Status.OK, source.link(b, handle));
+        assertEquals(Status.OK, source.unlink(a));
+
+        ObjectRecordTable restored = new ObjectRecordTable();
+        assertEquals(Status.OK, restored.restore(source.snapshot()));
+        assertEquals(1, restored.referenceCount(handle));
+        assertEquals(Status.OBJECT_STILL_REFERENCED, restored.release(handle));
+        assertEquals(Status.OK, restored.unlink(b));
+        assertEquals(Status.OK, restored.release(handle));
+    }
+
+    @Test
+    public void invalidSnapshotDoesNotPartiallyReplaceLiveState() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle live = table.allocate(RecordType.TYPE_4, 4, 4, 1).handle();
+        TileGroup liveTile = tile(4, 4, 1);
+        assertEquals(Status.OK, table.link(liveTile, live));
+
+        ObjectRecordTable.Snapshot valid = table.snapshot();
+        java.util.List<ObjectRecordTable.RecordSnapshot> badRecords =
+                new java.util.ArrayList<>(valid.records());
+        ObjectRecordTable.RecordSnapshot original = badRecords.get(0);
+        badRecords.set(0, new ObjectRecordTable.RecordSnapshot(
+                original.slotId(), original.generation() + 1, original.type(),
+                original.anchorX(), original.anchorY(), original.anchorGroup()));
+        ObjectRecordTable.Snapshot invalid = new ObjectRecordTable.Snapshot(
+                valid.schemaVersion(), badRecords, valid.generations(), valid.tileLinks());
+
+        assertEquals(Status.INVALID_SNAPSHOT, table.restore(invalid));
+        assertEquals(RecordType.TYPE_4, table.lookup(liveTile).type());
+        assertEquals(1, table.referenceCount(live));
+    }
+
+    @Test
+    public void restoredGenerationRejectsHandleFromReleasedCheckpointSlot() {
+        ObjectRecordTable source = new ObjectRecordTable();
+        ObjectHandle oldHandle = source.allocate(RecordType.TYPE_1, 0, 0, 0).handle();
+        assertEquals(Status.OK, source.release(oldHandle));
+        ObjectRecordTable.Snapshot afterRelease = source.snapshot();
+
+        ObjectRecordTable restored = new ObjectRecordTable();
+        assertEquals(Status.OK, restored.restore(afterRelease));
+        ObjectHandle newHandle = restored.allocate(RecordType.TYPE_2, 1, 1, 1).handle();
+        assertNotEquals(oldHandle, newHandle);
+        assertEquals(Status.STALE_HANDLE, restored.release(oldHandle));
+        assertEquals(RecordType.TYPE_2, restored.typeOf(newHandle).orElseThrow());
+    }
+
+    @Test
+    public void corruptedTileLinkToMissingOrUnrepresentableSlotIsRejectedAtomically() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle live = table.allocate(RecordType.TYPE_3, 0, 0, 0).handle();
+        TileGroup tile = tile(0, 0, 0);
+        assertEquals(Status.OK, table.link(tile, live));
+        ObjectRecordTable.Snapshot valid = table.snapshot();
+
+        java.util.Map<TileGroup, Integer> corruptedLinks =
+                new java.util.HashMap<>(valid.tileLinks());
+        corruptedLinks.put(tile(9, 9, 0), 8);
+        ObjectRecordTable.Snapshot corrupted = new ObjectRecordTable.Snapshot(
+                valid.schemaVersion(), valid.records(), valid.generations(), corruptedLinks);
+
+        assertEquals(Status.INVALID_SNAPSHOT, table.restore(corrupted));
+        assertEquals(Status.OK, table.lookup(tile).status());
+        assertEquals(1, table.referenceCount(live));
+    }
+
 }
