@@ -43,8 +43,14 @@ public final class CrossTableCheckpointTest {
         assertEquals(first.objectHandle(), restored.objects().lookup(a).handle());
         assertEquals((int) (first.objectHandle().value() & 0x0F),
                 PackedTileMetadataCodec.readObjectId(words.get(a), a.group()).value());
-        assertEquals(CrossTableLifecycleCoordinator.Status.OK,
-                restored.objects().lookup(a, words.get(a)).status());
+        ObjectRecordTable.LookupResult guardedA =
+                restored.objects().lookup(a, words.get(a));
+        assertEquals("guarded lookup status=" + guardedA.status()
+                        + ", tile=" + a + ", raw=" + words.get(a)
+                        + ", rawId=" + PackedTileMetadataCodec.readObjectId(
+                                words.get(a), a.group()).value()
+                        + ", plainHandle=" + restored.objects().lookup(a).handle(),
+                Status.OK, guardedA.status());
         assertEquals(CrossTableLifecycleCoordinator.Status.OK,
                 restored.objects().lookup(b, words.get(b)).status());
         assertEquals(2, restored.associatedSlot(first.objectHandle()));
