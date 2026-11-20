@@ -305,7 +305,7 @@ public final class ObjectRecordTableTest {
     @Test
     public void typeSevenRejectsLinkWritesAndReportsExplicitLinklessStatus() {
         ObjectRecordTable table = new ObjectRecordTable();
-        ObjectHandle handle = table.allocate(RecordType.TYPE_7, 1, 2, 0).handle();
+        ObjectHandle handle = table.allocateType7(1, 2, 0).handle();
         long before = table.rawLegacyPayload(handle);
         assertEquals(Status.INVALID_ARGUMENT, table.writeAuxiliaryLink(handle, 0));
         assertEquals(before, table.rawLegacyPayload(handle));
