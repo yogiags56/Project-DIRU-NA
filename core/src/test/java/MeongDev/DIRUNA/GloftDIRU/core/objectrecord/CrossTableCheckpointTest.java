@@ -31,9 +31,9 @@ public final class CrossTableCheckpointTest {
 
         Map<TileGroup, Integer> words = new HashMap<>();
         words.put(a, PackedTileMetadataCodec.writeObjectId(0, 0,
-                first.objectHandle().slotId()).rawWord());
+                (int) (first.objectHandle().value() & 0x0F)).rawWord());
         words.put(b, PackedTileMetadataCodec.writeObjectId(0, 1,
-                second.objectHandle().slotId()).rawWord());
+                (int) (second.objectHandle().value() & 0x0F)).rawWord());
         CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(source.snapshot(), words);
 
         CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
