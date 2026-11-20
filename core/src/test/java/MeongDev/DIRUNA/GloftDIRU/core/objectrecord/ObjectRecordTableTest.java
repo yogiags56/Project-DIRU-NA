@@ -680,4 +680,68 @@ public final class ObjectRecordTableTest {
         assertEquals(replacement.handle(), ambiguous.handle());
         assertEquals(RecordType.TYPE_6, ambiguous.type());
     }
+
+    @Test
+    public void packedMetadataLinksSurviveSnapshotRestoreWithOneClearedGroup() {
+        ObjectRecordTable source = new ObjectRecordTable();
+        int raw = 0;
+        TileGroup first = tile(31, 40, 0);
+        TileGroup second = tile(32, 40, 1);
+        TileGroup third = tile(33, 40, 2);
+        TileGroup[] tiles = {first, second, third};
+        ObjectHandle[] handles = new ObjectHandle[3];
+
+        for (int group = 0; group < 3; group++) {
+            AllocationResult allocated = source.allocate(
+                    RecordType.TYPE_5, 31 + group, 40, group);
+            handles[group] = allocated.handle();
+            assertEquals(Status.OK, source.link(tiles[group], handles[group]));
+            raw = PackedTileMetadataCodec.writeObjectId(raw, group,
+                    allocated.slotId()).rawWord();
+        }
+        raw = PackedTileMetadataCodec.clearGroup(raw, 1).rawWord();
+        assertEquals(Status.OK, source.unlink(second));
+
+        ObjectRecordTable restored = new ObjectRecordTable();
+        assertEquals(Status.OK, restored.restore(source.snapshot()));
+        assertEquals(Status.NO_LINK,
+                restored.lookup(second, raw).status());
+        assertEquals(Status.OK, restored.lookup(first, raw).status());
+        assertEquals(Status.OK, restored.lookup(third, raw).status());
+        assertEquals(0, restored.referenceCount(handles[1]));
+        assertEquals(1, restored.referenceCount(handles[0]));
+        assertEquals(1, restored.referenceCount(handles[2]));
+    }
+
+    @Test
+    public void snapshotRestorePreservesSlotReuseGenerationAndOldHandleStaysStale() {
+        ObjectRecordTable source = new ObjectRecordTable();
+        ObjectHandle oldHandle = source.allocate(RecordType.TYPE_1, 1, 1, 0).handle();
+        assertEquals(Status.OK, source.release(oldHandle));
+        ObjectHandle replacement = source.allocate(RecordType.TYPE_6, 2, 2, 1).handle();
+        assertNotEquals(oldHandle, replacement);
+        ObjectRecordTable restored = new ObjectRecordTable();
+
+        assertEquals(Status.OK, restored.restore(source.snapshot()));
+        assertEquals(Status.STALE_HANDLE, restored.release(oldHandle));
+        assertEquals(RecordType.TYPE_6, restored.typeOf(replacement).orElseThrow());
+    }
+
+    @Test
+    public void missingRecordTileLinkSnapshotRestoreIsAtomic() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle live = table.allocate(RecordType.TYPE_4, 4, 5, 0).handle();
+        TileGroup liveTile = tile(4, 5, 0);
+        assertEquals(Status.OK, table.link(liveTile, live));
+        Snapshot valid = table.snapshot();
+        java.util.Map<TileGroup, Integer> brokenLinks =
+                new java.util.HashMap<>(valid.tileLinks());
+        brokenLinks.put(tile(6, 7, 1), 7);
+        Snapshot invalid = new Snapshot(valid.schemaVersion(), valid.records(),
+                valid.generations(), brokenLinks, valid.auxiliaryEntries());
+
+        assertEquals(Status.INVALID_SNAPSHOT, table.restore(invalid));
+        assertEquals(Status.OK, table.lookup(liveTile).status());
+        assertEquals(1, table.referenceCount(live));
+    }
 }
