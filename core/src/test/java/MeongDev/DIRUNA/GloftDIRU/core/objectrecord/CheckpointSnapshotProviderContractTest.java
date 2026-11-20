@@ -104,7 +104,8 @@ public final class CheckpointSnapshotProviderContractTest {
                 CrossTableCheckpoint.CURRENT_SCHEMA_VERSION + 1,
                 live.snapshot(), Map.of());
 
-        assertEquals(Status.INVALID_SNAPSHOT, provider.restoreCheckpoint(invalid));
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                provider.restoreCheckpoint(invalid));
         assertEquals(before, live.snapshot().objectSnapshot().records().size());
     }
 }
