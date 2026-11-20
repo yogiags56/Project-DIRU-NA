@@ -68,4 +68,35 @@ public final class PackedTileMetadataCodecTest {
         assertEquals(0, PackedTileMetadataCodec.readObjectId(changed.rawWord(), 2).value());
         assertEquals(-1 & ~(7 << 18), changed.rawWord());
     }
+
+    @Test
+    public void zeroObjectIdIsNotAResolvableObjectReference() {
+        int raw = PackedTileMetadataCodec.writeObjectId(0, 1, 0).rawWord();
+        PackedTileMetadataCodec.ReadResult rawId =
+                PackedTileMetadataCodec.readObjectId(raw, 1);
+        PackedTileMetadataCodec.ReadResult reference =
+                PackedTileMetadataCodec.readObjectReference(raw, 1);
+
+        assertEquals(PackedTileMetadataCodec.Status.OK, rawId.status());
+        assertEquals(0, rawId.value());
+        assertEquals(PackedTileMetadataCodec.Status.NO_OBJECT_REFERENCE, reference.status());
+    }
+
+    @Test
+    public void validObjectReferencesRemainOneThroughSeven() {
+        for (int id = 1; id <= 7; id++) {
+            int raw = PackedTileMetadataCodec.writeObjectId(0, 2, id).rawWord();
+            PackedTileMetadataCodec.ReadResult reference =
+                    PackedTileMetadataCodec.readObjectReference(raw, 2);
+            assertEquals(PackedTileMetadataCodec.Status.OK, reference.status());
+            assertEquals(id, reference.value());
+        }
+    }
+
+    @Test
+    public void zeroAwareReadPreservesInvalidGroupStatus() {
+        PackedTileMetadataCodec.ReadResult reference =
+                PackedTileMetadataCodec.readObjectReference(0, 3);
+        assertEquals(PackedTileMetadataCodec.Status.INVALID_GROUP, reference.status());
+    }
 }
