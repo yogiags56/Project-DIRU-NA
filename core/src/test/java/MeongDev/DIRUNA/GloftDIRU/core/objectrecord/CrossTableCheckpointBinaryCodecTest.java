@@ -215,6 +215,101 @@ public class CrossTableCheckpointBinaryCodecTest {
         assertDecodeRejected(unknownInner);
     }
 
+
+    @Test
+    public void decodeIntoRejectsMalformedPayloadWithoutMutatingLiveDestination() throws Exception {
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        ObjectRecordTable.TileGroup liveTile = tile(40, 41, 2);
+        CrossTableLifecycleCoordinator.AttachResult live = destination.attach(
+                ObjectRecordTable.RecordType.TYPE_1, 40, 41, 2,
+                liveTile, 3, stateOne(40, 41));
+        assertTrue(live.succeeded());
+        byte[] malformed = CrossTableCheckpointBinaryCodec.encode(sampleCheckpoint());
+        malformed[0] ^= 0x55;
+        try {
+            CrossTableCheckpointBinaryCodec.decodeInto(malformed, destination);
+            fail("invalid magic must throw");
+        } catch (IOException expected) {
+            assertEquals(ObjectRecordTable.Status.OK, destination.objects().lookup(liveTile).status());
+            assertEquals(ObjectRecordTable.RecordType.TYPE_1,
+                    destination.objects().typeOf(live.objectHandle()).orElseThrow());
+            assertEquals(3, destination.associatedSlot(live.objectHandle()));
+        }
+    }
+
+    @Test
+    public void decodeIntoRestoresOnlyAfterSuccessfulDecodeAndValidation() throws Exception {
+        CrossTableCheckpoint source = sampleCheckpoint();
+        byte[] encoded = CrossTableCheckpointBinaryCodec.encode(source);
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        ObjectRecordTable.TileGroup liveTile = tile(50, 51, 1);
+        CrossTableLifecycleCoordinator.AttachResult live = destination.attach(
+                ObjectRecordTable.RecordType.TYPE_1, 50, 51, 1,
+                liveTile, 1, stateOne(50, 51));
+        assertTrue(live.succeeded());
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                CrossTableCheckpointBinaryCodec.decodeInto(encoded, destination));
+        assertEquals(ObjectRecordTable.Status.NO_LINK, destination.objects().lookup(liveTile).status());
+        assertEquals(-1, destination.associatedSlot(live.objectHandle()));
+        for (ObjectRecordTable.TileGroup expectedTile :
+                source.lifecycleSnapshot().objectSnapshot().tileLinks().keySet()) {
+            assertEquals(ObjectRecordTable.Status.OK, destination.objects().lookup(expectedTile).status());
+        }
+    }
+
+    @Test
+    public void deterministicEncodingIgnoresMapInsertionOrder() throws Exception {
+        CrossTableCheckpoint first = sampleCheckpoint();
+        CrossTableLifecycleCoordinator.Snapshot snapshot = first.lifecycleSnapshot();
+        Map<ObjectRecordTable.TileGroup, Integer> reversed = new java.util.LinkedHashMap<>();
+        java.util.List<Map.Entry<ObjectRecordTable.TileGroup, Integer>> entries =
+                new java.util.ArrayList<>(first.packedMetadataWords().entrySet());
+        java.util.Collections.reverse(entries);
+        for (Map.Entry<ObjectRecordTable.TileGroup, Integer> entry : entries)
+            reversed.put(entry.getKey(), entry.getValue());
+        CrossTableCheckpoint second = new CrossTableCheckpoint(snapshot, reversed);
+        assertArrayEquals(CrossTableCheckpointBinaryCodec.encode(first),
+                CrossTableCheckpointBinaryCodec.encode(second));
+    }
+
+    @Test
+    public void deterministicEncodingIgnoresTileLinkInsertionOrder() throws Exception {
+        CrossTableCheckpoint first = sampleCheckpoint();
+        ObjectRecordTable.Snapshot original = first.lifecycleSnapshot().objectSnapshot();
+        Map<ObjectRecordTable.TileGroup, Integer> reversedLinks = new java.util.LinkedHashMap<>();
+        java.util.List<Map.Entry<ObjectRecordTable.TileGroup, Integer>> entries =
+                new java.util.ArrayList<>(original.tileLinks().entrySet());
+        java.util.Collections.reverse(entries);
+        for (Map.Entry<ObjectRecordTable.TileGroup, Integer> entry : entries)
+            reversedLinks.put(entry.getKey(), entry.getValue());
+        ObjectRecordTable.Snapshot reordered = new ObjectRecordTable.Snapshot(
+                original.schemaVersion(), original.records(), original.generations(),
+                reversedLinks, original.auxiliaryEntries());
+        CrossTableLifecycleCoordinator.Snapshot reorderedLifecycle =
+                new CrossTableLifecycleCoordinator.Snapshot(reordered,
+                        first.lifecycleSnapshot().associations());
+        CrossTableCheckpoint second = new CrossTableCheckpoint(
+                reorderedLifecycle, first.packedMetadataWords());
+        assertArrayEquals(CrossTableCheckpointBinaryCodec.encode(first),
+                CrossTableCheckpointBinaryCodec.encode(second));
+    }
+
+    @Test
+    public void deterministicByteMutationSweepNeverLeaksUncheckedRuntimeFailure() throws Exception {
+        byte[] valid = CrossTableCheckpointBinaryCodec.encode(sampleCheckpoint());
+        int rejected = 0;
+        for (int index = 0; index < valid.length; index++) {
+            byte[] mutated = valid.clone();
+            mutated[index] ^= (byte) 0xA5;
+            try {
+                CrossTableCheckpointBinaryCodec.decode(mutated);
+            } catch (IOException expected) {
+                rejected++;
+            }
+        }
+        assertTrue("mutation sweep should reject at least some mutated payloads", rejected > 0);
+    }
+
     private static void assertDecodeRejected(byte[] bytes) throws Exception {
         try {
             CrossTableCheckpointBinaryCodec.decode(bytes);
