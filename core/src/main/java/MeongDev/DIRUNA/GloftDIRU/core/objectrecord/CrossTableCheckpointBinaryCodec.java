@@ -55,12 +55,12 @@ public final class CrossTableCheckpointBinaryCodec {
             throw new IllegalArgumentException("checkpoint exceeds codec limits");
         // Preflight the exact fixed-width payload size before allocating or writing.
         long estimatedSize = 20L
-                + records.size() * 36L
+                + records.size() * 32L
                 + 4L + ObjectRecordTable.OBJECT_SLOT_CAPACITY * 4L
-                + 4L + links.size() * 16L
+                + 4L + links.size() * 20L
                 + 4L + ObjectRecordTable.OBJECT_SLOT_CAPACITY * 8L
                 + 4L + associations.size() * 12L
-                + 4L + metadata.size() * 16L;
+                + 4L + metadata.size() * 20L;
         if (estimatedSize > MAX_ENCODED_BYTES)
             throw new IllegalArgumentException("encoded checkpoint exceeds byte limit");
 
