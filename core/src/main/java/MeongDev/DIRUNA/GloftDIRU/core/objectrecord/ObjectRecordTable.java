@@ -63,21 +63,32 @@ public final class ObjectRecordTable {
         private final List<RecordSnapshot> records;
         private final int[] generations;
         private final Map<TileGroup, Integer> tileLinks;
+        private final long[] auxiliaryEntries;
 
         public Snapshot(int schemaVersion, List<RecordSnapshot> records,
                         int[] generations, Map<TileGroup, Integer> tileLinks) {
+            this(schemaVersion, records, generations, tileLinks, new long[OBJECT_SLOT_CAPACITY]);
+        }
+
+        public Snapshot(int schemaVersion, List<RecordSnapshot> records,
+                        int[] generations, Map<TileGroup, Integer> tileLinks,
+                        long[] auxiliaryEntries) {
             this.schemaVersion = schemaVersion;
             this.records = Collections.unmodifiableList(new ArrayList<>(
                     records == null ? List.of() : records));
             this.generations = generations == null ? null : generations.clone();
             this.tileLinks = Collections.unmodifiableMap(new HashMap<>(
                     tileLinks == null ? Map.of() : tileLinks));
+            this.auxiliaryEntries = auxiliaryEntries == null ? null : auxiliaryEntries.clone();
         }
 
         public int schemaVersion() { return schemaVersion; }
         public List<RecordSnapshot> records() { return records; }
         public int[] generations() { return generations == null ? null : generations.clone(); }
         public Map<TileGroup, Integer> tileLinks() { return tileLinks; }
+        public long[] auxiliaryEntries() {
+            return auxiliaryEntries == null ? null : auxiliaryEntries.clone();
+        }
     }
 
     private static final class Record {
@@ -100,6 +111,8 @@ public final class ObjectRecordTable {
     private final Record[] slots = new Record[OBJECT_SLOT_CAPACITY];
     private final int[] generations = new int[OBJECT_SLOT_CAPACITY];
     private final Map<TileGroup, Integer> tileLinks = new HashMap<>();
+    // Opaque 64-bit auxiliary entries mirroring the legacy bLongArr table.
+    private final long[] auxiliaryEntries = new long[OBJECT_SLOT_CAPACITY];
 
     public ObjectRecordTable() {
         for (int i = 0; i < generations.length; i++) generations[i] = 1;
@@ -194,6 +207,23 @@ public final class ObjectRecordTable {
         return record == null ? -1 : record.references.size();
     }
 
+    /** Returns an opaque auxiliary entry by zero-based table index. */
+    public synchronized long auxiliaryEntryRaw(int index) {
+        checkAuxiliaryIndex(index);
+        return auxiliaryEntries[index];
+    }
+
+    /** Replaces an opaque auxiliary entry without interpreting its packed fields. */
+    public synchronized void setAuxiliaryEntryRaw(int index, long value) {
+        checkAuxiliaryIndex(index);
+        auxiliaryEntries[index] = value;
+    }
+
+    private static void checkAuxiliaryIndex(int index) {
+        if (index < 0 || index >= OBJECT_SLOT_CAPACITY)
+            throw new IndexOutOfBoundsException("auxiliary index must be 0..14");
+    }
+
     public synchronized Optional<RecordType> typeOf(ObjectHandle handle) {
         Record record = resolve(handle);
         return record == null ? Optional.empty() : Optional.of(record.type);
@@ -209,7 +239,8 @@ public final class ObjectRecordTable {
                         record.anchorX, record.anchorY, record.anchorGroup));
             }
         }
-        return new Snapshot(SNAPSHOT_SCHEMA_VERSION, recordSnapshots, generations, tileLinks);
+        return new Snapshot(SNAPSHOT_SCHEMA_VERSION, recordSnapshots, generations,
+                tileLinks, auxiliaryEntries);
     }
 
     /**
@@ -224,6 +255,7 @@ public final class ObjectRecordTable {
         System.arraycopy(candidate.generations, 0, generations, 0, generations.length);
         tileLinks.clear();
         tileLinks.putAll(candidate.tileLinks);
+        System.arraycopy(candidate.auxiliaryEntries, 0, auxiliaryEntries, 0, auxiliaryEntries.length);
         return Status.OK;
     }
 
@@ -231,9 +263,13 @@ public final class ObjectRecordTable {
         if (snapshot == null || snapshot.schemaVersion != SNAPSHOT_SCHEMA_VERSION
                 || snapshot.generations == null
                 || snapshot.generations.length != OBJECT_SLOT_CAPACITY
-                || snapshot.records == null || snapshot.tileLinks == null) return null;
+                || snapshot.records == null || snapshot.tileLinks == null
+                || snapshot.auxiliaryEntries == null
+                || snapshot.auxiliaryEntries.length != OBJECT_SLOT_CAPACITY) return null;
 
         ObjectRecordTable candidate = new ObjectRecordTable();
+        System.arraycopy(snapshot.auxiliaryEntries, 0, candidate.auxiliaryEntries, 0,
+                candidate.auxiliaryEntries.length);
         for (int i = 0; i < OBJECT_SLOT_CAPACITY; i++) {
             if (snapshot.generations[i] <= 0) return null;
             candidate.generations[i] = snapshot.generations[i];
