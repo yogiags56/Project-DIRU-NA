@@ -150,4 +150,29 @@ public final class CrossTableLifecycleCoordinatorTest {
         assertEquals(CrossTableLifecycleCoordinator.Status.NO_ASSOCIATION,
                 coordinator.consume(handle).status());
     }
+
+    @Test
+    public void restoreRejectsAssociationToAuxiliaryEntryInUnclassifiedState() {
+        CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+        CrossTableLifecycleCoordinator.AttachResult live = coordinator.attach(
+                RecordType.TYPE_2, 3, 4, 0, tile(3, 4, 0), 1,
+                stateOne(0, 0, 3, 4));
+        CrossTableLifecycleCoordinator.Snapshot valid = coordinator.snapshot();
+        long[] rawEntries = valid.objectSnapshot().auxiliaryEntries();
+        rawEntries[1] = (rawEntries[1] & ~0xFL) | 2L;
+        ObjectRecordTable.Snapshot corruptedObjects = new ObjectRecordTable.Snapshot(
+                valid.objectSnapshot().schemaVersion(),
+                valid.objectSnapshot().records(),
+                valid.objectSnapshot().generations(),
+                valid.objectSnapshot().tileLinks(), rawEntries);
+        CrossTableLifecycleCoordinator.Snapshot corrupted =
+                new CrossTableLifecycleCoordinator.Snapshot(
+                        corruptedObjects, valid.associations());
+
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                coordinator.restore(corrupted));
+        assertEquals(1, coordinator.associatedSlot(live.objectHandle()));
+        assertEquals(1, AuxiliaryEntryStateMachine.state(
+                coordinator.objects().auxiliaryEntryRaw(1)));
+    }
 }
