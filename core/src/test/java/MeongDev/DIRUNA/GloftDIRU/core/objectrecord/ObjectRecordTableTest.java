@@ -282,4 +282,76 @@ public final class ObjectRecordTableTest {
         assertEquals(314L, table.auxiliaryEntryRaw(2));
     }
 
+
+    @Test
+    public void rawLegacyLinkIsStoredReadAndPreservedAcrossReclassification() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle handle = table.allocate(RecordType.TYPE_2, 4, 5, 0).handle();
+        long before = table.rawLegacyPayload(handle);
+
+        assertEquals(Status.OK, table.writeAuxiliaryLink(handle, 6));
+        long linked = table.rawLegacyPayload(handle);
+        assertEquals(6, table.readAuxiliaryLink(handle).auxiliarySlot());
+        assertEquals(before & ~LegacyObjectRecordLinkCodec.LINK_MASK,
+                linked & ~LegacyObjectRecordLinkCodec.LINK_MASK);
+
+        assertEquals(Status.OK, table.reclassify(handle, RecordType.TYPE_5));
+        assertEquals(RecordType.TYPE_5, table.typeOf(handle).orElseThrow());
+        assertEquals(6, table.readAuxiliaryLink(handle).auxiliarySlot());
+        assertEquals(linked & ~ (0x7L << 28),
+                table.rawLegacyPayload(handle) & ~(0x7L << 28));
+    }
+
+    @Test
+    public void typeSevenRejectsLinkWritesAndReportsExplicitLinklessStatus() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle handle = table.allocate(RecordType.TYPE_7, 1, 2, 0).handle();
+        long before = table.rawLegacyPayload(handle);
+        assertEquals(Status.INVALID_ARGUMENT, table.writeAuxiliaryLink(handle, 0));
+        assertEquals(before, table.rawLegacyPayload(handle));
+        assertEquals(LegacyObjectRecordLinkCodec.Status.TYPE7_HAS_NO_LINK,
+                table.readAuxiliaryLink(handle).status());
+    }
+
+    @Test
+    public void rawLegacyPayloadSurvivesCheckpointRestoreAndStaleHandlesAreRejected() {
+        ObjectRecordTable source = new ObjectRecordTable();
+        ObjectHandle handle = source.allocate(RecordType.TYPE_2, 8, 9, 1).handle();
+        assertEquals(Status.OK, source.writeAuxiliaryLink(handle, 4));
+        long expected = source.rawLegacyPayload(handle);
+
+        ObjectRecordTable restored = new ObjectRecordTable();
+        assertEquals(Status.OK, restored.restore(source.snapshot()));
+        assertEquals(expected, restored.rawLegacyPayload(handle));
+        assertEquals(4, restored.readAuxiliaryLink(handle).auxiliarySlot());
+
+        assertEquals(Status.OK, restored.release(handle));
+        try {
+            restored.rawLegacyPayload(handle);
+            fail("stale handle must not expose raw payload");
+        } catch (IllegalArgumentException expectedFailure) {
+            // expected
+        }
+    }
+
+    @Test
+    public void invalidSnapshotTypeBitsDoNotReplaceLiveRawPayload() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle live = table.allocate(RecordType.TYPE_5, 2, 3, 0).handle();
+        assertEquals(Status.OK, table.writeAuxiliaryLink(live, 3));
+        long before = table.rawLegacyPayload(live);
+        ObjectRecordTable.Snapshot valid = table.snapshot();
+        java.util.List<ObjectRecordTable.RecordSnapshot> records =
+                new java.util.ArrayList<>(valid.records());
+        ObjectRecordTable.RecordSnapshot item = records.get(0);
+        records.set(0, new ObjectRecordTable.RecordSnapshot(item.slotId(), item.generation(),
+                RecordType.TYPE_5, item.anchorX(), item.anchorY(), item.anchorGroup(),
+                item.rawLegacyPayload() ^ (1L << 28)));
+        ObjectRecordTable.Snapshot corrupted = new ObjectRecordTable.Snapshot(
+                valid.schemaVersion(), records, valid.generations(), valid.tileLinks(),
+                valid.auxiliaryEntries());
+        assertEquals(Status.INVALID_SNAPSHOT, table.restore(corrupted));
+        assertEquals(before, table.rawLegacyPayload(live));
+        assertEquals(3, table.readAuxiliaryLink(live).auxiliarySlot());
+    }
 }
