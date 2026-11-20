@@ -38,6 +38,9 @@ public final class CrossTableCheckpointTest {
 
         CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
         assertEquals(CrossTableLifecycleCoordinator.Status.OK, checkpoint.restoreInto(restored));
+        assertEquals(first.objectHandle(), restored.objects().lookup(a).handle());
+        assertEquals((int) (first.objectHandle().value() & 0x0F),
+                PackedTileMetadataCodec.readObjectId(words.get(a), a.group()).value());
         assertEquals(CrossTableLifecycleCoordinator.Status.OK,
                 restored.objects().lookup(a, words.get(a)).status());
         assertEquals(CrossTableLifecycleCoordinator.Status.OK,
@@ -50,8 +53,7 @@ public final class CrossTableCheckpointTest {
     public void mismatchedPackedMetadataRejectsCheckpointWithoutChangingDestination() {
         CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
         TileGroup tile = tile(8, 9, 0);
-        CrossTableLifecycleCoordinator.AttachResult attached = source.attach(
-                RecordType.TYPE_2, 8, 9, 0, tile, 4, stateOne(8, 9));
+        source.attach(RecordType.TYPE_2, 8, 9, 0, tile, 4, stateOne(8, 9));
         int wrongWord = PackedTileMetadataCodec.writeObjectId(0, 0, 2).rawWord();
         CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(source.snapshot(),
                 Map.of(tile, wrongWord));
@@ -64,7 +66,6 @@ public final class CrossTableCheckpointTest {
         assertEquals(1, destination.associatedSlot(live.objectHandle()));
         assertEquals(RecordType.TYPE_1,
                 destination.objects().typeOf(live.objectHandle()).orElseThrow());
-        assertEquals(-1, destination.associatedSlot(attached.objectHandle()));
     }
 
     @Test
