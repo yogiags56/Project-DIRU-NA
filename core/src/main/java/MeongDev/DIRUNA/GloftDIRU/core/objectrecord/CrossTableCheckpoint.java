@@ -31,6 +31,33 @@ public final class CrossTableCheckpoint {
                 packedMetadataWords == null ? Map.of() : packedMetadataWords));
     }
 
+    /**
+     * Explicit adapter for a pre-envelope coordinator snapshot.
+     *
+     * Older in-memory snapshots did not carry the packed tile words. They can
+     * be upgraded without extra data only when there are no tile links. If
+     * links exist, callers must provide the corresponding packed words; the
+     * adapter never guesses object IDs or reconstructs opaque metadata bits.
+     *
+     * This adapts the current model Snapshot API. It is not a parser for an
+     * undocumented historical on-disk save format.
+     */
+    public static CrossTableCheckpoint fromLegacySnapshot(
+            CrossTableLifecycleCoordinator.Snapshot legacySnapshot,
+            Map<ObjectRecordTable.TileGroup, Integer> packedMetadataWords) {
+        if (legacySnapshot == null || legacySnapshot.objectSnapshot() == null)
+            throw new IllegalArgumentException("legacy snapshot is required");
+        Map<ObjectRecordTable.TileGroup, Integer> links =
+                legacySnapshot.objectSnapshot().tileLinks();
+        if (links == null)
+            throw new IllegalArgumentException("legacy snapshot tile links are unavailable");
+        if (!links.isEmpty() && packedMetadataWords == null)
+            throw new IllegalArgumentException(
+                    "packed metadata is required when legacy snapshot contains tile links");
+        return new CrossTableCheckpoint(CURRENT_SCHEMA_VERSION, legacySnapshot,
+                packedMetadataWords == null ? Map.of() : packedMetadataWords);
+    }
+
     public int schemaVersion() { return schemaVersion; }
 
     public CrossTableLifecycleCoordinator.Snapshot lifecycleSnapshot() {
