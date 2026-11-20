@@ -15,7 +15,8 @@ public final class CrossTableLifecycleCoordinator {
     public enum Status {
         OK, INVALID_ARGUMENT, OBJECT_ALLOCATION_FAILED, TILE_LINK_FAILED,
         AUXILIARY_SLOT_OCCUPIED, UNREPRESENTABLE_LINK, INVALID_AUXILIARY_STATE,
-        NO_ASSOCIATION, TRANSITION_REJECTED, CONSUME_REJECTED, INVALID_SNAPSHOT
+        NO_ASSOCIATION, TRANSITION_REJECTED, CONSUME_REJECTED, INVALID_SNAPSHOT,
+        SOURCE_ASSOCIATION_MISMATCH, TARGET_ALREADY_ASSOCIATED, TARGET_AUXILIARY_CONFLICT
     }
 
     public record AttachResult(Status status, ObjectRecordTable.ObjectHandle objectHandle,
@@ -146,6 +147,71 @@ public final class CrossTableLifecycleCoordinator {
         objects.setAuxiliaryEntryRaw(slot, result.remainingRawEntry());
         associations.remove(handle.value());
         return new OperationResult(Status.OK, 0L);
+    }
+
+    /**
+     * Replaces the object currently referenced by targetTile with Type-2,
+     * transferring the source object's auxiliary association to that target.
+     * The source must already have no tile references, as required by the
+     * source-observed release ordering.
+     */
+    public synchronized OperationResult replaceFromTileMetadata(
+            ObjectRecordTable.ObjectHandle sourceHandle,
+            ObjectRecordTable.TileGroup targetTile) {
+        if (sourceHandle == null || targetTile == null)
+            return new OperationResult(Status.INVALID_ARGUMENT, 0L);
+
+        Integer sourceSlot = associations.get(sourceHandle.value());
+        if (sourceSlot == null)
+            return new OperationResult(Status.NO_ASSOCIATION, 0L);
+        if (objects.typeOf(sourceHandle).isEmpty())
+            return new OperationResult(Status.NO_ASSOCIATION, 0L);
+
+        LegacyObjectRecordLinkCodec.ReadResult sourceLink =
+                objects.readAuxiliaryLink(sourceHandle);
+        if (!sourceLink.succeeded() || sourceLink.auxiliarySlot() != sourceSlot)
+            return new OperationResult(Status.SOURCE_ASSOCIATION_MISMATCH,
+                    objects.auxiliaryEntryRaw(sourceSlot));
+
+        int sourceState = AuxiliaryEntryStateMachine.state(
+                objects.auxiliaryEntryRaw(sourceSlot));
+        if (sourceState != AuxiliaryEntryStateMachine.STATE_ALLOCATED
+                && sourceState != AuxiliaryEntryStateMachine.STATE_READY)
+            return new OperationResult(Status.INVALID_AUXILIARY_STATE,
+                    objects.auxiliaryEntryRaw(sourceSlot));
+
+        ObjectRecordTable.LookupResult targetLookup = objects.lookup(targetTile);
+        if (!targetLookup.succeeded())
+            return new OperationResult(Status.TRANSITION_REJECTED, 0L);
+        ObjectRecordTable.ObjectHandle targetHandle = targetLookup.handle();
+        if (sourceHandle.equals(targetHandle))
+            return new OperationResult(Status.TRANSITION_REJECTED, 0L);
+        if (associations.containsKey(targetHandle.value()))
+            return new OperationResult(Status.TARGET_ALREADY_ASSOCIATED,
+                    objects.auxiliaryEntryRaw(associations.get(targetHandle.value())));
+
+        // Do not silently overwrite a target's independently active auxiliary
+        // entry. A matching raw slot is the source association being transferred.
+        if (targetLookup.type() != ObjectRecordTable.RecordType.TYPE_7) {
+            long targetRaw = objects.rawLegacyPayload(targetHandle);
+            int targetSlot = LegacyObjectRecordLinkCodec.readRawField(targetRaw);
+            int targetState = AuxiliaryEntryStateMachine.state(
+                    objects.auxiliaryEntryRaw(targetSlot));
+            if (targetSlot != sourceSlot
+                    && targetState != AuxiliaryEntryStateMachine.STATE_EMPTY)
+                return new OperationResult(Status.TARGET_AUXILIARY_CONFLICT,
+                        objects.auxiliaryEntryRaw(targetSlot));
+        }
+
+        ObjectRecordTable.Status replaced =
+                objects.replaceFromTileMetadata(sourceHandle, targetTile);
+        if (replaced != ObjectRecordTable.Status.OK)
+            return new OperationResult(Status.TRANSITION_REJECTED,
+                    objects.auxiliaryEntryRaw(sourceSlot));
+
+        associations.remove(sourceHandle.value());
+        associations.put(targetHandle.value(), sourceSlot);
+        return new OperationResult(Status.OK, objects.auxiliaryEntryRaw(sourceSlot));
     }
 
     public synchronized Snapshot snapshot() {
