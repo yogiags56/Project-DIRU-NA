@@ -223,12 +223,13 @@ public final class ObjectRecordTable {
                                                        RecordType targetType) {
         if (sourceHandle == null || targetHandle == null || targetType == null)
             return Status.INVALID_ARGUMENT;
-        if (sourceHandle.equals(targetHandle) || targetType == RecordType.TYPE_7)
+        if (sourceHandle.equals(targetHandle) || targetType != RecordType.TYPE_2)
             return Status.INVALID_TRANSITION;
         Record source = resolve(sourceHandle);
         Record target = resolve(targetHandle);
         if (source == null || target == null) return Status.STALE_HANDLE;
-        if (source.type == RecordType.TYPE_7 || target.type == RecordType.TYPE_7)
+        if ((source.type != RecordType.TYPE_1 && source.type != RecordType.TYPE_6)
+                || target.type == RecordType.TYPE_7)
             return Status.INVALID_TRANSITION;
 
         Snapshot before = snapshot();
