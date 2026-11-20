@@ -70,9 +70,15 @@ Zero is the cleared/empty value: the state-4 consumer explicitly assigns `0L` to
 
 ### State 1 and unknown values
 
-No explicit auxiliary state-1 writer was identified in this textual call-site audit. The reader does not reject other state values, but the state-4 consumer ignores every state except 3. Values 4..15 are not semantically classified.
+The four-argument byte-indexed allocator at lines 15863–15884 creates a new auxiliary entry with state 1, then writes subtype, movement value, and both coordinates.
 
-**Important unresolved anomaly:** the audited source exposes the packed setter and the direct clear, but the visible setter call sites found in the file write state 2; no visible call site writes state 3. The state-3 consumer is present, but its producer is not identified in this decompiled source scan. Do not invent a state-3 producer or conclude the branch is unreachable. Possible explanations (such as missing external mutation, decompiler/source incompleteness, or state restored from another path) remain hypotheses only.
+A separate movement transition writes state 3 at line 16144:
+`aVoid(b21, (byte) 3, (byte) 0, (byte) 4)`.
+Here `b21` is the zero-based auxiliary slot index read from the linked aLongArr record's offset-54, width-3 field. The surrounding branch has already resolved the linked movement entry and updates the object/movement state before marking the auxiliary entry as state 3.
+
+Therefore, the producer for state 3 is identified in the current decompiled source. This corrects the preliminary conclusion of this DEV-003BM draft. State 3 is a transition state on an existing linked auxiliary entry, not a state written by the two state-2 call sites.
+
+Values 4..15 are still not semantically classified. The exact bytecode parity of this transition remains unverified because the checked-in upstream classfile is historical and not proven to match the 2025 source revision.
 
 ## 4. Cross-table transition matrix
 
@@ -82,6 +88,7 @@ No explicit auxiliary state-1 writer was identified in this textual call-site au
 | Checkpoint save | Copy all 15 entries to `dLongArr` | Copy all 15 entries to `cLongArr` | Copy metadata grid to checkpoint grid |
 | Checkpoint restore | Restore all 15 entries from `dLongArr` | Restore all 15 entries from `cLongArr` | Restore metadata grid |
 | Controller state 4, entry state 3 | Read coordinates/direction, then clear entry | Type-7 record may be allocated/attached through six-argument allocator | Type-7 attachment path calls tile metadata cleanup/update |
+| Movement transition near line 16144 | Linked entry state 1 becomes 3 | Uses auxiliary slot index stored in aLongArr offset 54 | Associated movement/object record is updated |
 | Controller path near line 16605 | Set matched entry state to 2 | Subsequent processing may create or attach an object record | Updated by corresponding traversal helpers |
 | `mVoid(x,y)` | Set matched entry state to 2 | Calls six-argument allocator with type 0 | Stage-player-layer cell is set to -1 |
 | Teardown | Set reference to null | Set reference to null | Metadata arrays also released |
@@ -100,13 +107,13 @@ No typed auxiliary-record model was added in this milestone. The current native 
 
 Reason: state-3 production is not accounted for, fields 6..12 and 27..63 remain unexplained, and coordinate lookup accepts any state. Introducing a typed state machine now would encode assumptions as facts.
 
-## 7. Next milestone: DEV-003BN — State-3 Producer Hunt & Original-JAR Cross-Check
+## 7. Correction and next milestone: DEV-003BN — State-3 Transition Preconditions & Binary Provenance
 
-1. Trace every method that can reach the auxiliary packed setter, including overloaded/decompiler-ambiguous call sites.
-2. Inspect the original shipping JAR bytecode for the setter, state-4 consumer, and all callers.
-3. Determine whether state 3 is created by a missed call site, restored checkpoint data, or another mutation path.
-4. Identify the meanings (if any) of bits 6..12 and 27..63.
-5. Validate coordinate bounds and duplicate-coordinate behavior.
-6. Only after this evidence is complete, decide whether to add a typed auxiliary record API and transition tests.
+1. Prove the state-1 to state-3 transition preconditions around line 16144 and the source of b21.
+2. Validate the three-bit aLongArr offset-54 link against the zero-based bLongArr slot domain.
+3. Inspect the exact original shipping JAR/class set when supplied; the upstream historical target/classes/i.class is not a matching binary.
+4. Trace the consumer's behavior after state 3, including direction-specific branches and whole-entry clear.
+5. Keep bits 6..12 and 27..63 explicitly unknown unless further readers/writers establish meaning.
+6. Add typed transition tests only for semantics supported by source and binary evidence.
 
 No gameplay code was changed in DEV-003BM. No CI or runtime pass is claimed by this source-audit document.
