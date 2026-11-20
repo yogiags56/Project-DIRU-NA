@@ -253,6 +253,21 @@ public final class CrossTableLifecycleCoordinator {
             validated.put(handleValue, slot);
         }
 
+
+        // Reverse invariant: a nonzero packed link is meaningful and must have
+        // exactly the matching sidecar owner. Zero remains ambiguous because
+        // it can represent either an unassociated default record or slot 0.
+        for (ObjectRecordTable.RecordSnapshot record : snapshot.objectSnapshot().records()) {
+            if (record == null || record.type() == ObjectRecordTable.RecordType.TYPE_7)
+                continue;
+            int packedSlot = LegacyObjectRecordLinkCodec.readRawField(
+                    record.rawLegacyPayload());
+            if (packedSlot == 0) continue;
+            long handleValue = (((long) record.generation()) << 4) | record.slotId();
+            Integer associatedSlot = validated.get(handleValue);
+            if (associatedSlot == null || associatedSlot != packedSlot)
+                return Status.INVALID_SNAPSHOT;
+        }
         ObjectRecordTable.Status restored = objects.restore(snapshot.objectSnapshot());
         if (restored != ObjectRecordTable.Status.OK) return Status.INVALID_SNAPSHOT;
         associations.clear();
