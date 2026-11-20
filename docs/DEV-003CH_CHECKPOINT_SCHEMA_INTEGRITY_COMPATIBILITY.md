@@ -2,7 +2,7 @@
 
 ## Scope
 
-This milestone introduces an outer checkpoint schema version and strengthens tests for schema rejection and packed-metadata immutability. It remains in validation because the cross-group guarded lookup integration test is still failing.
+This milestone introduces an outer checkpoint schema version and strengthens tests for schema rejection and packed-metadata immutability. The cross-group guarded lookup test initially failed during DEV-003CG validation. The test fixture was updated to derive packed object IDs from the serialized tile-link map, and diagnostic assertions were added for both metadata groups. The latest complete workflow then passed.
 
 ## Implemented
 
@@ -17,11 +17,17 @@ The packed metadata map is copied into a new `HashMap` and exposed through an un
 - exposed packed metadata map cannot be mutated;
 - null metadata map is treated as empty and rejected when the snapshot contains tile links.
 
-## CI investigation
+## CI investigation and final validation
 
-DEV-003CG CI failed in `CrossTableCheckpointTest.checkpointRestoresAllPackedMetadataLinksAndCoordinatorState`. The first metadata group guarded lookup passes in the diagnostic run; the second metadata group is the remaining failure. The test now emits the second group's guarded lookup status, tile key, raw word, decoded ID, and map-only handle to identify the exact mismatch. Do not mark DEV-003CH complete until this failure is resolved and the full core test suite plus Android debug APK build pass.
+Earlier DEV-003CG workflow runs failed in `CrossTableCheckpointTest.checkpointRestoresAllPackedMetadataLinksAndCoordinatorState`. The test fixture now derives packed IDs directly from the serialized tile-link map, and diagnostic assertions report both metadata-group lookup outcomes. The final diagnostic commit completed successfully:
 
-Earlier DEV-003CG runs failed in Core JVM tests, so Android debug APK assembly was skipped. The standalone checkpoint-envelope implementation commit did pass CI, but that does not validate the failing integration test.
+- Core JVM tests: **success** (305 tests completed in this workflow; no failures reported).
+- Android debug APK assembly: **success**.
+- APK artifact upload: **success**.
+
+Workflow: `44795118276` — https://github.com/yogiags56/Project-DIRU-NA/actions/runs/44795118276
+
+This confirms the current checkpoint schema and cross-group tests pass CI. It does not prove compatibility with historical serialized checkpoint files or original-game runtime parity.
 
 ## Commits
 
@@ -31,10 +37,10 @@ Earlier DEV-003CG runs failed in Core JVM tests, so Android debug APK assembly w
 - Guarded lookup diagnostics: `a144e6fe2a7d6ed93a4d8e7df599947c576703c1`
 - Second-group diagnostics: `b2d3c4b839d1537f2f4eee2fa0ac7f65bb5662ec`
 
-## Next action — DEV-003CH-FIX
+## Next milestone — DEV-003CI: Legacy Checkpoint Compatibility Policy
 
-1. Read the latest diagnostic CI output for the second metadata group.
-2. Fix the underlying codec, tile-group, or test fixture mismatch based on observed values; do not weaken the assertion.
-3. Add explicit round-trip assertions for groups 0, 1, and 2 using distinct nonzero IDs.
-4. Re-run all core JVM tests and Android debug APK assembly.
-5. Only after a green workflow, proceed to legacy checkpoint compatibility policy.
+1. Define the canonical serialized envelope fields and schema migration rules.
+2. Decide whether pre-envelope snapshots are rejected, upgraded through an explicit adapter, or accepted only when packed metadata is supplied separately.
+3. Test unknown future schema versions, missing envelope fields, and empty-world snapshots.
+4. Preserve strict atomic restore and avoid guessing missing packed metadata.
+5. Document that passing native model tests is not proof of compatibility with the original game's save format.
