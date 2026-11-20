@@ -481,4 +481,73 @@ public final class ObjectRecordTableTest {
         assertEquals(5, table.readAuxiliaryLink(target).auxiliarySlot());
         assertEquals(Status.STALE_HANDLE, table.release(source));
     }
+
+    @Test
+    public void replacementResolvesTargetFromExactTileGroupMetadata() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_6, 1, 1, 0).handle();
+        ObjectHandle decoy = table.allocate(RecordType.TYPE_1, 5, 6, 0).handle();
+        ObjectHandle target = table.allocateType7(5, 6, 1).handle();
+        TileGroup groupZero = tile(5, 6, 0);
+        TileGroup groupOne = tile(5, 6, 1);
+        assertEquals(Status.OK, table.link(groupZero, decoy));
+        assertEquals(Status.OK, table.link(groupOne, target));
+        assertEquals(Status.OK, table.writeAuxiliaryLink(source, 6));
+
+        assertEquals(Status.OK, table.replaceFromTileMetadata(source, groupOne));
+        assertEquals(RecordType.TYPE_1, table.typeOf(decoy).orElseThrow());
+        assertEquals(RecordType.TYPE_2, table.typeOf(target).orElseThrow());
+        assertEquals(6, table.readAuxiliaryLink(target).auxiliarySlot());
+        assertEquals(Status.OK, table.lookup(groupOne).status());
+        assertEquals(target, table.lookup(groupOne).handle());
+        assertEquals(Status.STALE_HANDLE, table.release(source));
+    }
+
+    @Test
+    public void replacementMetadataLookupDoesNotFallBackToAnotherGroup() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_1, 2, 3, 0).handle();
+        ObjectHandle otherGroup = table.allocate(RecordType.TYPE_2, 8, 9, 0).handle();
+        assertEquals(Status.OK, table.link(tile(8, 9, 2), otherGroup));
+        assertEquals(Status.NO_LINK,
+                table.replaceFromTileMetadata(source, tile(8, 9, 1)));
+        assertEquals(RecordType.TYPE_1, table.typeOf(source).orElseThrow());
+        assertEquals(RecordType.TYPE_2, table.typeOf(otherGroup).orElseThrow());
+    }
+
+    @Test
+    public void replacementFromMetadataRollsBackWhenSourceStillHasTileReferences() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_6, 1, 1, 0).handle();
+        ObjectHandle target = table.allocate(RecordType.TYPE_1, 4, 4, 1).handle();
+        TileGroup sourceTile = tile(1, 1, 0);
+        TileGroup targetTile = tile(4, 4, 1);
+        assertEquals(Status.OK, table.link(sourceTile, source));
+        assertEquals(Status.OK, table.link(targetTile, target));
+        assertEquals(Status.OK, table.writeAuxiliaryLink(source, 3));
+        long targetBefore = table.rawLegacyPayload(target);
+
+        assertEquals(Status.OBJECT_STILL_REFERENCED,
+                table.replaceFromTileMetadata(source, targetTile));
+        assertEquals(RecordType.TYPE_6, table.typeOf(source).orElseThrow());
+        assertEquals(RecordType.TYPE_1, table.typeOf(target).orElseThrow());
+        assertEquals(targetBefore, table.rawLegacyPayload(target));
+        assertEquals(3, table.readAuxiliaryLink(source).auxiliarySlot());
+        assertEquals(1, table.referenceCount(source));
+        assertEquals(1, table.referenceCount(target));
+    }
+
+    @Test
+    public void replacementMetadataRejectsSelfTargetAndStaleSource() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_1, 3, 3, 0).handle();
+        TileGroup tile = tile(3, 3, 0);
+        assertEquals(Status.OK, table.link(tile, source));
+        assertEquals(Status.INVALID_TRANSITION,
+                table.replaceFromTileMetadata(source, tile));
+        assertEquals(Status.OK, table.unlink(tile));
+        assertEquals(Status.OK, table.release(source));
+        assertEquals(Status.STALE_HANDLE,
+                table.replaceFromTileMetadata(source, tile));
+    }
 }
