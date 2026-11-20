@@ -19,7 +19,7 @@ public final class PackedTileMetadataCodec {
     public static final int UPPER_FIELD_WIDTH = 2;
     private static final int GROUP_MASK = (1 << BITS_PER_GROUP) - 1;
 
-    public enum Status { OK, INVALID_GROUP, INVALID_FIELD, VALUE_OUT_OF_RANGE }
+    public enum Status { OK, NO_OBJECT_REFERENCE, INVALID_GROUP, INVALID_FIELD, VALUE_OUT_OF_RANGE }
 
     public record ReadResult(Status status, int value) {
         public boolean succeeded() { return status == Status.OK; }
@@ -56,6 +56,18 @@ public final class PackedTileMetadataCodec {
 
     public static ReadResult readObjectId(int rawWord, int group) {
         return readField(rawWord, group, OBJECT_ID_OFFSET, OBJECT_ID_WIDTH);
+    }
+
+    /**
+     * Safe native interpretation for tile lookups: zero means no resolvable
+     * tile reference. Use readObjectId() when the raw legacy bits themselves
+     * must be preserved or inspected; do not use zero as an array index.
+     */
+    public static ReadResult readObjectReference(int rawWord, int group) {
+        ReadResult raw = readObjectId(rawWord, group);
+        if (!raw.succeeded()) return raw;
+        if (raw.value() == 0) return new ReadResult(Status.NO_OBJECT_REFERENCE, 0);
+        return raw;
     }
 
     public static WriteResult writeObjectId(int rawWord, int group, int objectId) {
