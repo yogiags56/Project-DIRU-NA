@@ -146,7 +146,8 @@ public class CrossTableCheckpointBinaryCodecTest {
         assertEquals(ObjectRecordTable.Status.OK, table.link(tile(12, 34, 1), allocated.handle()));
         ObjectRecordTable.Snapshot snapshot = table.snapshot();
         ObjectRecordTable.RecordSnapshot original = snapshot.records().get(0);
-        long raw = original.rawLegacyPayload() | 0x1234567800000000L | 0x00000000000055AAL;
+        long opaqueHighBits = 0x1234567800000000L & ~LegacyObjectRecordLinkCodec.LINK_MASK;
+        long raw = original.rawLegacyPayload() | opaqueHighBits | 0x00000000000055AAL;
         ObjectRecordTable.RecordSnapshot withOpaque = new ObjectRecordTable.RecordSnapshot(
                 original.slotId(), original.generation(), original.type(),
                 original.anchorX(), original.anchorY(), original.anchorGroup(), raw);
