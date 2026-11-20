@@ -38,6 +38,9 @@ jobs:
       - name: Run core JVM tests
         run: ./gradlew --no-daemon --stacktrace :core:test
 
+      - name: Run Android storage unit tests
+        run: ./gradlew --no-daemon --stacktrace :app:testDebugUnitTest
+
       - name: Assemble Android debug APK
         run: ./gradlew --no-daemon --stacktrace :app:assembleDebug
 
