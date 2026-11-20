@@ -52,6 +52,20 @@ public class AndroidCheckpointStorageTest {
         assertTrue(store.hasRecoverableFile());
     }
 
+    @Test public void loadCandidateDoesNotMutateCoordinatorUntilExplicitApply() throws Exception {
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        store.write(validEmptyCheckpoint());
+
+        AndroidCheckpointLoadResult candidate =
+                new AndroidCheckpointStorage(context).loadCandidate();
+        assertTrue(candidate.restored());
+        assertNotNull(candidate.checkpoint());
+
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, candidate.applyTo(destination));
+    }
+
     @Test public void loadSafelyDistinguishesMissingCheckpoint() {
         AndroidCheckpointLoadResult result =
                 new AndroidCheckpointStorage(context).loadSafelyInto(
