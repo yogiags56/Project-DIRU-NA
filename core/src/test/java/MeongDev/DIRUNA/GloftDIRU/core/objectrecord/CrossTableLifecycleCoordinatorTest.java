@@ -280,8 +280,40 @@ public final class CrossTableLifecycleCoordinatorTest {
                 result.status());
         assertEquals(1, coordinator.associatedSlot(source.objectHandle()));
         assertEquals(2, coordinator.associatedSlot(target.objectHandle()));
-        assertEquals(RecordType.TYPE_2,
+        assertEquals(RecordType.TYPE_1,
                 coordinator.objects().typeOf(source.objectHandle()).orElseThrow());
+    }
+
+    @Test
+    public void replacementPreservesAuxiliaryPayloadInStateOneAndStateThree() {
+        for (boolean ready : new boolean[]{false, true}) {
+            CrossTableLifecycleCoordinator coordinator = new CrossTableLifecycleCoordinator();
+            TileGroup sourceTile = tile(1, 2, 0);
+            TileGroup targetTile = tile(5, 6, 1);
+            CrossTableLifecycleCoordinator.AttachResult source = coordinator.attach(
+                    RecordType.TYPE_6, 1, 2, 0, sourceTile, 3,
+                    stateOne(2, 0, 11, 13));
+            ObjectRecordTable.AllocationResult target =
+                    coordinator.objects().allocateType7(5, 6, 1);
+            assertEquals(ObjectRecordTable.Status.OK,
+                    coordinator.objects().link(targetTile, target.handle()));
+            assertEquals(ObjectRecordTable.Status.OK,
+                    coordinator.objects().unlink(sourceTile));
+            if (ready) {
+                assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                        coordinator.markReady(source.objectHandle()).status());
+            }
+            long auxiliaryBefore = coordinator.objects().auxiliaryEntryRaw(3);
+
+            assertEquals(CrossTableLifecycleCoordinator.Status.OK,
+                    coordinator.replaceFromTileMetadata(source.objectHandle(), targetTile).status());
+            assertEquals(auxiliaryBefore, coordinator.objects().auxiliaryEntryRaw(3));
+            assertEquals(3, coordinator.associatedSlot(target.handle()));
+            assertEquals(ready ? AuxiliaryEntryStateMachine.STATE_READY
+                            : AuxiliaryEntryStateMachine.STATE_ALLOCATED,
+                    AuxiliaryEntryStateMachine.state(
+                            coordinator.objects().auxiliaryEntryRaw(3)));
+        }
     }
 
     @Test
