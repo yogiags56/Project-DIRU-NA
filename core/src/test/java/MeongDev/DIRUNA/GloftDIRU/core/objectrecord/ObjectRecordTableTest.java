@@ -467,4 +467,18 @@ public final class ObjectRecordTableTest {
                 & LegacyObjectRecordLinkCodec.LINK_MASK);
         assertEquals(RecordType.TYPE_7, table.typeOf(live).orElseThrow());
     }
+
+    @Test
+    public void replacementMayOverwriteResolvedTypeSevenTargetAsTypeTwo() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        ObjectHandle source = table.allocate(RecordType.TYPE_6, 1, 1, 0).handle();
+        ObjectHandle target = table.allocateType7(2, 2, 0).handle();
+        assertEquals(Status.OK, table.writeAuxiliaryLink(source, 5));
+
+        assertEquals(Status.OK,
+                table.replaceAndTransferLink(source, target, RecordType.TYPE_2));
+        assertEquals(RecordType.TYPE_2, table.typeOf(target).orElseThrow());
+        assertEquals(5, table.readAuxiliaryLink(target).auxiliarySlot());
+        assertEquals(Status.STALE_HANDLE, table.release(source));
+    }
 }
