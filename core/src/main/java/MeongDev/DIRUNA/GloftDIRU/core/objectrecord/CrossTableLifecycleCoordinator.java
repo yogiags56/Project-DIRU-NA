@@ -91,6 +91,13 @@ public final class CrossTableLifecycleCoordinator {
             return new AttachResult(Status.TILE_LINK_FAILED, null, auxiliarySlot);
         }
 
+        ObjectRecordTable.Status rawLinkStatus =
+                objects.writeAuxiliaryLink(allocation.handle(), auxiliarySlot);
+        if (rawLinkStatus != ObjectRecordTable.Status.OK) {
+            objects.restore(before);
+            return new AttachResult(Status.UNREPRESENTABLE_LINK, null, auxiliarySlot);
+        }
+
         objects.setAuxiliaryEntryRaw(auxiliarySlot, stateOneRaw);
         associations.put(allocation.handle().value(), auxiliarySlot);
         return new AttachResult(Status.OK, allocation.handle(), auxiliarySlot);
@@ -104,6 +111,10 @@ public final class CrossTableLifecycleCoordinator {
         if (objects.typeOf(handle).isEmpty())
             return new OperationResult(Status.NO_ASSOCIATION, 0L);
 
+        LegacyObjectRecordLinkCodec.ReadResult packedLink =
+                objects.readAuxiliaryLink(handle);
+        if (!packedLink.succeeded() || packedLink.auxiliarySlot() != slot)
+            return new OperationResult(Status.NO_ASSOCIATION, objects.auxiliaryEntryRaw(slot));
         long raw = objects.auxiliaryEntryRaw(slot);
         AuxiliaryEntryStateMachine.TransitionResult result =
                 AuxiliaryEntryStateMachine.markReady(raw, slot, slot);
@@ -122,6 +133,10 @@ public final class CrossTableLifecycleCoordinator {
         if (objects.typeOf(handle).isEmpty())
             return new OperationResult(Status.NO_ASSOCIATION, 0L);
 
+        LegacyObjectRecordLinkCodec.ReadResult packedLink =
+                objects.readAuxiliaryLink(handle);
+        if (!packedLink.succeeded() || packedLink.auxiliarySlot() != slot)
+            return new OperationResult(Status.NO_ASSOCIATION, objects.auxiliaryEntryRaw(slot));
         long raw = objects.auxiliaryEntryRaw(slot);
         AuxiliaryEntryStateMachine.ConsumeResult result =
                 AuxiliaryEntryStateMachine.consume(raw);
@@ -161,7 +176,10 @@ public final class CrossTableLifecycleCoordinator {
             }
             int auxiliaryState = AuxiliaryEntryStateMachine.state(
                     candidate.auxiliaryEntryRaw(slot));
+            LegacyObjectRecordLinkCodec.ReadResult packedLink =
+                    candidate.readAuxiliaryLink(handle);
             if (candidate.typeOf(handle).isEmpty()
+                    || !packedLink.succeeded() || packedLink.auxiliarySlot() != slot
                     || (auxiliaryState != AuxiliaryEntryStateMachine.STATE_ALLOCATED
                     && auxiliaryState != AuxiliaryEntryStateMachine.STATE_READY)
                     || validated.containsValue(slot))
