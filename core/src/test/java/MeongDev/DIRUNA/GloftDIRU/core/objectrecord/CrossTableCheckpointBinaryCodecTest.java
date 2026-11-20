@@ -310,6 +310,27 @@ public class CrossTableCheckpointBinaryCodecTest {
         assertTrue("mutation sweep should reject at least some mutated payloads", rejected > 0);
     }
 
+
+    @Test
+    public void duplicateTileKeysInBinaryPayloadAreRejected() throws Exception {
+        byte[] encoded = CrossTableCheckpointBinaryCodec.encode(sampleCheckpoint());
+        // Two records (20 + 2*32), fixed generations (4 + 15*4), then tile count.
+        int linksStart = 20 + 2 * 32 + 4 + 15 * 4 + 4;
+        // Each tile link is X, Y, group, slot (four 32-bit words).
+        System.arraycopy(encoded, linksStart, encoded, linksStart + 20, 12);
+        assertDecodeRejected(encoded);
+    }
+
+    @Test
+    public void duplicateAssociationHandlesInBinaryPayloadAreRejected() throws Exception {
+        byte[] encoded = CrossTableCheckpointBinaryCodec.encode(sampleCheckpoint());
+        int associationsCountOffset = 20 + 2 * 32 + 4 + 15 * 4
+                + 4 + 2 * 20 + 4 + 15 * 8;
+        int associationsStart = associationsCountOffset + 4;
+        System.arraycopy(encoded, associationsStart, encoded, associationsStart + 12, 8);
+        assertDecodeRejected(encoded);
+    }
+
     private static void assertDecodeRejected(byte[] bytes) throws Exception {
         try {
             CrossTableCheckpointBinaryCodec.decode(bytes);
