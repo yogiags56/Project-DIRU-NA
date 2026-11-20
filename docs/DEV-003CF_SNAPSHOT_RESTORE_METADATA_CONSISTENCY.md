@@ -8,6 +8,8 @@ Review of the added `packedMetadataRoundTripsAndClearsEachGroupIndependently` te
 
 Correction commit: `947200f97cd5e17183e096dc6466cf9a7c45d8ac`.
 
+DEV-003CF test commit: `1a3e6d3cede8b79b1e8ae648affb024a956745c6`.
+
 ## Snapshot/restore implementation audit
 
 `ObjectRecordTable.snapshot()` serializes occupied records, generation counters, tile-link map, and auxiliary entries. Per-record reverse-reference sets are deliberately not serialized.
@@ -18,13 +20,13 @@ This design makes restore atomic with respect to validation failure and ensures 
 
 ## New snapshot/restore regression tests
 
-Three tests were added to `ObjectRecordTableTest`:
+Three focused tests were added to `ObjectRecordTableTest`:
 
-1. `snapshotRestorePreservesPackedMetadataLinkAndClearedGroups`: creates records linked through separate metadata groups, clears/unlinks one group, snapshots/restores the object table, then verifies the cleared group remains unlinked, the other groups resolve, and their reference counts are rebuilt.
+1. `packedMetadataLinksSurviveSnapshotRestoreWithOneClearedGroup`: creates records linked through three metadata groups, clears/unlinks the middle group, snapshots/restores the object table, then verifies the cleared group remains unlinked, the other groups resolve through their packed metadata, and reverse-reference counts are rebuilt.
 
-2. `snapshotRestoreKeepsReleasedSlotGenerationAndOldHandleStale`: releases a record, reuses its slot, snapshots/restores, and verifies the old generation-bearing handle remains stale while the replacement handle resolves.
+2. `snapshotRestorePreservesSlotReuseGenerationAndOldHandleStaysStale`: releases a record, reuses its slot, snapshots/restores, and verifies the old generation-bearing handle remains stale while the replacement handle resolves.
 
-3. `restoreRejectsMissingRecordForTileLinkAtomically`: corrupts a snapshot so a tile link points to a missing object slot; restore must return `INVALID_SNAPSHOT` and leave the pre-existing live table unchanged.
+3. `missingRecordTileLinkSnapshotRestoreIsAtomic`: corrupts a snapshot so a tile link points to a missing object slot; restore must return `INVALID_SNAPSHOT` and leave the pre-existing live table unchanged.
 
 ## Important scope distinction
 
