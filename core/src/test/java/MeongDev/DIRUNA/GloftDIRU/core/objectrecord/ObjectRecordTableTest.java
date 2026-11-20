@@ -550,4 +550,55 @@ public final class ObjectRecordTableTest {
         assertEquals(Status.STALE_HANDLE,
                 table.replaceFromTileMetadata(source, tile));
     }
+
+    @Test
+    public void guardedMetadataLookupResolvesMatchingNonzeroId() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        AllocationResult allocated = table.allocate(RecordType.TYPE_5, 4, 5, 1);
+        TileGroup tile = tile(4, 5, 1);
+        assertEquals(Status.OK, table.link(tile, allocated.handle()));
+        int raw = PackedTileMetadataCodec.writeObjectId(0, 1, allocated.slotId()).rawWord();
+
+        LookupResult result = table.lookup(tile, raw);
+        assertEquals(Status.OK, result.status());
+        assertEquals(allocated.handle(), result.handle());
+        assertEquals(RecordType.TYPE_5, result.type());
+    }
+
+    @Test
+    public void guardedMetadataLookupTreatsZeroAsNoLinkWithoutIndexing() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        TileGroup tile = tile(4, 5, 1);
+        LookupResult result = table.lookup(tile, 0);
+        assertEquals(Status.NO_LINK, result.status());
+        assertNull(result.handle());
+    }
+
+    @Test
+    public void guardedMetadataLookupRejectsMismatchBetweenRawWordAndLinkMap() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        AllocationResult first = table.allocate(RecordType.TYPE_1, 1, 1, 0);
+        AllocationResult second = table.allocate(RecordType.TYPE_2, 2, 2, 0);
+        TileGroup tile = tile(1, 1, 0);
+        assertEquals(Status.OK, table.link(tile, first.handle()));
+        int mismatchedRaw = PackedTileMetadataCodec.writeObjectId(0, 0,
+                second.slotId()).rawWord();
+
+        assertEquals(Status.TILE_METADATA_MISMATCH,
+                table.lookup(tile, mismatchedRaw).status());
+        assertEquals(RecordType.TYPE_1, table.typeOf(first.handle()).orElseThrow());
+        assertEquals(RecordType.TYPE_2, table.typeOf(second.handle()).orElseThrow());
+    }
+
+    @Test
+    public void guardedMetadataLookupRejectsStaleLinkMapEntry() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        AllocationResult allocated = table.allocate(RecordType.TYPE_1, 1, 1, 0);
+        TileGroup tile = tile(1, 1, 0);
+        assertEquals(Status.OK, table.link(tile, allocated.handle()));
+        int raw = PackedTileMetadataCodec.writeObjectId(0, 0, allocated.slotId()).rawWord();
+        assertEquals(Status.OK, table.unlink(tile));
+
+        assertEquals(Status.TILE_METADATA_MISMATCH, table.lookup(tile, raw).status());
+    }
 }
