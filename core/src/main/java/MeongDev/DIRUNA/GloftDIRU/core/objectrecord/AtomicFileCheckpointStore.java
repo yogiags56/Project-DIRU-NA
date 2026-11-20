@@ -15,12 +15,27 @@ import java.nio.file.StandardOpenOption;
  * falling back to a non-atomic replacement when the filesystem lacks support.
  */
 public final class AtomicFileCheckpointStore implements CheckpointStore {
+    interface AtomicMover {
+        void move(Path source, Path destination) throws IOException;
+    }
+
+    private static final AtomicMover NIO_ATOMIC_MOVER = (source, target) ->
+            Files.move(source, target,
+                    StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+
     private final Path destination;
+    private final AtomicMover mover;
 
     public AtomicFileCheckpointStore(Path destination) {
+        this(destination, NIO_ATOMIC_MOVER);
+    }
+
+    AtomicFileCheckpointStore(Path destination, AtomicMover mover) {
         if (destination == null || destination.getFileName() == null)
             throw new IllegalArgumentException("destination file is required");
+        if (mover == null) throw new IllegalArgumentException("atomic mover is required");
         this.destination = destination.toAbsolutePath().normalize();
+        this.mover = mover;
     }
 
     @Override
@@ -43,8 +58,7 @@ public final class AtomicFileCheckpointStore implements CheckpointStore {
                 channel.force(true);
             }
             try {
-                Files.move(temporary, destination,
-                        StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                mover.move(temporary, destination);
             } catch (AtomicMoveNotSupportedException ex) {
                 throw new IOException("atomic checkpoint replacement is not supported", ex);
             }
