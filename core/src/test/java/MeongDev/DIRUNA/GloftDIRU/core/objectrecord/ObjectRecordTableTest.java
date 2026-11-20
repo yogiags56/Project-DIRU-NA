@@ -601,4 +601,80 @@ public final class ObjectRecordTableTest {
 
         assertEquals(Status.TILE_METADATA_MISMATCH, table.lookup(tile, raw).status());
     }
+
+    @Test
+    public void packedMetadataRoundTripsAndClearsEachGroupIndependently() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        int raw = 0x15555555;
+        for (int group = 0; group < ObjectRecordTable.TILE_GROUP_COUNT; group++) {
+            TileGroup tile = tile(20 + group, 30, group);
+            AllocationResult allocated =
+                    table.allocate(RecordType.TYPE_5, 20 + group, 30, group);
+            assertEquals(Status.OK, table.link(tile, allocated.handle()));
+            PackedTileMetadataCodec.WriteResult written =
+                    PackedTileMetadataCodec.writeObjectId(raw, group, allocated.slotId());
+            assertEquals(PackedTileMetadataCodec.Status.OK, written.status());
+            raw = written.rawWord();
+
+            LookupResult found = table.lookup(tile, raw);
+            assertEquals(Status.OK, found.status());
+            assertEquals(allocated.handle(), found.handle());
+        }
+
+        for (int group = 0; group < ObjectRecordTable.TILE_GROUP_COUNT; group++) {
+            TileGroup tile = tile(20 + group, 30, group);
+            PackedTileMetadataCodec.WriteResult cleared =
+                    PackedTileMetadataCodec.clearGroup(raw, group);
+            assertEquals(PackedTileMetadataCodec.Status.OK, cleared.status());
+            raw = cleared.rawWord();
+            assertEquals(Status.NO_LINK, table.lookup(tile, raw).status());
+            assertEquals(Status.OK, table.unlink(tile));
+            assertEquals(0, PackedTileMetadataCodec.readField(
+                    raw, group, 0, 9).value());
+            for (int other = 0; other < ObjectRecordTable.TILE_GROUP_COUNT; other++) {
+                if (other == group) continue;
+                assertNotEquals(0, PackedTileMetadataCodec.readObjectId(raw, other).value());
+            }
+        }
+    }
+
+    @Test
+    public void packedReferenceAfterUnlinkIsRejectedBeforeSlotReuse() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        TileGroup tile = tile(7, 8, 1);
+        AllocationResult allocated = table.allocate(RecordType.TYPE_2, 7, 8, 1);
+        assertEquals(Status.OK, table.link(tile, allocated.handle()));
+        int oldWord = PackedTileMetadataCodec.writeObjectId(0, 1,
+                allocated.slotId()).rawWord();
+        assertEquals(Status.OK, table.lookup(tile, oldWord).status());
+
+        assertEquals(Status.OK, table.unlink(tile));
+        assertEquals(Status.OK, table.release(allocated.handle()));
+        assertEquals(Status.TILE_METADATA_MISMATCH,
+                table.lookup(tile, oldWord).status());
+    }
+
+    @Test
+    public void legacyPackedIdCannotDistinguishSameSlotAfterReuse() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        TileGroup tile = tile(9, 10, 0);
+        AllocationResult first = table.allocate(RecordType.TYPE_1, 9, 10, 0);
+        assertEquals(Status.OK, table.link(tile, first.handle()));
+        int oldWord = PackedTileMetadataCodec.writeObjectId(0, 0,
+                first.slotId()).rawWord();
+        assertEquals(Status.OK, table.unlink(tile));
+        assertEquals(Status.OK, table.release(first.handle()));
+
+        AllocationResult replacement = table.allocate(RecordType.TYPE_6, 9, 10, 0);
+        assertEquals(first.slotId(), replacement.slotId());
+        assertNotEquals(first.handle(), replacement.handle());
+        assertEquals(Status.OK, table.link(tile, replacement.handle()));
+
+        // The legacy packed field carries only the slot ID, not its generation.
+        // Once the same slot is reused and relinked, old bits are indistinguishable.
+        LookupResult ambiguous = table.lookup(tile, oldWord);
+        assertEquals(Status.OK, ambiguous.status());
+        assertEquals(replacement.handle(), ambiguous.handle());
+        assertEquals(RecordType.TYPE_6, ambiguous.type());
+    }
 }
