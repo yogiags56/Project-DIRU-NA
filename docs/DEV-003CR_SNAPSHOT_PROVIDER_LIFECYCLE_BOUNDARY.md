@@ -59,12 +59,16 @@ provider, or authoritative game-state thread. Therefore this milestone adds
 the integration contract only; it does not install Activity autosave hooks or
 pretend that the current lifecycle coordinator represents a complete game.
 
+Contract tests added in `CheckpointSnapshotProviderContractTest` use a deliberately
+small test provider to verify detached capture, capture-failure short-circuiting,
+and candidate-first rejection. They are executable examples of the interface
+contract, not a substitute for a production gameplay adapter.
+
 Still required before live integration:
 
 - A concrete provider backed by real gameplay state.
 - A documented game-thread executor/dispatcher and owner-thread assertions.
-- Deterministic tests for save supersession and in-flight ordering.
-- Tests proving capture failure never enqueues or overwrites a checkpoint.
+- Deterministic tests for Android save supersession and in-flight ordering.
 - Android process-kill and physical-device AtomicFile durability tests.
 
 ## Validation status
