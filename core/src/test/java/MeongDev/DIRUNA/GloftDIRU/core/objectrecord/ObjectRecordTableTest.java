@@ -225,4 +225,61 @@ public final class ObjectRecordTableTest {
         assertEquals(1, table.referenceCount(live));
     }
 
+
+    @Test
+    public void checkpointRoundTripPreservesOpaqueAuxiliaryEntriesBitForBit() {
+        ObjectRecordTable source = new ObjectRecordTable();
+        long[] values = {
+                0L, 1L, -1L, Long.MIN_VALUE, Long.MAX_VALUE,
+                0x0123456789ABCDEFL, 0xFEDCBA9876543210L,
+                0x0000000F00000003L, 0x7F00000000000001L,
+                0x8000000000000001L, 42L, 99L, 123456789L,
+                0x5555555555555555L, 0xAAAAAAAAAAAAAAAAL
+        };
+        for (int i = 0; i < values.length; i++) source.setAuxiliaryEntryRaw(i, values[i]);
+
+        ObjectRecordTable restored = new ObjectRecordTable();
+        assertEquals(Status.OK, restored.restore(source.snapshot()));
+        for (int i = 0; i < values.length; i++)
+            assertEquals(values[i], restored.auxiliaryEntryRaw(i));
+    }
+
+    @Test
+    public void auxiliaryEntryAccessIsBoundedAndSnapshotArraysAreDefensiveCopies() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        table.setAuxiliaryEntryRaw(0, 77L);
+        ObjectRecordTable.Snapshot snapshot = table.snapshot();
+
+        long[] exported = snapshot.auxiliaryEntries();
+        exported[0] = 999L;
+        assertEquals(77L, snapshot.auxiliaryEntries()[0]);
+        assertEquals(77L, table.auxiliaryEntryRaw(0));
+
+        try {
+            table.auxiliaryEntryRaw(15);
+            fail("index 15 must be rejected");
+        } catch (IndexOutOfBoundsException expected) {
+            // expected
+        }
+        try {
+            table.setAuxiliaryEntryRaw(-1, 1L);
+            fail("negative index must be rejected");
+        } catch (IndexOutOfBoundsException expected) {
+            // expected
+        }
+    }
+
+    @Test
+    public void invalidAuxiliaryArrayLengthRejectsRestoreWithoutChangingLiveState() {
+        ObjectRecordTable table = new ObjectRecordTable();
+        table.setAuxiliaryEntryRaw(2, 314L);
+        ObjectRecordTable.Snapshot valid = table.snapshot();
+        ObjectRecordTable.Snapshot invalid = new ObjectRecordTable.Snapshot(
+                valid.schemaVersion(), valid.records(), valid.generations(),
+                valid.tileLinks(), new long[14]);
+
+        assertEquals(Status.INVALID_SNAPSHOT, table.restore(invalid));
+        assertEquals(314L, table.auxiliaryEntryRaw(2));
+    }
+
 }
