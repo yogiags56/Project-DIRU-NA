@@ -250,10 +250,22 @@ public class CrossTableCheckpointBinaryCodecTest {
         assertEquals(CrossTableLifecycleCoordinator.Status.OK,
                 CrossTableCheckpointBinaryCodec.decodeInto(encoded, destination));
         assertEquals(ObjectRecordTable.Status.NO_LINK, destination.objects().lookup(liveTile).status());
-        assertEquals(source.lifecycleSnapshot().objectSnapshot().records(),
-                destination.snapshot().objectSnapshot().records());
-        assertEquals(source.lifecycleSnapshot().objectSnapshot().tileLinks(),
-                destination.snapshot().objectSnapshot().tileLinks());
+        ObjectRecordTable.Snapshot expectedObjects =
+                source.lifecycleSnapshot().objectSnapshot();
+        ObjectRecordTable.Snapshot restoredObjects = destination.snapshot().objectSnapshot();
+        assertEquals(expectedObjects.records().size(), restoredObjects.records().size());
+        for (int i = 0; i < expectedObjects.records().size(); i++) {
+            ObjectRecordTable.RecordSnapshot expected = expectedObjects.records().get(i);
+            ObjectRecordTable.RecordSnapshot restored = restoredObjects.records().get(i);
+            assertEquals(expected.slotId(), restored.slotId());
+            assertEquals(expected.generation(), restored.generation());
+            assertEquals(expected.type(), restored.type());
+            assertEquals(expected.anchorX(), restored.anchorX());
+            assertEquals(expected.anchorY(), restored.anchorY());
+            assertEquals(expected.anchorGroup(), restored.anchorGroup());
+            assertEquals(expected.rawLegacyPayload(), restored.rawLegacyPayload());
+        }
+        assertEquals(expectedObjects.tileLinks(), restoredObjects.tileLinks());
         assertEquals(source.lifecycleSnapshot().associations(),
                 destination.snapshot().associations());
         for (ObjectRecordTable.TileGroup expectedTile :
