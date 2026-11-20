@@ -10,16 +10,28 @@ import java.util.Map;
  * wrapper validates them against the restored object-table link map.
  */
 public final class CrossTableCheckpoint {
+    public static final int CURRENT_SCHEMA_VERSION = 1;
+
+    private final int schemaVersion;
     private final CrossTableLifecycleCoordinator.Snapshot lifecycleSnapshot;
     private final Map<ObjectRecordTable.TileGroup, Integer> packedMetadataWords;
 
     public CrossTableCheckpoint(
             CrossTableLifecycleCoordinator.Snapshot lifecycleSnapshot,
             Map<ObjectRecordTable.TileGroup, Integer> packedMetadataWords) {
+        this(CURRENT_SCHEMA_VERSION, lifecycleSnapshot, packedMetadataWords);
+    }
+
+    public CrossTableCheckpoint(int schemaVersion,
+            CrossTableLifecycleCoordinator.Snapshot lifecycleSnapshot,
+            Map<ObjectRecordTable.TileGroup, Integer> packedMetadataWords) {
+        this.schemaVersion = schemaVersion;
         this.lifecycleSnapshot = lifecycleSnapshot;
         this.packedMetadataWords = Collections.unmodifiableMap(new HashMap<>(
                 packedMetadataWords == null ? Map.of() : packedMetadataWords));
     }
+
+    public int schemaVersion() { return schemaVersion; }
 
     public CrossTableLifecycleCoordinator.Snapshot lifecycleSnapshot() {
         return lifecycleSnapshot;
@@ -36,7 +48,7 @@ public final class CrossTableCheckpoint {
      */
     public CrossTableLifecycleCoordinator.Status restoreInto(
             CrossTableLifecycleCoordinator destination) {
-        if (destination == null || lifecycleSnapshot == null
+        if (schemaVersion != CURRENT_SCHEMA_VERSION || destination == null || lifecycleSnapshot == null
                 || lifecycleSnapshot.objectSnapshot() == null)
             return CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT;
 
