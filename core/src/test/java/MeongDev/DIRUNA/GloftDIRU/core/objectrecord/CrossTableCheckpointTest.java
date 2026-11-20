@@ -90,4 +90,55 @@ public final class CrossTableCheckpointTest {
         assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
                 checkpoint.restoreInto(null));
     }
+
+    @Test
+    public void unsupportedCheckpointSchemaIsRejectedWithoutMutation() {
+        CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
+        CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(
+                CrossTableCheckpoint.CURRENT_SCHEMA_VERSION + 1,
+                source.snapshot(), Map.of());
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        CrossTableLifecycleCoordinator.AttachResult live = destination.attach(
+                RecordType.TYPE_1, 1, 1, 0, tile(1, 1, 0), 1, stateOne(1, 1));
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                checkpoint.restoreInto(destination));
+        assertEquals(1, destination.associatedSlot(live.objectHandle()));
+        assertEquals(RecordType.TYPE_1,
+                destination.objects().typeOf(live.objectHandle()).orElseThrow());
+    }
+
+    @Test
+    public void checkpointDefensivelyCopiesPackedMetadataMap() {
+        CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
+        TileGroup tile = tile(3, 4, 0);
+        CrossTableLifecycleCoordinator.AttachResult attached = source.attach(
+                RecordType.TYPE_5, 3, 4, 0, tile, 2, stateOne(3, 4));
+        int slotId = (int) (attached.objectHandle().value() & 0x0F);
+        Map<TileGroup, Integer> sourceWords = new HashMap<>();
+        sourceWords.put(tile, PackedTileMetadataCodec.writeObjectId(0, 0, slotId).rawWord());
+        CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(source.snapshot(), sourceWords);
+        sourceWords.clear();
+
+        assertEquals(1, checkpoint.packedMetadataWords().size());
+        try {
+            checkpoint.packedMetadataWords().clear();
+            fail("checkpoint metadata map must be immutable");
+        } catch (UnsupportedOperationException expected) {
+            // expected
+        }
+        CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, checkpoint.restoreInto(restored));
+    }
+
+    @Test
+    public void nullMetadataMapBecomesEmptyAndCannotMatchNonemptyTileLinks() {
+        CrossTableLifecycleCoordinator source = new CrossTableLifecycleCoordinator();
+        TileGroup tile = tile(5, 6, 1);
+        source.attach(RecordType.TYPE_2, 5, 6, 1, tile, 3, stateOne(5, 6));
+        CrossTableCheckpoint checkpoint = new CrossTableCheckpoint(source.snapshot(), null);
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.INVALID_SNAPSHOT,
+                checkpoint.restoreInto(destination));
+        assertEquals(Status.NO_LINK, destination.objects().lookup(tile).status());
+    }
 }
