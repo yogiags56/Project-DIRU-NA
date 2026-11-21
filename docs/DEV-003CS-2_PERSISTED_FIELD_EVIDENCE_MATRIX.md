@@ -21,7 +21,7 @@ The original candidate's `saveCheckpoint()` / `restoreCheckpoint()` represent an
 | Player/object layer | Per-cell authored/transformed player/object codes | AUDIT-012 parses layer 1 into `crtStagePlayerLayer[x][y]`; AUDIT-009 says checkpoint captures/restores it | Include full validated grid if required to restore dynamic world | High category; define whether snapshot stores authored or transformed runtime layer |
 | Background layer | Per-cell background values | AUDIT-004 §6.2 explicitly lists background layer in checkpoint snapshot; AUDIT-012 §2 identifies layer 2 as `bIntArrArr[x][y]` and shows it participates in foreground metadata and object preprocessing | Include in the candidate checkpoint model; preserve as a distinct channel from foreground/player-object data | High that it is a distinct runtime layer and part of audited snapshot category; exact byte-for-byte copy/restore path still needs source-line trace |
 | Foreground layer | Per-cell foreground codes and packed metadata | AUDIT-012 parses layer 3 into `crtStageForegrondLayer[x][y]`; AUDIT-004 identifies checkpoint code 4 and context-dependent upper metadata; AUDIT-009 says foreground layer is restored | Include full validated runtime grid | High |
-| Per-cell integer object state | Integer grid for object/entity runtime state | AUDIT-009 explicitly lists object-state integer grid in checkpoint snapshot/restore | Include after documenting dimensions, object semantics, and entity reconstruction | High category; values and multi-cell invariants incomplete |
+| Tile metadata grid (`eIntArrArr` / `fIntArrArr`) | Packed per-cell object-record references and metadata | DEV-003AZ traces checkpoint copy `eIntArrArr` → `fIntArrArr` and restore `fIntArrArr` → `eIntArrArr`; DEV-003BE identifies record IDs/group linkage | Include atomically with conditional object and auxiliary tables it references | High for pair and relationship; exact dimensions/cell encoding still need validation |
 | Conditional object-record table (`aLongArr[15]`) | Fifteen opaque packed 64-bit object records | DEV-003AE exact save copy to `cLongArr` at 15223–15226 and restore at 15353; DEV-003BE maps type/coordinate/group bit ranges | Include as conditional feature section, opaque until semantics complete; restore atomically with tile metadata | High for capacity and copy pair; bit semantics partial |
 | Conditional auxiliary table (`bLongArr[15]`) | Fifteen opaque packed 64-bit auxiliary records | DEV-003AE exact save copy to `dLongArr` at 15227–15230 and restore at 15354; DEV-003BL / DEV-003BE audit its separate role | Include separately from object table; restore atomically with tile metadata and controller state | High for capacity and copy pair; full state transitions remain incomplete |
 | Per-cell animation/timer byte state | `bByteArrArr` and `cByteArrArr` are distinct runtime grids | AUDIT-002 §17.1 explicitly lists `bByteArrArr` in checkpoint contents; AUDIT-002 §3 / AUDIT-012 identify both runtime arrays | Include `bByteArrArr` as a checkpoint candidate; `cByteArrArr` remains runtime-only/unproven for checkpoint inclusion until its copy path is found | High for `bByteArrArr` category inclusion; `cByteArrArr` checkpoint status unproven |
@@ -36,7 +36,7 @@ The original candidate's `saveCheckpoint()` / `restoreCheckpoint()` represent an
 | Input state | Held-key bitmask and pending key input | AUDIT-004 key callbacks and shared bitmask | Exclude; clear/reinitialize input on restore | High exclusion |
 | Movement interpolation | `jInt` interpolation timer and transient movement/action flags | AUDIT-004 sets/decrements movement timer; AUDIT-009 says restore resets movement state | Exclude by default; capture only if future deterministic resume explicitly requires mid-move continuation | Medium; safest capture point is stable movement boundary |
 | Animation/animator slots | Animator indices and animation state | AUDIT-004 and AUDIT-009 describe animation reset/reselection on restore | Exclude transient animator objects/handles; reconstruct a safe animation from logical state | High exclusion for objects; exact logical animation state unresolved |
-| Camera/render state | Camera offsets, pixel interpolation, dirty/update markers | AUDIT-004 camera derived from tile coords; AUDIT-009 says dirty markers rebuilt after restore | Exclude derived camera/cache state; recompute after commit | High exclusion |
+| Camera/render state | Camera offsets, pixel interpolation, dirty/update markers | AUDIT-002 §17.1 describes camera/player state; AUDIT-004 §6.3 and AUDIT-009 §4 describe camera recentering from saved player tile; AUDIT-009 §4 step 6 says dirty markers are rebuilt | Recompute camera from logical player/stage state unless a direct scalar copy is found; rebuild dirty markers | High for recomputation behavior; exact camera scalar copies remain open |
 | Audio/resource handles | Playback and loaded resource objects | AUDIT-012 resource lifecycle; AUDIT-009 describes sound side effects | Exclude; reacquire/rebind through platform/resource systems | High exclusion |
 | Partial stage-loader state | Incremental loader step counter and partially initialized layers/resources | AUDIT-010 state 21; AUDIT-012 incremental stage initialization | Exclude; never checkpoint partially initialized stage | High exclusion |
 
@@ -127,3 +127,21 @@ AUDIT-002 §17.1 explicitly lists `bByteArrArr` among checkpoint-copied arrays. 
 - `cByteArrArr`: runtime state exists, but checkpoint inclusion is unproven. Keep it out of the checkpoint schema unless a direct `saveCheckpoint()` / `restoreCheckpoint()` path is found.
 
 This prevents a runtime array from being assumed checkpointed merely because it exists in the stage model.
+
+
+## 11. Scalar/controller and restore-order evidence update — 2026-11-21
+
+See `DEV-003CS-2_CHECKPOINT_COPY_RESTORE_SOURCE_TRACE.md` §7 for the category-level scalar/controller inventory and restore-order outline.
+
+Newly consolidated evidence:
+- Player tile X/Y and checkpoint-related save byte 10 are captured/restored.
+- Several player/gameplay counters, state bytes, world/stage progress and inventory-like fields are described by AUDIT-009, but their exact variable-by-variable ownership is unresolved.
+- Currency/score-like counters are mentioned in AUDIT-002 §22; do not assume they share one semantic field or all belong in the stage checkpoint.
+- Movement interpolation is deliberately settled before capture and reset on restore.
+- Transient input/interaction/animation state is reset or reconstructed rather than blindly restored.
+- Camera is recentered from logical player position; dirty/update markers are rebuilt after stage-grid restore.
+- Object code 48 is reconstructed after grid restoration, with a mode/background-dependent path.
+
+The generic “Per-cell integer object state” row is replaced with the specific tile metadata grid `eIntArrArr` / `fIntArrArr`. It must remain distinct from background layer `bIntArrArr`.
+
+CS-2 remains open until every scalar assignment, all layer/byte-array copy pairs and dimensions, optional feature conditions, and progression/profile ownership are traced.
