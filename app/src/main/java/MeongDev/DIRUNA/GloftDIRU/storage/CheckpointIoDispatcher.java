@@ -51,8 +51,21 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         if (callback == null) throw new IllegalArgumentException("callback is required");
         if (closed) throw new IllegalStateException("dispatcher is closed");
         io.execute(() -> {
-            AndroidCheckpointLoadResult result = storage.loadCandidate();
-            main.post(() -> callback.onComplete(result));
+            AndroidCheckpointLoadResult result;
+            try {
+                result = storage.loadCandidate();
+                if (result == null) {
+                    result = AndroidCheckpointLoadResult.of(
+                            AndroidCheckpointLoadResult.Status.STORAGE_ERROR,
+                            "checkpoint storage returned no load result");
+                }
+            } catch (RuntimeException ex) {
+                result = AndroidCheckpointLoadResult.of(
+                        AndroidCheckpointLoadResult.Status.STORAGE_ERROR,
+                        "checkpoint load failed: " + ex.getClass().getSimpleName());
+            }
+            AndroidCheckpointLoadResult completed = result;
+            main.post(() -> callback.onComplete(completed));
         });
     }
 
