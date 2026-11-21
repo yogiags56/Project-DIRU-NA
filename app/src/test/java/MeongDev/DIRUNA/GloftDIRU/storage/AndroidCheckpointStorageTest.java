@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.util.Map;
 
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpoint;
+import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.ObjectRecordTable;
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpointBinaryCodec;
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableLifecycleCoordinator;
 import org.junit.After;
