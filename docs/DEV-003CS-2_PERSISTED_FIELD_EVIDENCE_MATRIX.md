@@ -24,7 +24,7 @@ The original candidate's `saveCheckpoint()` / `restoreCheckpoint()` represent an
 | Per-cell integer object state | Integer grid for object/entity runtime state | AUDIT-009 explicitly lists object-state integer grid in checkpoint snapshot/restore | Include after documenting dimensions, object semantics, and entity reconstruction | High category; values and multi-cell invariants incomplete |
 | Conditional object-record table (`aLongArr[15]`) | Fifteen opaque packed 64-bit object records | DEV-003AE exact save copy to `cLongArr` at 15223–15226 and restore at 15353; DEV-003BE maps type/coordinate/group bit ranges | Include as conditional feature section, opaque until semantics complete; restore atomically with tile metadata | High for capacity and copy pair; bit semantics partial |
 | Conditional auxiliary table (`bLongArr[15]`) | Fifteen opaque packed 64-bit auxiliary records | DEV-003AE exact save copy to `dLongArr` at 15227–15230 and restore at 15354; DEV-003BL / DEV-003BE audit its separate role | Include separately from object table; restore atomically with tile metadata and controller state | High for capacity and copy pair; full state transitions remain incomplete |
-| Per-cell byte timers/state | Byte grids used by runtime tile/entity updates | AUDIT-009 explicitly lists per-cell byte timers; AUDIT-012 identifies runtime arrays `bByteArrArr` and `cByteArrArr` initialized by object-layer preprocessing | Candidate include, preserving each array separately; do not merge until exact roles and dimensions are traced | High that per-cell byte state exists; exact array-to-snapshot mapping and semantics remain open |
+| Per-cell animation/timer byte state | `bByteArrArr` and `cByteArrArr` are distinct runtime grids | AUDIT-002 §17.1 explicitly lists `bByteArrArr` in checkpoint contents; AUDIT-002 §3 / AUDIT-012 identify both runtime arrays | Include `bByteArrArr` as a checkpoint candidate; `cByteArrArr` remains runtime-only/unproven for checkpoint inclusion until its copy path is found | High for `bByteArrArr` category inclusion; `cByteArrArr` checkpoint status unproven |
 | Player/gameplay counters | Multiple player and gameplay counters | AUDIT-009 says broad snapshot contains several counters/state fields; AUDIT-004 documents movement and damage state families | Candidate include only counters that affect future simulation/progression | Medium; enumerate readers/writers and invariants before naming |
 | Progression/inventory-like state | Stage progress, inventory-like fields, checkpoint-related save byte 10 | AUDIT-009 lists progression/inventory-like fields and save byte 10 | Include durable progression values needed to resume; keep profile save separate where appropriate | Medium; identify ownership and avoid duplicate/conflicting persistence |
 | Moving-object state | Optional mode-specific arrays and moving-object state | AUDIT-004 §6.2 explicitly lists optional mode-specific arrays and moving-object state; AUDIT-009 describes optional arrays/long values under `lBoolean` | Conditional snapshot section only when the mode and moving entities are supported | Medium; identify exact entities, arrays, lengths, and reconstruction invariants |
@@ -63,7 +63,7 @@ Subject to CS-2 review, the smallest useful first schema candidate is:
 - Foreground runtime layer.
 - Player/object runtime layer.
 - Tile metadata grid.
-- Per-cell byte timers/state that are proven necessary.
+- `bByteArrArr` per-cell animation/timer state, subject to exact copy/restore and dimensions audit.
 - Required progression/checkpoint identifier values proven to affect restore.
 
 Background layer and optional mode sections remain conditional pending verification. Input, animation objects, camera, renderer caches, audio handles, and loading progress are excluded.
@@ -74,7 +74,7 @@ This is a proposed minimum, not yet an approved serialization contract. It must 
 
 - Trace every copied field in candidate `saveCheckpoint()` and every corresponding assignment in `restoreCheckpoint()`; record source line ranges in a follow-up audit.
 - Trace exact copy and restore statements for the background layer; AUDIT-004 §6.2 already identifies it as part of the checkpoint snapshot, while AUDIT-012 establishes its distinct runtime role.
-- Enumerate all integer object-state and byte timer dimensions, map `bByteArrArr` / `cByteArrArr` to snapshot fields, and document multi-cell entity invariants.
+- Enumerate dimensions and invariants for `bByteArrArr`; search for a direct checkpoint copy path for `cByteArrArr` before deciding inclusion.
 - Trace progression/inventory fields to the existing native profile-save model before deciding ownership.
 - Resolve mode-specific array lengths and whether mode state is in scope for first playable build.
 - Define canonical world/stage IDs and compatibility policy for changed stage content.
@@ -94,7 +94,7 @@ CS-2 remains **in progress** until the open verification tasks are resolved and 
 A second pass against AUDIT-004 §§6.1–6.3 and AUDIT-012 §§2–3 corrected two classifications:
 
 - **Background layer:** AUDIT-004 §6.2 explicitly includes the background layer in the checkpoint snapshot. AUDIT-012 identifies it as the second distinct stage channel, `bIntArrArr[x][y]`, and documents its participation in foreground metadata/object preprocessing. It is now a candidate include, not an optional omit pending proof of mutation. Exact copy/restore statements still need a line-level trace.
-- **Per-cell byte state:** AUDIT-012 names runtime arrays `bByteArrArr` and `cByteArrArr`. Both must remain distinct candidate channels until their snapshot mapping, dimensions, and semantics are established.
+- **Per-cell byte state:** AUDIT-012 names runtime arrays `bByteArrArr` and `cByteArrArr`. `bByteArrArr` is listed in AUDIT-002 §17.1 checkpoint contents. `cByteArrArr` is a runtime byte grid, but its checkpoint inclusion is not established by the available checkpoint-content list and must remain excluded from the schema until a direct copy/restore path is located.
 - **Moving-object state:** AUDIT-004 §6.2 explicitly identifies optional mode-specific arrays and moving-object state. This now has a separate conditional row; it must not be silently dropped if that mode is supported.
 
 Additional confirmed timing boundary from AUDIT-004 §6.1: checkpoint activation sets a deferred-save flag; the actual in-memory capture occurs only after movement interpolation settles. Native capture should preserve this safe-point concept and must not snapshot halfway through a tile transition in the first implementation.
@@ -117,3 +117,13 @@ DEV-003AE gives exact save/restore line ranges for both 15-entry arrays. DEV-003
 The Native isolated object/auxiliary table model is not a complete gameplay checkpoint provider. Reuse requires review against the full game-owner state model.
 
 CS-2 remains in progress because exact stage-layer and per-cell byte-array copy/restore pairs, scalar/controller fields, and stage compatibility invariants still need tracing.
+
+
+## 9. Byte-array checkpoint classification correction — 2026-11-21
+
+AUDIT-002 §17.1 explicitly lists `bByteArrArr` among checkpoint-copied arrays. It does not list `cByteArrArr`, although §3 identifies `cByteArrArr` as a runtime animation/timing/state byte layer. The matrix now distinguishes these facts:
+
+- `bByteArrArr`: checkpoint candidate, category inclusion supported; exact copy target and dimensions still need direct tracing.
+- `cByteArrArr`: runtime state exists, but checkpoint inclusion is unproven. Keep it out of the checkpoint schema unless a direct `saveCheckpoint()` / `restoreCheckpoint()` path is found.
+
+This prevents a runtime array from being assumed checkpointed merely because it exists in the stage model.
