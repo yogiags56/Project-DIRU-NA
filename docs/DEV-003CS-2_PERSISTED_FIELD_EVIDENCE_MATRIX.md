@@ -85,3 +85,16 @@ This is a proposed minimum, not yet an approved serialization contract. It must 
 **Not complete:** final field names/types, exact serialized schema, full call-site trace for every copied field, Native owner implementation, runtime validation, or physical-device testing.
 
 CS-2 remains **in progress** until the open verification tasks are resolved and the field matrix is reviewed. No production snapshot provider should be implemented from this draft alone.
+
+
+## 7. Evidence refinement — 2026-11-21
+
+A second pass against AUDIT-004 §§6.1–6.3 and AUDIT-012 §§2–3 corrected two classifications:
+
+- **Background layer:** AUDIT-004 §6.2 explicitly includes the background layer in the checkpoint snapshot. AUDIT-012 identifies it as the second distinct stage channel, `bIntArrArr[x][y]`, and documents its participation in foreground metadata/object preprocessing. It is now a candidate include, not an optional omit pending proof of mutation. Exact copy/restore statements still need a line-level trace.
+- **Per-cell byte state:** AUDIT-012 names runtime arrays `bByteArrArr` and `cByteArrArr`. Both must remain distinct candidate channels until their snapshot mapping, dimensions, and semantics are established.
+- **Moving-object state:** AUDIT-004 §6.2 explicitly identifies optional mode-specific arrays and moving-object state. This now has a separate conditional row; it must not be silently dropped if that mode is supported.
+
+Additional confirmed timing boundary from AUDIT-004 §6.1: checkpoint activation sets a deferred-save flag; the actual in-memory capture occurs only after movement interpolation settles. Native capture should preserve this safe-point concept and must not snapshot halfway through a tile transition in the first implementation.
+
+These refinements improve category-level evidence but do not close CS-2. The exact assignment-by-assignment copy/restore trace and schema invariants remain outstanding.
