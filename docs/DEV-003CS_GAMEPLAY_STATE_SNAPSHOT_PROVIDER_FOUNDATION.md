@@ -102,3 +102,19 @@ DEV-003CR remains the persistence/provider boundary foundation and is not reopen
 ## 8. Approval state
 
 This document is a proposed definition prepared after the DEV-003CR source-level exit gate. It does not claim that DEV-003CS was previously named or approved in the roadmap. Treat the title, scope, and acceptance criteria as a proposal until the project owner confirms them.
+
+
+## CS-1 completion record
+
+The source-level ownership and lifecycle boundary is documented in
+[DEV-003CS-1 Gameplay State Ownership & Lifecycle Boundary](DEV-003CS-1_GAMEPLAY_STATE_OWNERSHIP_LIFECYCLE.md).
+
+CS-1 documents the distinction between screen/navigation state, gameplay
+simulation, input, incremental stage loading, rendering, lifecycle signals,
+and persistence I/O. It defines the proposed Native single-writer game-owner
+thread contract, snapshot eligibility, and candidate-first restore flow.
+
+CS-1 is complete as an architecture/evidence document only. No production
+gameplay owner or snapshot provider is claimed to exist. CS-2 must next produce
+an evidence-backed persisted-field matrix. The implementation dependency remains
+the first reproducible gameplay state owner in the DEV-002 workstream.
