@@ -84,16 +84,29 @@ public class AndroidCheckpointStorageTest {
         assertEquals(AndroidCheckpointLoadResult.Status.RESTORED, result.status());
     }
 
+    private static long stateOneRaw(int direction, int movement, int x, int y) {
+        return ((long) y << 20) | ((long) x << 13) | ((long) movement << 6)
+                | ((long) direction << 4) | 1L;
+    }
+
     @Test public void corruptCheckpointIsReportedAndNotSilentlyReset() throws Exception {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
         store.write(new byte[] { 0x44, 0x49, 0x52, 0x55, 0, 0, 0, 99 });
 
         CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        ObjectRecordTable.TileGroup liveTile = new ObjectRecordTable.TileGroup(3, 4, 0);
+        CrossTableLifecycleCoordinator.AttachResult live = destination.attach(
+                ObjectRecordTable.RecordType.TYPE_2, 3, 4, 0, liveTile, 2,
+                stateOneRaw(1, 0, 3, 4));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, live.status());
+
         AndroidCheckpointLoadResult result =
                 new AndroidCheckpointStorage(context).loadSafelyInto(destination);
         assertEquals(AndroidCheckpointLoadResult.Status.CORRUPT, result.status());
-        assertTrue(destination.snapshot().objectSnapshot().records().isEmpty());
+        assertEquals(2, destination.associatedSlot(live.objectHandle()));
+        assertEquals(ObjectRecordTable.Status.OK,
+                destination.objects().lookup(liveTile).status());
         assertTrue(checkpointFile.exists());
     }
 
@@ -135,6 +148,22 @@ public class AndroidCheckpointStorageTest {
         assertTrue(candidate.restored());
         assertArrayEquals(knownGood, new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME).read());
+    }
+
+
+    @Test public void truncatedCheckpointIsReportedAsCorruptAndPreserved() throws Exception {
+        byte[] valid = validEmptyCheckpoint();
+        byte[] truncated = java.util.Arrays.copyOf(valid, valid.length / 2);
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        store.write(truncated);
+
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.CORRUPT, result.status());
+        assertTrue(store.hasRecoverableFile());
+        assertArrayEquals(truncated, store.read());
     }
 
     @Test public void invalidDestinationIsReportedWithoutFileMutation() throws Exception {
