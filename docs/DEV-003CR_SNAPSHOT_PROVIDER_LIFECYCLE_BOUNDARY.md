@@ -76,3 +76,22 @@ Still required before live integration:
 This change is a source/API and documentation change. It is not considered
 runtime-verified until the repository CI runs core JVM tests, Android unit
 tests, and debug APK assembly on the resulting commit.
+
+
+## Deterministic save request sequencing
+
+The core module now provides `CheckpointSaveSequence`, a small synchronized
+sequence gate used by the Android dispatcher. Each accepted save receives a
+monotonic sequence. A queued worker checks whether a newer request has arrived
+immediately before beginning its write; stale queued work is reported as
+superseded. The gate does not interrupt a write that has already begun.
+
+The dispatcher now depends on the `CheckpointStorage` interface rather than
+the concrete Android storage adapter. This makes the I/O coordinator easier
+to test with controlled storage implementations while keeping Android
+AtomicFile details behind `AndroidCheckpointStorage`.
+
+The sequence gate has pure JVM tests for monotonic allocation, supersession,
+and invalid sequence rejection. Dispatcher-level tests for actual executor
+ordering, callback delivery, and close/rejection behavior remain outstanding;
+the sequence tests alone do not prove those Android concurrency behaviors.
