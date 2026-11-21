@@ -153,3 +153,16 @@ previous adapter instance) and restoration when only the AtomicFile backup is
 present. These are host-side tests of Android adapter behavior; they do not
 simulate an actual OS process kill or prove physical-device power-loss
 durability. Those remain device validation items.
+
+
+## Corrupt and truncated recovery safety
+
+Added storage adapter tests that seed a destination coordinator with a live
+object/auxiliary association before loading a corrupt checkpoint. The test
+asserts the live object and association remain unchanged and that the corrupt
+file is retained. A separate truncated-payload test verifies the load outcome
+is `CORRUPT` and the stored bytes remain available for diagnosis.
+
+These tests exercise the candidate-first recovery boundary: decoding failure
+must not mutate the live coordinator or delete the source checkpoint. CI for
+the new test commit is required before treating this coverage as verified.
