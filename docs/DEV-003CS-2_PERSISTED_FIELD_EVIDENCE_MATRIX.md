@@ -156,3 +156,17 @@ Important correction: save-record byte 10 is a boolean-like gameplay state resto
 The durable save-record map (bytes 3–12) must not be conflated with the temporary in-memory stage checkpoint. In particular, bytes 4–7, 9, 11, and 12 are durable profile/shop/progression candidates, but checkpoint inclusion is not established by their save-record presence. Save byte 8 is a hero progression value restored by retry and must not be casually relabeled health.
 
 Native schema rule: maintain separate durable-profile and in-memory-checkpoint ownership. Add a field to the checkpoint only when a direct capture/restore assignment or equivalent explicit evidence proves membership.
+
+## 13. Exact source assignment ledger update — 2026-11-21
+
+The direct source-level assignment ledger is now documented in DEV-003CS-2_CHECKPOINT_COPY_RESTORE_SOURCE_TRACE.md §9, using i.java at pinned revision 215c71d04057d66a1b08419b1a4b1043ae3e0881.
+
+Exact pairs now recorded:
+- 14 unconditional scalar pairs, including player tile X/Y, save byte 10, and opaque state fields.
+- 14 additional scalar pairs guarded by lBoolean.
+- caInt/amInt and cbInt/alInt are captured unconditionally but restored only under kByte == 1.
+- mByteArr/oByteArr, four stage grids, conditional eIntArrArr/fIntArrArr, and two 15-entry long tables have exact copy/restore ranges.
+- cByteArrArr is confirmed not copied by saveCheckpoint()/restoreCheckpoint(); bByteArrArr is copied via dByteArrArr.
+- Restore-side camera computation, transient resets, dirty-cell rebuild, special-cell mutations, and object-code-48 reconstruction are explicitly separated from captured payload.
+
+This closes the assignment-identification portion of CS-2 at static-source level. It does not close semantic naming, allocation/compatibility invariants, independent shipping-binary verification, or deterministic runtime round-trip validation.
