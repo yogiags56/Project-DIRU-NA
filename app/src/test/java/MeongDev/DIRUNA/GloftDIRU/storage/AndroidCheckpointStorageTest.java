@@ -210,14 +210,34 @@ public class AndroidCheckpointStorageTest {
         assertArrayEquals(valid, store.read());
     }
 
-    @Test public void oversizedWriteIsRejected() throws Exception {
+    @Test public void oversizedWriteIsRejectedWithoutReplacingPreviousCheckpoint() throws Exception {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        byte[] previous = validEmptyCheckpoint();
+        store.write(previous);
+
         try {
             store.write(new byte[CrossTableCheckpointBinaryCodec.MAX_ENCODED_BYTES + 1]);
             fail("oversized payload must be rejected");
         } catch (java.io.IOException expected) {
-            assertFalse(store.hasRecoverableFile());
+            assertTrue(store.hasRecoverableFile());
+            assertArrayEquals(previous, store.read());
         }
+    }
+
+    @Test public void oversizedStoredFileIsRejectedAndPreserved() throws Exception {
+        byte[] oversized = new byte[CrossTableCheckpointBinaryCodec.MAX_ENCODED_BYTES + 1];
+        try (FileOutputStream output = new FileOutputStream(checkpointFile)) {
+            output.write(oversized);
+        }
+
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.STORAGE_ERROR, result.status());
+        assertTrue(store.hasRecoverableFile());
+        assertEquals(oversized.length, checkpointFile.length());
     }
 }
