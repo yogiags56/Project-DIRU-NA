@@ -139,3 +139,17 @@ the worker posted its result. The tests now use a longer bounded worker wait
 and explicitly pump the main looper until the expected callback count is
 observed. This is a test synchronization adjustment; production dispatcher
 semantics are unchanged. A fresh CI run is required to verify the change.
+
+
+## CI verification and process-recreation recovery coverage
+
+The corrected dispatcher synchronization tests passed in CI on commit
+`2bb805782e733c22456fd5a6b56cb1b210e989c8`. The workflow completed
+successfully, including the core JVM test suite and Android debug build.
+
+Additional Robolectric storage coverage now verifies recovery through a newly
+constructed storage adapter (modeling process recreation without reusing the
+previous adapter instance) and restoration when only the AtomicFile backup is
+present. These are host-side tests of Android adapter behavior; they do not
+simulate an actual OS process kill or prove physical-device power-loss
+durability. Those remain device validation items.
