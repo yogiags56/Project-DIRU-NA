@@ -16,7 +16,7 @@
 | Background layer `bIntArrArr` | Snapshot counterpart not yet independently named in this trace | AUDIT-004 §6.2 lists background layer as part of checkpoint contents | AUDIT-004 §6.3 says stage arrays are restored | Inclusion is established at category level; exact copy target/range remains open |
 | Player/object layer `crtStagePlayerLayer` | Snapshot counterpart not yet independently named in this trace | AUDIT-009 §3 describes it among checkpoint state arrays | AUDIT-009 §4 says player/object layer is restored | Inclusion established at category level; exact copy target/range remains open |
 | Foreground layer `crtStageForegrondLayer` | Snapshot counterpart not yet independently named in this trace | AUDIT-004 §6.2 / AUDIT-009 §3 | AUDIT-004 §6.3 / AUDIT-009 §4 | Inclusion established at category level; exact copy target/range remains open |
-| Per-cell byte arrays `bByteArrArr`, `cByteArrArr` | Exact snapshot buffers not yet independently named in this trace | AUDIT-009 describes per-cell byte timers; AUDIT-002 identifies auxiliary per-cell byte state | AUDIT-009 describes timer-array restore | Keep separate; exact per-array copy/restore mapping still open |
+| Per-cell animation/timer array `bByteArrArr` | Exact snapshot buffer not yet independently named in this trace | AUDIT-002 §17.1 explicitly lists `bByteArrArr` in checkpoint contents; AUDIT-009 §3–4 describes per-cell byte timers and stage-array restoration | AUDIT-002 §17.1 says the listed arrays are copied back | Candidate include; exact dimensions and copy target still need direct trace |
 
 ## 2. Object and auxiliary table semantics
 
@@ -55,6 +55,12 @@ When the feature is active, checkpoint save/restore couples:
 
 Restoring tile metadata without the referenced object table, or restoring object records without their tile metadata, can produce inconsistent references. Treat these as one validated atomic state group.
 
+### Byte-state distinction
+
+AUDIT-002 §3 identifies both `bByteArrArr` (auxiliary per-cell byte state) and `cByteArrArr` (animation/timing/state byte layer) in stage runtime data. However, AUDIT-002 §17.1 explicitly lists `bByteArrArr` in checkpoint contents and does **not** explicitly list `cByteArrArr`. Therefore:
+- `bByteArrArr` is a checkpoint candidate supported at category level.
+- `cByteArrArr` remains runtime state with checkpoint inclusion **unproven**; do not add it to the serialized snapshot until a direct save/restore copy path is located.
+
 ## 3. Conditional feature lifecycle
 
 DEV-003AZ records that:
@@ -86,6 +92,6 @@ Therefore the object/auxiliary section is conditional feature state. A Native sn
 
 **Newly confirmed:** exact 15-entry object and auxiliary table copy pairs; tile metadata grid pairing; atomic relationship between tile metadata and referenced records; conditional feature lifecycle.
 
-**Still open:** exact copy/restore pairs for all three stage layers and per-cell byte arrays; full scalar/controller snapshot list; final schema types and compatibility policy.
+**Still open:** exact copy/restore pairs and dimensions for the three stage layers and `bByteArrArr`; checkpoint inclusion of `cByteArrArr` is unproven; full scalar/controller snapshot list; final schema types and compatibility policy.
 
 CS-2 remains in progress. This trace does not authorize a production snapshot provider yet.
