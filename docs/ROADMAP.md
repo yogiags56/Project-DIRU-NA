@@ -612,3 +612,12 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - [ ] Build synthetic map and sprite parser fixtures
 - [ ] Validate against original Nokia package/runtime evidence
 
+
+
+## Proposed next milestone — DEV-003CS
+
+**Proposal:** [DEV-003CS — Gameplay State Snapshot Model & Provider Foundation](DEV-003CS_GAMEPLAY_STATE_SNAPSHOT_PROVIDER_FOUNDATION.md)
+
+This proposal follows the DEV-003CR source-level exit gate. It is not marked approved or complete. Its purpose is to connect the checkpoint boundary to a real gameplay-owned state model only after an authoritative gameplay owner and its thread are implemented. It defines evidence-backed persisted-field mapping, immutable capture, owner-thread restore, deterministic tests, and safe lifecycle save requests. The README still marks the first reproducible gameplay milestone incomplete, so production provider integration is gated on that prerequisite.
+
+Project-owner approval is required before treating this proposal as the official DEV-003CS scope.
