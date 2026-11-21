@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpoint;
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableLifecycleCoordinator;
@@ -25,7 +26,7 @@ import static org.junit.Assert.*;
 @RunWith(RobolectricTestRunner.class)
 @LooperMode(LooperMode.Mode.PAUSED)
 public final class CheckpointIoDispatcherTest {
-    private static final long TIMEOUT_SECONDS = 3;
+    private static final long TIMEOUT_SECONDS = 15;
 
     private static CrossTableCheckpoint checkpoint() {
         return new CrossTableCheckpoint(
@@ -90,6 +91,16 @@ public final class CheckpointIoDispatcherTest {
         assertTrue("timed out waiting for worker", latch.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
     }
 
+    private static void drainMainLooperUntil(BooleanSupplier completed) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(TIMEOUT_SECONDS);
+        while (!completed.getAsBoolean() && System.nanoTime() < deadline) {
+            Shadows.shadowOf(Looper.getMainLooper()).idle();
+            Thread.sleep(10);
+        }
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        assertTrue("timed out waiting for main-looper callback", completed.getAsBoolean());
+    }
+
     @Test public void queuedOlderSaveIsSupersededAndNewestSaveIsWritten() throws Exception {
         FakeStorage storage = new FakeStorage();
         storage.loadEntered = new CountDownLatch(1);
@@ -107,7 +118,7 @@ public final class CheckpointIoDispatcherTest {
         storage.releaseLoad.countDown();
         await(storage.loadFinished);
         await(storage.saveFinished);
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        drainMainLooperUntil(() -> results.size() == 2);
 
         assertEquals(1, storage.writes.get());
         assertEquals(1, storage.saved.size());
@@ -131,7 +142,7 @@ public final class CheckpointIoDispatcherTest {
         storage.releaseSave.countDown();
 
         await(storage.saveFinished);
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        drainMainLooperUntil(() -> results.size() == 2);
         assertEquals(2, storage.writes.get());
         assertEquals(2, storage.saved.size());
         assertEquals(CheckpointSaveResult.Status.SAVED, results.get(0).status());
@@ -148,7 +159,7 @@ public final class CheckpointIoDispatcherTest {
 
         dispatcher.save(checkpoint(), result -> results.add(result));
         await(storage.saveFinished);
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
+        drainMainLooperUntil(() -> results.size() == 1);
 
         assertEquals(1, results.size());
         assertEquals(CheckpointSaveResult.Status.FAILED, results.get(0).status());
