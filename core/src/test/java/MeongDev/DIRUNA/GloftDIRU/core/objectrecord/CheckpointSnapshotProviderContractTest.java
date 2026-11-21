@@ -68,7 +68,7 @@ public final class CheckpointSnapshotProviderContractTest {
         assertEquals(Status.OK, live.objects().allocate(RecordType.TYPE_1, 8, 9, 1).status());
 
         CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
-        assertEquals(Status.OK, captured.restoreInto(restored));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, captured.restoreInto(restored));
         assertEquals(0, restored.snapshot().objectSnapshot().records().size());
         assertEquals(1, live.snapshot().objectSnapshot().records().size());
     }
