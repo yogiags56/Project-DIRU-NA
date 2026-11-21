@@ -191,3 +191,18 @@ Added two more Android storage boundary tests:
   `CORRUPT` and its original bytes remain available.
 
 The tests are committed separately; they require their own fresh CI run.
+
+
+## Encoded-size boundary and previous-save preservation
+
+The latest CI runs for commits `67a9d68` and `95f96e7` both completed
+successfully. Added storage tests for the 16 MiB encoded-size boundary:
+- Reject an oversized new write while preserving and re-reading the previous
+  valid checkpoint.
+- Reject an oversized on-disk checkpoint as a storage error while retaining
+  the file for diagnosis.
+
+The write-side test checks the adapter's preflight rejection path. It does not
+simulate a low-level I/O failure after `AtomicFile.startWrite()`; that requires
+a fault-injection seam or device-level filesystem test and remains outstanding.
+The new tests require a fresh CI run.
