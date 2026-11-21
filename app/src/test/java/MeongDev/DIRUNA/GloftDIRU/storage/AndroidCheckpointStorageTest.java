@@ -210,6 +210,34 @@ public class AndroidCheckpointStorageTest {
         assertArrayEquals(valid, store.read());
     }
 
+    @Test public void failedAtomicWritePreservesPreviousCheckpoint() throws Exception {
+        byte[] previous = validEmptyCheckpoint();
+        AndroidAtomicCheckpointStore normal = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        normal.write(previous);
+
+        AndroidAtomicCheckpointStore failing = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME,
+                new AndroidAtomicCheckpointStore.CheckpointWriteOperation() {
+                    @Override public void write(FileOutputStream output, byte[] bytes)
+                            throws java.io.IOException {
+                        output.write(bytes, 0, Math.max(1, bytes.length / 2));
+                        throw new java.io.IOException("injected mid-write failure");
+                    }
+                });
+
+        try {
+            failing.write(validEmptyCheckpoint());
+            fail("injected write failure must propagate");
+        } catch (java.io.IOException expected) {
+            assertEquals("injected mid-write failure", expected.getMessage());
+        }
+
+        AndroidAtomicCheckpointStore reopened = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        assertArrayEquals(previous, reopened.read());
+    }
+
     @Test public void oversizedWriteIsRejectedWithoutReplacingPreviousCheckpoint() throws Exception {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
