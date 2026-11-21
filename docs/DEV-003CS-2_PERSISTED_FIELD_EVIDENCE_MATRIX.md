@@ -145,3 +145,14 @@ Newly consolidated evidence:
 The generic “Per-cell integer object state” row is replaced with the specific tile metadata grid `eIntArrArr` / `fIntArrArr`. It must remain distinct from background layer `bIntArrArr`.
 
 CS-2 remains open until every scalar assignment, all layer/byte-array copy pairs and dimensions, optional feature conditions, and progression/profile ownership are traced.
+
+
+## 12. Durable save-record versus temporary checkpoint correction — 2026-11-21
+
+See `DEV-003CS-2_CHECKPOINT_COPY_RESTORE_SOURCE_TRACE.md` §8.
+
+Important correction: save-record byte 10 is a boolean-like gameplay state restored by checkpoint, **not a checkpoint index**. Save-record byte 3 maps to/from `azInt`; `azInt` is also decremented by the retry handler, so its semantic identity remains unresolved.
+
+The durable save-record map (bytes 3–12) must not be conflated with the temporary in-memory stage checkpoint. In particular, bytes 4–7, 9, 11, and 12 are durable profile/shop/progression candidates, but checkpoint inclusion is not established by their save-record presence. Save byte 8 is a hero progression value restored by retry and must not be casually relabeled health.
+
+Native schema rule: maintain separate durable-profile and in-memory-checkpoint ownership. Add a field to the checkpoint only when a direct capture/restore assignment or equivalent explicit evidence proves membership.
