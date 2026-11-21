@@ -22,6 +22,8 @@ The original candidate's `saveCheckpoint()` / `restoreCheckpoint()` represent an
 | Background layer | Per-cell background values | AUDIT-004 §6.2 explicitly lists background layer in checkpoint snapshot; AUDIT-012 §2 identifies layer 2 as `bIntArrArr[x][y]` and shows it participates in foreground metadata and object preprocessing | Include in the candidate checkpoint model; preserve as a distinct channel from foreground/player-object data | High that it is a distinct runtime layer and part of audited snapshot category; exact byte-for-byte copy/restore path still needs source-line trace |
 | Foreground layer | Per-cell foreground codes and packed metadata | AUDIT-012 parses layer 3 into `crtStageForegrondLayer[x][y]`; AUDIT-004 identifies checkpoint code 4 and context-dependent upper metadata; AUDIT-009 says foreground layer is restored | Include full validated runtime grid | High |
 | Per-cell integer object state | Integer grid for object/entity runtime state | AUDIT-009 explicitly lists object-state integer grid in checkpoint snapshot/restore | Include after documenting dimensions, object semantics, and entity reconstruction | High category; values and multi-cell invariants incomplete |
+| Conditional object-record table (`aLongArr[15]`) | Fifteen opaque packed 64-bit object records | DEV-003AE exact save copy to `cLongArr` at 15223–15226 and restore at 15353; DEV-003BE maps type/coordinate/group bit ranges | Include as conditional feature section, opaque until semantics complete; restore atomically with tile metadata | High for capacity and copy pair; bit semantics partial |
+| Conditional auxiliary table (`bLongArr[15]`) | Fifteen opaque packed 64-bit auxiliary records | DEV-003AE exact save copy to `dLongArr` at 15227–15230 and restore at 15354; DEV-003BL / DEV-003BE audit its separate role | Include separately from object table; restore atomically with tile metadata and controller state | High for capacity and copy pair; full state transitions remain incomplete |
 | Per-cell byte timers/state | Byte grids used by runtime tile/entity updates | AUDIT-009 explicitly lists per-cell byte timers; AUDIT-012 identifies runtime arrays `bByteArrArr` and `cByteArrArr` initialized by object-layer preprocessing | Candidate include, preserving each array separately; do not merge until exact roles and dimensions are traced | High that per-cell byte state exists; exact array-to-snapshot mapping and semantics remain open |
 | Player/gameplay counters | Multiple player and gameplay counters | AUDIT-009 says broad snapshot contains several counters/state fields; AUDIT-004 documents movement and damage state families | Candidate include only counters that affect future simulation/progression | Medium; enumerate readers/writers and invariants before naming |
 | Progression/inventory-like state | Stage progress, inventory-like fields, checkpoint-related save byte 10 | AUDIT-009 lists progression/inventory-like fields and save byte 10 | Include durable progression values needed to resume; keep profile save separate where appropriate | Medium; identify ownership and avoid duplicate/conflicting persistence |
@@ -60,7 +62,7 @@ Subject to CS-2 review, the smallest useful first schema candidate is:
 - Player tile X/Y and normalized facing.
 - Foreground runtime layer.
 - Player/object runtime layer.
-- Integer object-state grid.
+- Tile metadata grid.
 - Per-cell byte timers/state that are proven necessary.
 - Required progression/checkpoint identifier values proven to affect restore.
 
@@ -98,3 +100,20 @@ A second pass against AUDIT-004 §§6.1–6.3 and AUDIT-012 §§2–3 corrected 
 Additional confirmed timing boundary from AUDIT-004 §6.1: checkpoint activation sets a deferred-save flag; the actual in-memory capture occurs only after movement interpolation settles. Native capture should preserve this safe-point concept and must not snapshot halfway through a tile transition in the first implementation.
 
 These refinements improve category-level evidence but do not close CS-2. The exact assignment-by-assignment copy/restore trace and schema invariants remain outstanding.
+
+
+## 8. Copy/restore trace refinement — 2026-11-21
+
+See [DEV-003CS-2 Checkpoint Copy/Restore Source Trace](DEV-003CS-2_CHECKPOINT_COPY_RESTORE_SOURCE_TRACE.md).
+
+The preliminary “integer object-state grid” label was too broad. The exact audited grid `eIntArrArr` is a packed **tile metadata grid**, paired with `fIntArrArr` during checkpoint save/restore. It contains metadata/reference relationships and must not be confused with the background/property grid `bIntArrArr`.
+
+Two further distinct conditional feature tables are confirmed:
+- `aLongArr[15]` object records ↔ `cLongArr[15]` checkpoint copy.
+- `bLongArr[15]` auxiliary records ↔ `dLongArr[15]` checkpoint copy.
+
+DEV-003AE gives exact save/restore line ranges for both 15-entry arrays. DEV-003AZ documents that tile metadata and both tables are restored together. DEV-003BL establishes the atomic object/auxiliary subsystem contract. These tables must remain separate and be restored as one coherent group with the tile metadata grid when the feature is active.
+
+The Native isolated object/auxiliary table model is not a complete gameplay checkpoint provider. Reuse requires review against the full game-owner state model.
+
+CS-2 remains in progress because exact stage-layer and per-cell byte-array copy/restore pairs, scalar/controller fields, and stage compatibility invariants still need tracing.
