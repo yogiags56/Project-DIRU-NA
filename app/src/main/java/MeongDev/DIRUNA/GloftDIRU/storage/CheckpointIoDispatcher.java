@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpoint;
+import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CheckpointSaveSequence;
 
 /**
  * Serializes checkpoint disk I/O away from the UI thread.
@@ -34,8 +35,7 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         return thread;
     });
     private final Handler main = new Handler(Looper.getMainLooper());
-    private long nextSequence;
-    private long latestRequestedSequence;
+    private final CheckpointSaveSequence saveSequence = new CheckpointSaveSequence();
     private boolean closed;
 
     public CheckpointIoDispatcher(AndroidCheckpointStorage storage) {
@@ -68,8 +68,7 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         if (immutableSnapshot == null || callback == null)
             throw new IllegalArgumentException("snapshot and callback are required");
         if (closed) throw new IllegalStateException("dispatcher is closed");
-        long sequence = ++nextSequence;
-        latestRequestedSequence = sequence;
+        long sequence = saveSequence.request();
         try {
             io.execute(() -> {
                 if (isSuperseded(sequence)) {
@@ -102,8 +101,8 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         return sequence;
     }
 
-    private synchronized boolean isSuperseded(long sequence) {
-        return sequence < latestRequestedSequence;
+    private boolean isSuperseded(long sequence) {
+        return saveSequence.isSuperseded(sequence);
     }
 
     private void postSave(SaveCallback callback, CheckpointSaveResult result) {
