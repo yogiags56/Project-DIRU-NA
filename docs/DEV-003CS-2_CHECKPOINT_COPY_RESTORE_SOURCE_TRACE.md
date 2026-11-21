@@ -146,3 +146,35 @@ This is an observed outline, not a final native API. Exact scalar assignment ord
 - Locate exact camera scalar copies, if any; until then camera remains recomputable presentation state.
 - Confirm whether object code 48 is the only post-restore reconstruction path.
 - Preserve the distinction between fields captured and fields reset/recomputed during restore.
+
+
+## 8. Save-record byte ownership cross-check (AUDIT-002 §§21–22)
+
+A separate save-record audit maps bytes 3–12 to durable progression fields. This is a different persistence domain from the in-memory checkpoint snapshot. The cross-check is useful for ownership, but it does not prove that every save-record byte is copied by `saveCheckpoint()`.
+
+| Save-record byte(s) | Audited source behavior | Checkpoint interpretation |
+|---|---|---|
+| 3 | Current/selected progression index copied to/from `azInt` | Candidate scalar relationship; exact checkpoint capture/restore assignment still needs direct source statement |
+| 4–5 | Little-endian 16-bit `aZInt`, read/written by shop logic | Durable profile/shop state; do not include in temporary stage snapshot without direct copy evidence |
+| 6–7 | Little-endian 16-bit `bbInt`, shop increments and price thresholds | Durable profile/shop state; same exclusion rule |
+| 8 | Hero progression value initialized to 4, palette offset `value - 4`, passed to damage handling | Gameplay progression value; retry handler explicitly resets bounded hero value from save byte 8 |
+| 9 | Progression/unlock tier, values 1, 2, 8 used at story/seal milestones | Durable progression; include in checkpoint only if direct snapshot assignment is verified |
+| 10 | Boolean-like gameplay state, initialized 0 and toggled during gameplay | **Not a checkpoint index.** AUDIT-009 says restore copies this byte; exact semantics remain unresolved |
+| 11 | Small state byte `rByte`, persisted by `wVoid()`/`xVoid()` | Durable save field; checkpoint inclusion unproven |
+| 12 | Small progression counter, incremented/clamped to 3 in story flow | Durable progression candidate; checkpoint inclusion unproven |
+
+### 8.1 Corrections to earlier shorthand
+
+- Replace “checkpoint index/value (save byte 10)” with **“save byte 10 — boolean-like gameplay state restored by checkpoint; semantic name unresolved.”**
+- `azInt` has a documented relationship with save byte 3 (selected progression index), while the retry handler also decrements `azInt`. This dual use must be traced through all writers/readers before assigning a semantic label such as lives, world index, or retry count.
+- Save byte 8 is the bounded hero progression value restored by the retry handler; it must not be confused with `nByte` or assumed to be a conventional health field.
+- Bytes 4–7, 9, 11, and 12 belong to the durable save-record map. Their presence in that map is not proof that they are part of the in-memory checkpoint snapshot.
+- The source audit confirms checkpoint restore copies selected progression fields, but the exact variable-by-variable assignment list is still outstanding.
+
+### 8.2 Persistence-domain rule
+
+Maintain two explicit models:
+1. **Durable profile save:** record bytes and progression/shop/unlock state persisted through the ordinary save writer.
+2. **Temporary in-memory checkpoint:** stage/player state captured for respawn and restored during the current runtime.
+
+A field may participate in both only when the source shows both paths. Never infer checkpoint membership from save-record membership alone.
