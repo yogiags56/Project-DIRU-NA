@@ -167,6 +167,37 @@ public class AndroidCheckpointStorageTest {
         assertArrayEquals(truncated, store.read());
     }
 
+
+    @Test public void emptyCheckpointFileIsStorageErrorAndPreserved() throws Exception {
+        Files.write(checkpointFile.toPath(), new byte[0]);
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.STORAGE_ERROR, result.status());
+        assertTrue(store.hasRecoverableFile());
+        assertEquals(0, checkpointFile.length());
+    }
+
+    @Test public void unsupportedBinaryFormatVersionIsCorruptAndPreserved() throws Exception {
+        byte[] encoded = validEmptyCheckpoint();
+        encoded[4] = 0;
+        encoded[5] = 0;
+        encoded[6] = 0;
+        encoded[7] = 99;
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        store.write(encoded);
+
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.CORRUPT, result.status());
+        assertArrayEquals(encoded, store.read());
+    }
+
     @Test public void invalidDestinationIsReportedWithoutFileMutation() throws Exception {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
