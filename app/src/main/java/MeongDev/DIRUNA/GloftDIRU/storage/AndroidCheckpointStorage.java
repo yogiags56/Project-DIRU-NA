@@ -14,7 +14,7 @@ import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableLifecycleCoordinato
  * App-private Android entry point for saving and restoring DIRU-NA checkpoints.
  * The core module remains Android-independent.
  */
-public final class AndroidCheckpointStorage {
+public final class AndroidCheckpointStorage implements CheckpointStorage {
     public static final String DEFAULT_FILE_NAME = "diru-na.checkpoint";
 
     private final CheckpointPersistenceService persistence;
