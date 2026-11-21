@@ -128,3 +128,14 @@ expects `CrossTableLifecycleCoordinator.Status.OK`. This was a test assertion
 type mismatch, not a checkpoint restore implementation failure. A fresh CI
 run on the corrected branch head is still required to verify the fix and
 continue into Android unit tests and APK assembly.
+
+
+## Robolectric dispatcher test synchronization correction
+
+The first Android test run confirmed the core JVM suite passes but exposed two
+test-harness timing defects: a worker latch timed out under the CI runner, and
+callback assertions could run before the paused main looper was drained after
+the worker posted its result. The tests now use a longer bounded worker wait
+and explicitly pump the main looper until the expected callback count is
+observed. This is a test synchronization adjustment; production dispatcher
+semantics are unchanged. A fresh CI run is required to verify the change.
