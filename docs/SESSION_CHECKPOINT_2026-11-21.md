@@ -93,6 +93,8 @@ Finish CS-2 evidence review (updated after copy/restore trace at `a163dd3a`):
 - `1414300b` — update field matrix with the same byte-array inclusion distinction.
 
 - `8d7b0680` — add CS-2 copy/restore trace to the working branch (the trace was kept off `main`; an initial misplaced copy on `main` was immediately removed in cleanup commit `20161a02`).
+- `0f63c3e1` — checkpoint recovery document updated with trace location.
+- `7a1553fc` — checkpoint recovery document updated with latest byte-array evidence; this was the content HEAD before the current checkpoint refresh.
 
 - `c35fbfba` — add CS-2 exact copy/restore trace for metadata and conditional object/auxiliary tables.
 - `a163dd3a` — correct CS-2 field matrix: `eIntArrArr` is tile metadata; add `aLongArr[15]` and `bLongArr[15]` conditional snapshot tables.
