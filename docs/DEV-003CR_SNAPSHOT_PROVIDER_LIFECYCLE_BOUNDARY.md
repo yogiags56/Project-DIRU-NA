@@ -95,3 +95,23 @@ The sequence gate has pure JVM tests for monotonic allocation, supersession,
 and invalid sequence rejection. Dispatcher-level tests for actual executor
 ordering, callback delivery, and close/rejection behavior remain outstanding;
 the sequence tests alone do not prove those Android concurrency behaviors.
+
+
+## Dispatcher concurrency and callback tests
+
+Added Robolectric tests for the serialized Android dispatcher using a controlled
+fake storage and latches. The scenarios cover an older queued save being
+superseded behind a blocked load, an already-started write completing before
+a newer save, save I/O failure reporting, rejection of save after close, and
+load runtime failure reporting as `STORAGE_ERROR`. The load failure test also
+asserts callback delivery on the Android main looper.
+
+The dispatcher now converts unexpected runtime exceptions and null load
+results into explicit `STORAGE_ERROR` outcomes instead of allowing the
+executor task to terminate without notifying the caller. Save callbacks retain
+the existing `SAVED`, `SUPERSEDED`, and `FAILED` outcomes.
+
+These tests verify executor sequencing and callback routing under Robolectric;
+they do not replace process-kill, filesystem durability, or physical-device
+AtomicFile testing. A production game-thread dispatcher is still required
+before applying loaded candidates to live gameplay state.
