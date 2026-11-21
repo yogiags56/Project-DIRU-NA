@@ -166,3 +166,13 @@ is `CORRUPT` and the stored bytes remain available for diagnosis.
 These tests exercise the candidate-first recovery boundary: decoding failure
 must not mutate the live coordinator or delete the source checkpoint. CI for
 the new test commit is required before treating this coverage as verified.
+
+
+## Latest CI compile failure and correction
+
+The new non-destructive recovery test initially failed at Android test
+compilation because its fixture referenced `ObjectRecordTable` without
+importing the core type. The compiler reported unresolved
+`ObjectRecordTable` references in `AndroidCheckpointStorageTest`. Added the
+missing import; no production source behavior was changed. The corrected
+commit requires a fresh Android test and debug assembly run.
