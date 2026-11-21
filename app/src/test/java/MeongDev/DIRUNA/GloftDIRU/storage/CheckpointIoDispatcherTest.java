@@ -41,21 +41,31 @@ public final class CheckpointIoDispatcherTest {
         volatile CountDownLatch releaseLoad;
         volatile CountDownLatch saveEntered;
         volatile CountDownLatch releaseSave;
+        volatile CountDownLatch loadFinished;
+        volatile CountDownLatch saveFinished;
         volatile boolean failSave;
 
         @Override public void save(CrossTableCheckpoint value) throws IOException {
             int number = writes.incrementAndGet();
             if (saveEntered != null) saveEntered.countDown();
-            awaitIfPresent(releaseSave);
-            if (failSave) throw new IOException("synthetic write failure");
-            saved.add(value);
+            try {
+                awaitIfPresent(releaseSave);
+                if (failSave) throw new IOException("synthetic write failure");
+                saved.add(value);
+            } finally {
+                if (saveFinished != null) saveFinished.countDown();
+            }
         }
 
         @Override public AndroidCheckpointLoadResult loadCandidate() {
             if (loadEntered != null) loadEntered.countDown();
-            awaitIfPresent(releaseLoad);
-            return AndroidCheckpointLoadResult.of(
-                    AndroidCheckpointLoadResult.Status.MISSING, "test missing");
+            try {
+                awaitIfPresent(releaseLoad);
+                return AndroidCheckpointLoadResult.of(
+                        AndroidCheckpointLoadResult.Status.MISSING, "test missing");
+            } finally {
+                if (loadFinished != null) loadFinished.countDown();
+            }
         }
 
         private static void awaitIfPresent(CountDownLatch latch) {
@@ -83,18 +93,19 @@ public final class CheckpointIoDispatcherTest {
         storage.loadEntered = new CountDownLatch(1);
         storage.releaseLoad = new CountDownLatch(1);
         CheckpointIoDispatcher dispatcher = new CheckpointIoDispatcher(storage);
-        CountDownLatch loadDone = new CountDownLatch(1);
-        dispatcher.load(result -> loadDone.countDown());
+        storage.loadFinished = new CountDownLatch(1);
+        dispatcher.load(result -> { });
         await(storage.loadEntered);
 
         List<CheckpointSaveResult> results = Collections.synchronizedList(new ArrayList<>());
-        CountDownLatch savesDone = new CountDownLatch(2);
-        dispatcher.save(checkpoint(), result -> { results.add(result); savesDone.countDown(); });
-        dispatcher.save(checkpoint(), result -> { results.add(result); savesDone.countDown(); });
+        storage.saveFinished = new CountDownLatch(2);
+        dispatcher.save(checkpoint(), result -> { results.add(result); });
+        dispatcher.save(checkpoint(), result -> { results.add(result); });
 
         storage.releaseLoad.countDown();
-        await(loadDone);
-        await(savesDone);
+        await(storage.loadFinished);
+        await(storage.saveFinished);
+        Shadows.shadowOf(Looper.getMainLooper()).idle();
         Shadows.shadowOf(Looper.getMainLooper()).idle();
 
         assertEquals(1, storage.writes.get());
@@ -111,14 +122,14 @@ public final class CheckpointIoDispatcherTest {
         storage.releaseSave = new CountDownLatch(1);
         CheckpointIoDispatcher dispatcher = new CheckpointIoDispatcher(storage);
         List<CheckpointSaveResult> results = Collections.synchronizedList(new ArrayList<>());
-        CountDownLatch savesDone = new CountDownLatch(2);
+        storage.saveFinished = new CountDownLatch(2);
 
-        dispatcher.save(checkpoint(), result -> { results.add(result); savesDone.countDown(); });
+        dispatcher.save(checkpoint(), result -> { results.add(result); });
         await(storage.saveEntered);
-        dispatcher.save(checkpoint(), result -> { results.add(result); savesDone.countDown(); });
+        dispatcher.save(checkpoint(), result -> { results.add(result); });
         storage.releaseSave.countDown();
 
-        await(savesDone);
+        await(storage.saveFinished);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
         assertEquals(2, storage.writes.get());
         assertEquals(2, storage.saved.size());
@@ -131,11 +142,11 @@ public final class CheckpointIoDispatcherTest {
         FakeStorage storage = new FakeStorage();
         storage.failSave = true;
         CheckpointIoDispatcher dispatcher = new CheckpointIoDispatcher(storage);
-        CountDownLatch done = new CountDownLatch(1);
+        storage.saveFinished = new CountDownLatch(1);
         List<CheckpointSaveResult> results = new ArrayList<>();
 
-        dispatcher.save(checkpoint(), result -> { results.add(result); done.countDown(); });
-        await(done);
+        dispatcher.save(checkpoint(), result -> results.add(result));
+        await(storage.saveFinished);
         Shadows.shadowOf(Looper.getMainLooper()).idle();
 
         assertEquals(1, results.size());
