@@ -626,7 +626,7 @@ Project-owner approval is required before treating this proposal as the official
 ### DEV-003CS progress
 
 - [x] CS-1 — Gameplay state ownership and lifecycle boundary documented (architecture/evidence only; no production owner implemented).
-- [ ] CS-2 — Evidence-backed persisted-field matrix.
+- [~] CS-2 — Evidence-backed persisted-field matrix (initial evidence draft committed; field-by-field source trace and review remain).
 - [ ] CS-3 — Native gameplay state model seam (depends on first reproducible gameplay owner in DEV-002).
 - [ ] CS-4 — Immutable snapshot provider.
 - [ ] CS-5 — Provider and restore tests.
