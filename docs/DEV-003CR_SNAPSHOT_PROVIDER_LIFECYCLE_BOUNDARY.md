@@ -224,3 +224,21 @@ is therefore recorded as post-integration validation, not a blocker for the
 source-level DEV-003CR boundary. Live gameplay integration remains explicitly
 out of scope until a concrete game-state provider and owner-thread dispatcher
 exist.
+
+
+## DEV-003CR source-level exit gate — verified
+
+The fault-injection test commit `144b5c3a7331023f6d3883248fb094eed2dce720`
+passed GitHub Actions workflow
+`44848229552`. The final documentation head
+`19afbac174823755518b0f7150a7866e3a8e2ce9` also passed workflow
+`44848243427`. Both workflows completed the core JVM tests, Android storage
+unit tests, and Android debug APK assembly successfully.
+
+The source-level DEV-003CR exit gate is therefore met for the implemented
+snapshot-provider contract, persistence adapter, dispatcher tests, recovery
+behavior, and injected mid-write rollback scenario. This does not claim a
+production gameplay provider exists: no real gameplay engine or authoritative
+game-state thread is present yet. Physical-device process-kill and storage
+durability checks remain device-validation work. PR #1 remains open and
+unmerged pending review/authorization.
