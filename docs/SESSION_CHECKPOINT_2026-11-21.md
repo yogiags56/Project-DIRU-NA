@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified HEAD when this checkpoint was prepared: `a163dd3a2449c39a80d2223deb89127b7ef353ac`
+- Last verified HEAD when this checkpoint was prepared: `8d7b06805bff4d51427efd89bd5a330ab640fa40`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -88,6 +88,8 @@ Finish CS-2 evidence review (updated after copy/restore trace at `a163dd3a`):
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `8d7b0680` — add CS-2 copy/restore trace to the working branch (the trace was kept off `main`; an initial misplaced copy on `main` was immediately removed in cleanup commit `20161a02`).
 
 - `c35fbfba` — add CS-2 exact copy/restore trace for metadata and conditional object/auxiliary tables.
 - `a163dd3a` — correct CS-2 field matrix: `eIntArrArr` is tile metadata; add `aLongArr[15]` and `bLongArr[15]` conditional snapshot tables.
