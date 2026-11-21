@@ -44,6 +44,7 @@ public final class CheckpointIoDispatcherTest {
         volatile CountDownLatch loadFinished;
         volatile CountDownLatch saveFinished;
         volatile boolean failSave;
+        volatile boolean failLoad;
 
         @Override public void save(CrossTableCheckpoint value) throws IOException {
             int number = writes.incrementAndGet();
@@ -61,6 +62,7 @@ public final class CheckpointIoDispatcherTest {
             if (loadEntered != null) loadEntered.countDown();
             try {
                 awaitIfPresent(releaseLoad);
+                if (failLoad) throw new IllegalStateException("synthetic load failure");
                 return AndroidCheckpointLoadResult.of(
                         AndroidCheckpointLoadResult.Status.MISSING, "test missing");
             } finally {
@@ -105,7 +107,6 @@ public final class CheckpointIoDispatcherTest {
         storage.releaseLoad.countDown();
         await(storage.loadFinished);
         await(storage.saveFinished);
-        Shadows.shadowOf(Looper.getMainLooper()).idle();
         Shadows.shadowOf(Looper.getMainLooper()).idle();
 
         assertEquals(1, storage.writes.get());
