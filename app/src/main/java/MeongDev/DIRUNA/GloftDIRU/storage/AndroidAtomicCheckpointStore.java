@@ -19,8 +19,27 @@ import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpointBinaryCod
 public final class AndroidAtomicCheckpointStore implements CheckpointStore {
     private final AtomicFile atomicFile;
     private final File baseFile;
+    private final CheckpointWriteOperation writeOperation;
+
+    interface CheckpointWriteOperation {
+        void write(FileOutputStream output, byte[] encodedCheckpoint) throws IOException;
+    }
 
     public AndroidAtomicCheckpointStore(File filesDirectory, String fileName) {
+        this(filesDirectory, fileName, new CheckpointWriteOperation() {
+            @Override public void write(FileOutputStream output, byte[] encodedCheckpoint)
+                    throws IOException {
+                writeOperation.write(output, encodedCheckpoint);
+            }
+        });
+    }
+
+    AndroidAtomicCheckpointStore(File filesDirectory, String fileName,
+            CheckpointWriteOperation writeOperation) {
+        if (writeOperation == null) {
+            throw new IllegalArgumentException("checkpoint write operation is required");
+        }
+        this.writeOperation = writeOperation;
         if (filesDirectory == null || fileName == null || fileName.isEmpty()
                 || fileName.contains("/") || fileName.contains("\\")
                 || ".".equals(fileName) || "..".equals(fileName)) {
