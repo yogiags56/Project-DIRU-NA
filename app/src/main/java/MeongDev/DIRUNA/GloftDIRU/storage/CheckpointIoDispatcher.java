@@ -28,7 +28,7 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         void onComplete(CheckpointSaveResult result);
     }
 
-    private final AndroidCheckpointStorage storage;
+    private final CheckpointStorage storage;
     private final ExecutorService io = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "diru-na-checkpoint-io");
         thread.setDaemon(true);
@@ -38,7 +38,7 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
     private final CheckpointSaveSequence saveSequence = new CheckpointSaveSequence();
     private boolean closed;
 
-    public CheckpointIoDispatcher(AndroidCheckpointStorage storage) {
+    public CheckpointIoDispatcher(CheckpointStorage storage) {
         if (storage == null) throw new IllegalArgumentException("storage is required");
         this.storage = storage;
     }
