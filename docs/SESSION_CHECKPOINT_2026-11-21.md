@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified HEAD when this checkpoint was prepared: `15b30bf3dead9bee5f1218a003cda8a82f844bee`
+- Last verified HEAD when this checkpoint was prepared: `a163dd3a2449c39a80d2223deb89127b7ef353ac`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -66,12 +66,12 @@ CS-2 currently in progress:
 
 ## Current work
 
-Finish CS-2 evidence review (updated after evidence refinement at `15b30bf3`):
+Finish CS-2 evidence review (updated after copy/restore trace at `a163dd3a`):
 1. Trace every field copied by candidate `saveCheckpoint()` and assigned by `restoreCheckpoint()`, using precise source locations where available.
-2. Trace exact background-layer copy/restore statements; AUDIT-004 §6.2 explicitly includes it in the snapshot, and AUDIT-012 documents its runtime role.
+2. Enumerate dimensions and allocation paths for all stage layers and byte arrays.
 3. Enumerate dimensions and invariants of integer object-state arrays and distinct byte-state arrays `bByteArrArr` / `cByteArrArr`.
 4. Trace progression/inventory ownership versus native profile-save model.
-5. Trace optional mode-specific moving-object arrays and their reconstruction invariants.
+5. Reconcile snapshot model with the first reproducible gameplay milestone in DEV-002.
 5. Resolve optional mode arrays and first-build scope.
 6. Define canonical world/stage IDs and compatibility rules.
 7. Reconcile snapshot schema with first reproducible gameplay milestone in DEV-002.
@@ -88,6 +88,9 @@ Finish CS-2 evidence review (updated after evidence refinement at `15b30bf3`):
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `c35fbfba` — add CS-2 exact copy/restore trace for metadata and conditional object/auxiliary tables.
+- `a163dd3a` — correct CS-2 field matrix: `eIntArrArr` is tile metadata; add `aLongArr[15]` and `bLongArr[15]` conditional snapshot tables.
 
 - `72ad625b` — refine CS-2 matrix: background layer included as candidate, separate byte-state arrays, moving-object state row.
 - `15b30bf3` — record evidence refinement and deferred checkpoint safe-point finding.
