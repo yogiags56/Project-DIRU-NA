@@ -176,3 +176,18 @@ importing the core type. The compiler reported unresolved
 `ObjectRecordTable` references in `AndroidCheckpointStorageTest`. Added the
 missing import; no production source behavior was changed. The corrected
 commit requires a fresh Android test and debug assembly run.
+
+
+## Successful CI and malformed-file boundary tests
+
+The corrected import commit `2409ca3f9f312b047ac362664229ed61661843ac`
+completed GitHub Actions successfully: the combined core JVM test and Android
+debug build job concluded `success`.
+
+Added two more Android storage boundary tests:
+- A zero-byte checkpoint file is reported as `STORAGE_ERROR` by the AtomicFile
+  read path and is retained rather than treated as a missing/new save.
+- A checkpoint with an unsupported binary format version is reported as
+  `CORRUPT` and its original bytes remain available.
+
+The tests are committed separately; they require their own fresh CI run.
