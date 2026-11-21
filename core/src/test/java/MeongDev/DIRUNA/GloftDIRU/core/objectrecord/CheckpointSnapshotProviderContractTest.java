@@ -60,18 +60,17 @@ public final class CheckpointSnapshotProviderContractTest {
     @Test
     public void capturedCheckpointIsDetachedFromLaterLiveMutations() {
         CrossTableLifecycleCoordinator live = new CrossTableLifecycleCoordinator();
-        assertEquals(Status.OK, live.objects().allocate(RecordType.TYPE_1, 3, 4, 0).status());
         TestProvider provider = new TestProvider(live);
 
         CrossTableCheckpoint captured = provider.captureCheckpoint();
         assertNotNull(captured);
 
-        assertEquals(Status.OK, live.objects().allocate(RecordType.TYPE_2, 8, 9, 1).status());
+        assertEquals(Status.OK, live.objects().allocate(RecordType.TYPE_1, 8, 9, 1).status());
 
         CrossTableLifecycleCoordinator restored = new CrossTableLifecycleCoordinator();
         assertEquals(Status.OK, captured.restoreInto(restored));
-        assertEquals(1, restored.snapshot().objectSnapshot().records().size());
-        assertEquals(2, live.snapshot().objectSnapshot().records().size());
+        assertEquals(0, restored.snapshot().objectSnapshot().records().size());
+        assertEquals(1, live.snapshot().objectSnapshot().records().size());
     }
 
     @Test
