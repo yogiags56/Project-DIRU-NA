@@ -29,7 +29,7 @@ public final class AndroidAtomicCheckpointStore implements CheckpointStore {
         this(filesDirectory, fileName, new CheckpointWriteOperation() {
             @Override public void write(FileOutputStream output, byte[] encodedCheckpoint)
                     throws IOException {
-                writeOperation.write(output, encodedCheckpoint);
+                output.write(encodedCheckpoint);
             }
         });
     }
@@ -63,7 +63,7 @@ public final class AndroidAtomicCheckpointStore implements CheckpointStore {
         FileOutputStream output = null;
         try {
             output = atomicFile.startWrite();
-            output.write(encodedCheckpoint);
+            writeOperation.write(output, encodedCheckpoint);
             atomicFile.finishWrite(output);
             output = null;
         } catch (IOException | RuntimeException failure) {
