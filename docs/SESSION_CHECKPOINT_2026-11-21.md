@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified content HEAD before this checkpoint refresh: `ad4a04ceaf064b9980c642d54adcdc895fcc1e40`
+- Last verified content HEAD before this checkpoint refresh: `95f9e30dc74abfd5d899b0ce37cd703b92353ae1`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -66,13 +66,12 @@ CS-2 currently in progress:
 
 ## Current work
 
-Finish CS-2 evidence review (updated after scalar/controller audit at `ad4a04ce`):
-1. Trace every field copied by candidate `saveCheckpoint()` and assigned by `restoreCheckpoint()`, using precise source locations where available.
-2. Enumerate dimensions and allocation paths for all stage layers and byte arrays.
-3. Enumerate dimensions and invariants of integer object-state arrays and distinct byte-state arrays `bByteArrArr` / `cByteArrArr`.
-4. Trace progression/inventory ownership versus native profile-save model.
-5. Reconcile snapshot model with the first reproducible gameplay milestone in DEV-002.
-5. Resolve optional mode arrays and first-build scope.
+Finish CS-2 evidence review (updated after exact source assignment ledger at `95f9e30d`):
+1. Exact assignment ledger now completed at static-source level in `docs/DEV-003CS-2_CHECKPOINT_COPY_RESTORE_SOURCE_TRACE.md` §9 (source lines 15190–15382). Remaining: semantic ownership for opaque fields, allocation/compatibility invariants, and independent/runtime validation.
+2. Enumerate dimensions and allocation paths for all stage layers and byte arrays; exact row copy extent is width rows × height elements.
+3. Confirmed exact mapping: `bIntArrArr`→`cIntArrArr`; `bByteArrArr`→`dByteArrArr`; player layer→`eByteArrArr`; foreground→`dIntArrArr`; `cByteArrArr` has no copy path in these methods.
+4. Preserve strict separation between durable profile save and in-memory checkpoint; resolve opaque scalar ownership and `kByte` mode-specific state.
+5. Resolve optional mode arrays and first-build scope, including complete `lBoolean` activation/lifecycle.
 6. Define canonical world/stage IDs and compatibility rules.
 7. Reconcile snapshot schema with first reproducible gameplay milestone in DEV-002.
 8. Update matrix and roadmap; keep CS-2 in progress until all critical questions are answered.
@@ -88,6 +87,9 @@ Finish CS-2 evidence review (updated after scalar/controller audit at `ad4a04ce`
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `d6927033` — add exact source-level scalar, mode-conditional, stage-grid, and byte-array assignment ledger with original source line ranges.
+- `95f9e30d` — update persisted-field matrix with exact assignment evidence and corrections.
 
 - `f41da7b9` — add category-level scalar/controller and post-restore reconstruction audit to CS-2 source trace.
 - `ad4a04ce` — align persisted-field matrix with tile-metadata distinction and scalar/controller evidence.
