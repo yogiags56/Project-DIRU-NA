@@ -140,7 +140,7 @@ public final class CheckpointIoDispatcherTest {
 
         assertEquals(1, results.size());
         assertEquals(CheckpointSaveResult.Status.FAILED, results.get(0).status());
-        assertNotNull(results.get(0).error());
+        assertNotNull(results.get(0).failure());
         dispatcher.close();
     }
 
