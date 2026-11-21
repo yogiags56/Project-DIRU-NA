@@ -206,3 +206,21 @@ The write-side test checks the adapter's preflight rejection path. It does not
 simulate a low-level I/O failure after `AtomicFile.startWrite()`; that requires
 a fault-injection seam or device-level filesystem test and remains outstanding.
 The new tests require a fresh CI run.
+
+
+## Atomic write failure rollback test
+
+Added a package-private write-operation seam to the Android AtomicFile adapter.
+The production constructor still uses the normal single-call stream write; the
+seam is available only to package-local tests. A Robolectric test first writes
+a known-good checkpoint, injects an IOException after a partial write to the
+AtomicFile output stream, and then opens a fresh adapter to verify that the
+previous checkpoint remains readable and byte-identical. This exercises the
+adapter's `failWrite()` recovery path rather than only its input-size preflight.
+
+The test is included in the current branch CI run. Host-side AtomicFile behavior
+is not a substitute for physical-device power-loss testing. Device validation
+is therefore recorded as post-integration validation, not a blocker for the
+source-level DEV-003CR boundary. Live gameplay integration remains explicitly
+out of scope until a concrete game-state provider and owner-thread dispatcher
+exist.
