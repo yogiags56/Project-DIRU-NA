@@ -111,7 +111,8 @@ public final class CheckpointIoDispatcherTest {
         await(storage.loadEntered);
 
         List<CheckpointSaveResult> results = Collections.synchronizedList(new ArrayList<>());
-        storage.saveFinished = new CountDownLatch(2);
+        // Only the newest request reaches storage; the older one is skipped.
+        storage.saveFinished = new CountDownLatch(1);
         dispatcher.save(checkpoint(), result -> { results.add(result); });
         dispatcher.save(checkpoint(), result -> { results.add(result); });
 
