@@ -178,3 +178,82 @@ Maintain two explicit models:
 2. **Temporary in-memory checkpoint:** stage/player state captured for respawn and restored during the current runtime.
 
 A field may participate in both only when the source shows both paths. Never infer checkpoint membership from save-record membership alone.
+
+## 9. Exact source-level capture/restore assignment ledger
+
+Direct source inspected: kubikaugustyn/DiamondRushSource/src/main/java/i.java, pinned revision 215c71d04057d66a1b08419b1a4b1043ae3e0881. Method ranges: saveCheckpoint() lines 15190–15246; restoreCheckpoint() lines 15248–15382. Static source inspection only; not runtime validation or shipping-JAR bytecode comparison.
+
+### 9.1 Unconditional scalar pairs
+
+| Capture (line) | Restore (line) | Evidence label |
+|---|---|---|
+| jByte = i.iByteArr[10] (15191) | i.iByteArr[10] = jByte (15284) | Save byte 10; boolean-like gameplay state, semantic name unresolved |
+| chInt = cfInt (15192) | cfInt = chInt (15286) | Opaque scalar |
+| cgInt = ceInt (15193) | ceInt = cgInt (15287) | Opaque scalar |
+| afInt = aaInt (15194) | aaInt = afInt (15285) | Opaque scalar |
+| bZInt = aCInt (15195) | aCInt = bZInt (15288) | Opaque scalar |
+| bXInt = aZInt (15196) | aZInt = bXInt (15290) | Opaque scalar |
+| bYInt = bbInt (15197) | bbInt = bYInt (15289) | Opaque scalar |
+| bSInt = crtPlayerX (15198) | crtPlayerX = bSInt (15294) | Player logical tile X |
+| bTInt = crtPlayerY (15199) | crtPlayerY = bTInt (15295) | Player logical tile Y |
+| bUInt = aUInt (15200) | aUInt = bUInt (15296) | Opaque scalar |
+| bVInt = aVInt (15201) | aVInt = bVInt (15297) | Opaque scalar |
+| bWInt = ayInt (15202) | ayInt = bWInt (15344) | Spawn/original-X-related per stage init audit; retain opaque |
+| ajInt = aiInt (15203) | aiInt = ajInt (15298) | Opaque scalar |
+| cnInt = cmInt (15206) | cmInt = cnInt (15321) | Static/global scalar |
+
+### 9.2 Mode-dependent scalar pairs (only when lBoolean is true)
+
+| Capture (line) | Restore (line) |
+|---|---|
+| yByte = xByte (15231) | xByte = yByte (15355) |
+| dAInt = dqInt (15232) | dqInt = dAInt (15356) |
+| dBInt = drInt (15233) | drInt = dBInt (15357) |
+| dCInt = dsInt (15234) | dsInt = dCInt (15358) |
+| zByte = vByte (15235) | vByte = zByte (15359) |
+| dDInt = dvInt (15236) | dvInt = dDInt (15360) |
+| dEInt = dwInt (15237) | dwInt = dEInt (15361) |
+| dFInt = dxInt (15238) | dxInt = dFInt (15362) |
+| AByte = wByte (15239) | wByte = AByte (15363) |
+| dGInt = dyInt (15240) | dyInt = dGInt (15364) |
+| dHInt = dzInt (15241) | dzInt = dHInt (15365) |
+| amBoolean = alBoolean (15242) | alBoolean = amBoolean (15347) |
+| dIInt = dtInt (15243) | dtInt = dIInt (15348) |
+| dJInt = duInt (15244) | duInt = dJInt (15349) |
+
+The caInt = amInt and cbInt = alInt pairs are captured unconditionally (15204–15205), but restored only when kByte == 1 (15315–15318). Other kByte branches execute reconstruction/reset behavior rather than restoring a paired value.
+
+### 9.3 Exact array copy pairs
+
+| Live state | Snapshot buffer | Capture lines | Restore lines |
+|---|---|---:|---:|
+| Optional mByteArr | oByteArr | 15207–15209 | 15322–15324 |
+| bIntArrArr | cIntArrArr | 15210–15211 | 15325–15326 |
+| bByteArrArr | dByteArrArr | 15210–15212 | 15325–15327 |
+| crtStagePlayerLayer | eByteArrArr | 15210–15213 | 15325–15328 |
+| crtStageForegrondLayer | dIntArrArr | 15210–15214 | 15325–15329 |
+| Conditional eIntArrArr | fIntArrArr | 15216–15222 | 15346–15352 |
+| Conditional aLongArr | cLongArr | 15223–15226 | 15353 |
+| Conditional bLongArr | dLongArr | 15227–15230 | 15354 |
+
+Grid copies iterate crtStageWidth rows and copy crtStageHeight elements. The 15-long snapshot buffers are allocated when null and copied using the live array length.
+
+Correction: cByteArrArr is not copied by these checkpoint methods. bByteArrArr is copied through dByteArrArr.
+
+### 9.4 Restore-side behavior that is not captured data
+
+- Resets transient/control fields (cEInt, aHInt/aGInt/aFInt, bgInt/bhInt, EBoolean, blInt, tBoolean, axInt, kInt, bjInt) and sets hero animator slot 0 to animation 2 (15249–15259, 15282–15293).
+- Computes camera offsets from saved tile coordinates: ciInt = bSInt * 24 - 120; cjInt = bTInt * 24 - 160 + 40 (15257–15258). These are derived, not copied.
+- Applies special-cell mutations when qBoolean or rBoolean is active (15264–15280).
+- Rebuilds cell update/dirty state by scanning restored player/foreground layers and calling kVoid(k,j) (15331–15339).
+- Resets optional animator slot 2 and clears player-layer cell [18][63] if that animator exists (15340–15343).
+- Sets oBoolean = true (15345).
+- After optional mode arrays restore, scans player-layer cells for object code 48 and dispatches dVoid(48) or aiVoid() based on background bit 0x8 (15367–15380).
+
+### 9.5 CS-2 scalar evidence status
+
+Closed at static-source assignment level: exact unconditional scalar pairs; mode-dependent scalar pairs; kByte == 1 pair; stage-grid and byte-array mappings; conditional object/auxiliary table mappings; restore-side reset/derived/reconstruction behavior.
+
+Still open before CS-2 can close: semantic ownership for opaque scalars; stage dimension/allocation invariants and source null/length preconditions; complete lBoolean activation/lifecycle; world/stage/mode compatibility key; independent comparison against original shipping binary; deterministic runtime round-trip tests.
+
+Do not invent friendly names for opaque decompiler identifiers. Assign Native semantic names only after tracing their writers/readers and mode-specific behavior.
