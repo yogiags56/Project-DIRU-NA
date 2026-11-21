@@ -95,3 +95,54 @@ Therefore the object/auxiliary section is conditional feature state. A Native sn
 **Still open:** exact copy/restore pairs and dimensions for the three stage layers and `bByteArrArr`; checkpoint inclusion of `cByteArrArr` is unproven; full scalar/controller snapshot list; final schema types and compatibility policy.
 
 CS-2 remains in progress. This trace does not authorize a production snapshot provider yet.
+
+
+## 7. Scalar, controller, and reconstruction-state audit
+
+Cross-checking AUDIT-002 §17.1 and §22, AUDIT-004 §§6.1–6.3, and AUDIT-009 §§3–4 yields this category-level inventory. The audits do not yet provide a complete assignment-by-assignment scalar variable list, so these are categories, not invented source identifiers.
+
+| State category | Capture evidence | Restore evidence | Native treatment |
+|---|---|---|---|
+| Player tile X/Y | AUDIT-009 §3; AUDIT-004 §6.2 | AUDIT-009 §4 steps 1/4 | Required scalar pair; validate against restored stage bounds |
+| Checkpoint index/value (save byte 10) | AUDIT-009 §3 | AUDIT-009 §4 step 2 | Required for checkpoint progression consistency; distinct from durable save serialization |
+| Player/gameplay counters and state bytes | AUDIT-002 §22; AUDIT-009 §3 | AUDIT-002 §22; AUDIT-009 §4 step 2 | Include only individually traced fields; preserve opaque values until semantics are proven |
+| World/stage progress and inventory-like fields | AUDIT-009 §3; AUDIT-002 §22 | AUDIT-009 §4 step 2 | Establish checkpoint-local versus profile progression ownership before schema inclusion |
+| Currency/score-like counters | AUDIT-002 §22 | AUDIT-002 §22; AUDIT-009 §3–4 | Conditional pending exact writer/UI and restore trace; do not conflate score, currency, and profile totals |
+| Movement/interpolation state | AUDIT-004 §§2.2, 6.2 | AUDIT-009 §4 step 4 resets movement/state fields | Capture only at safe point after interpolation reaches zero; do not persist mid-transition interpolation |
+| Interaction/animation state | AUDIT-004 §6.2 | AUDIT-009 §4 steps 1/3 reset transient fields and set hero animator slot 0 to animation 2 | Prefer deterministic reset/reconstruction for transient fields |
+| Camera offsets/target | AUDIT-002 §17.1 notes camera-related state; AUDIT-004 §6.3 and AUDIT-009 §4 step 1 describe camera recentering | Camera recentered from saved player tile | Treat as derived presentation state unless direct saved scalar assignments are found |
+| Dirty/update markers | AUDIT-009 §4 step 6 | Rebuilt after stage grids restore | Recompute after restore |
+| Object code 48 multi-cell reconstruction | AUDIT-002 §17.1; AUDIT-009 §4 step 8 | Reconstructed after grid restore using mode/background-dependent path | Explicit post-restore phase; validate metadata/table references first |
+| Input/held-key state | AUDIT-009 §4 step 1 | Transient input fields reset | Exclude |
+| Audio/resource handles | No snapshot capture evidence | Runtime resources reinitialized as needed | Exclude; reacquire through runtime resource systems |
+
+### 7.1 Capture safe point
+
+AUDIT-004 §6.1 and §2.2 establish deferred capture:
+1. Detect a new checkpoint tile and set `shouldSaveCheckpoint`.
+2. Finish tile movement/interpolation (`jInt == 0` in the audited movement description).
+3. Play checkpoint feedback and invoke `saveCheckpoint()`.
+
+Native capture must be requested on the single-writer gameplay owner at a stable tick boundary. A request arriving during movement remains pending; the Android/UI thread must never read mutable game arrays directly.
+
+### 7.2 Restore ordering
+
+The observed behavior supports this high-level order:
+1. Reset transient input/interaction/animation state and establish camera offsets from the saved logical player tile.
+2. Restore only confirmed checkpoint-local scalar/progression fields.
+3. Restore player tile coordinates and reset movement state.
+4. Restore stage grids and conditional object/auxiliary tables as coherent groups.
+5. Rebuild dirty/update markers.
+6. Reconstruct special multi-cell objects (including code 48) after backing metadata and records are valid.
+7. Recompute camera presentation from restored logical state.
+
+This is an observed outline, not a final native API. Exact scalar assignment order and the precise field set in step 2 remain open.
+
+### 7.3 Remaining scalar evidence gaps
+
+- Enumerate every scalar copied by `saveCheckpoint()` and assigned by `restoreCheckpoint()` with exact source identifiers and line references.
+- Trace progression/inventory/currency candidates to all writers and UI display sites to decide checkpoint-local versus durable profile ownership.
+- Confirm the optional `lBoolean` feature flag and associated counters/arrays.
+- Locate exact camera scalar copies, if any; until then camera remains recomputable presentation state.
+- Confirm whether object code 48 is the only post-restore reconstruction path.
+- Preserve the distinction between fields captured and fields reset/recomputed during restore.
