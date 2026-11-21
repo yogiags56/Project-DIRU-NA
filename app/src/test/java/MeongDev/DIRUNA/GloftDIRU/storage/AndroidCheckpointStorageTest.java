@@ -107,6 +107,36 @@ public class AndroidCheckpointStorageTest {
         assertArrayEquals(knownGood, store.read());
     }
 
+    @Test public void newStorageInstanceRestoresCheckpointAfterProcessRecreation() throws Exception {
+        AndroidCheckpointStorage writer = new AndroidCheckpointStorage(context);
+        CrossTableCheckpoint expected = new CrossTableCheckpoint(
+                new CrossTableLifecycleCoordinator().snapshot(), Map.of());
+        writer.save(expected);
+
+        // A new adapter instance models application process recreation: no
+        // in-memory storage object is reused for the subsequent load.
+        AndroidCheckpointStorage reopened = new AndroidCheckpointStorage(context);
+        AndroidCheckpointLoadResult candidate = reopened.loadCandidate();
+        assertTrue(candidate.restored());
+
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, candidate.applyTo(destination));
+    }
+
+    @Test public void backupOnlyCheckpointIsRecognizedAndRecovered() throws Exception {
+        byte[] knownGood = validEmptyCheckpoint();
+        File backup = new File(checkpointFile.getPath() + ".bak");
+        Files.write(backup.toPath(), knownGood);
+        assertFalse(checkpointFile.exists());
+
+        AndroidCheckpointStorage reopened = new AndroidCheckpointStorage(context);
+        AndroidCheckpointLoadResult candidate = reopened.loadCandidate();
+
+        assertTrue(candidate.restored());
+        assertArrayEquals(knownGood, new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME).read());
+    }
+
     @Test public void invalidDestinationIsReportedWithoutFileMutation() throws Exception {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
