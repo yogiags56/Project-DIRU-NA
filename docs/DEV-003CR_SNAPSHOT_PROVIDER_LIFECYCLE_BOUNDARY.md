@@ -115,3 +115,16 @@ These tests verify executor sequencing and callback routing under Robolectric;
 they do not replace process-kill, filesystem durability, or physical-device
 AtomicFile testing. A production game-thread dispatcher is still required
 before applying loaded candidates to live gameplay state.
+
+
+## CI failure diagnosis and correction
+
+The first CI execution of the detached-snapshot contract test reached the test
+suite (345 tests executed) and found one assertion failure. The captured
+checkpoint restored correctly, but the assertion compared the coordinator
+restore result against the object-table `Status` enum. These are distinct
+enum types even though both expose an `OK` value. The assertion now explicitly
+expects `CrossTableLifecycleCoordinator.Status.OK`. This was a test assertion
+type mismatch, not a checkpoint restore implementation failure. A fresh CI
+run on the corrected branch head is still required to verify the fix and
+continue into Android unit tests and APK assembly.
