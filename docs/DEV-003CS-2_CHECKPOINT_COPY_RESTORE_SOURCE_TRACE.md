@@ -704,3 +704,46 @@ Therefore a checkpoint that stores only `aLongArr` is incomplete. The paired `bL
 - Whether all 15 secondary slots are meaningful for every optional-mode phase or some are dormant.
 - Cross-validation rules between primary records, secondary workspace entries, and stage-cell references.
 - Runtime captures/golden vectors for both tables are still unavailable.
+
+
+## 17. Secondary-table record schema and traversal evidence
+
+Pinned source revision: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 17.1 Confirmed secondary-table allocator
+
+The four-byte-argument `aByte(byte, byte, byte, byte)` helper (15863–15884) allocates the first free `bLongArr` slot by scanning offset 0 width 4 for zero. It initializes these fields:
+
+| Offset | Width | Stored value | Evidence |
+|---:|---:|---|---|
+| 0 | 4 | 1 | allocator initialization |
+| 4 | 2 | fourth argument | allocator initialization |
+| 6 | 7 | first argument | allocator initialization |
+| 13 | 7 | second argument | allocator initialization |
+| 20 | 7 | third argument | allocator initialization |
+| 27 | 7 | first argument again | allocator initialization |
+
+These are six bitfield writes in the secondary table's 64-bit word. The 7-bit ranges 6:7, 13:7, 20:7, and 27:7 are adjacent, not overlapping. Offset 0:4 and 4:2 are also adjacent. Do not reuse the primary-table offset-28 lifecycle schema for this table.
+
+### 17.2 Coordinate lookup and use
+
+- `bByte(x,y)` scans all 15 secondary slots and compares coordinates read from offsets 13:7 and 20:7; returns the zero-based slot or -1 (15917–15930).
+- In the optional-mode path setup (around 16603–16606), the four-argument allocator is called, then `bByte` locates the matching coordinate and sets that secondary slot's offset 0:4 to 2.
+- When `alBoolean` is set, the update path reads successive secondary entries using `dtInt`, fetches coordinates at 13:7 and 20:7, and passes them to `mVoid`; then increments `dtInt` until `duInt` (9521–9528).
+- This is consistent with an ordered coordinate/path traversal used by optional-mode presentation/update. Exact meaning of the 2-bit field at offset 4 and the offset-6/27 values remains contextual and must not be assigned guessed names.
+
+### 17.3 Relation to xByte=4 rebuild
+
+The xByte=4 branch (16455–16510) scans primary records, clears the same-index secondary word for qualifying primary records, and rebuilds movement/continuation behavior through primary-record and stage-cell helpers. Separately, the four-argument secondary allocator is invoked in the xByte=5 setup path. These are distinct mechanisms; do not state that xByte=4 directly populates the secondary table with the primary path nodes.
+
+### 17.4 Corrected interpretation
+
+The secondary table is not merely a passive scratch buffer. It stores independently allocated 64-bit coordinate/path entries, supports zero-based coordinate lookup, is traversed sequentially by an update/presentation path, and is explicitly checkpointed/restored. Its exact lifecycle and flag semantics still need complete call-site analysis.
+
+### 17.5 Native schema/test implications
+
+- Define a separate `SecondaryPathRecord` raw-word codec with capacity 15 and zero-based slot API.
+- Preserve all 64 bits, including presently unexplained offset-6 and offset-27 values.
+- Add test vectors for allocator field writes, free-slot scan, coordinate lookup, offset-0 state transition 1→2, and ordered traversal.
+- Validate coordinate bounds against actual stage dimensions before using coordinates; do not silently clamp.
+- Keep secondary table state atomic with primary records, stage-cell grid, and optional-mode scalars.
