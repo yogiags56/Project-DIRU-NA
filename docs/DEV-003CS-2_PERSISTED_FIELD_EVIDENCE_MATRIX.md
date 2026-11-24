@@ -187,3 +187,18 @@ New semantic classifications supported by source use sites:
 - Prior tentative `ayInt` “spawn/original-X” label is withdrawn; it remains opaque runtime gating/position-related state.
 
 This narrows schema ownership but does not close CS-2. Remaining work: trace all opaque scalar writers/reset points, decode optional-mode records, establish stage/profile ownership, and validate dimensions/compatibility and runtime round trips.
+
+
+## 15. Optional mode lifecycle and packed records — 2026-11-24
+
+See `DEV-003CS-2_CHECKPOINT_COPY_RESTORE_SOURCE_TRACE.md` §11.
+
+Source evidence now establishes:
+- `lBoolean` is activated by stage foreground trigger code 19; the first activation initializes the mode arrays and fields.
+- Stage teardown resets the discriminator and nulls the four 15-entry long tables.
+- `asVoid()` is gated by `lBoolean`.
+- The 15-slot 64-bit record tables use packed fields with observed offsets 0, 4, 6, 13, 20, 26, 28, 31, 37, 43, 45, 47, 49, 54, and 57. This is an observed partial map, not a complete decoder specification.
+- The `xByte` lifecycle includes idle/ready (3), operation setup (5), record processing (1→2), and completion/rebuild (4→2) paths.
+- Optional-mode tables and their scalar control state must be captured/restored atomically with the stage grid and activation discriminator.
+
+Still open: complete bitfield semantics, all transition writers, valid coordinate/slot invariants, auxiliary-table reader audit, and runtime/binary verification.
