@@ -381,3 +381,51 @@ A complete occurrence scan of the pinned source revision found:
 - `cLongArr` and `dLongArr` are allocated lazily by capture and are not allocated by `arVoid()`; `arVoid()` allocates the active source arrays and their snapshot peers.
 
 This confirms the active-vs-backup distinction for the two long-table pairs at static-source level.
+
+
+## 12. Optional mode call-site correction and full transition-writer audit
+
+This section supersedes the activation-order wording in §11.1 where it conflicts with the direct call-site evidence. Pinned source revision remains 215c71d04057d66a1b08419b1a4b1043ae3e0881.
+
+### 12.1 Correct activation/allocation order
+
+There are two call sites for `arVoid()`, and their guards differ:
+
+1. Stage-load switch case 3 calls `arVoid()` only when `lBoolean == true`, then allocates `eIntArrArr` and calls `afVoid()` (4594–4599).
+2. Foreground trigger code 19 calls `arVoid()` only when `lBoolean == false`, then sets `lBoolean = true`, clears `alBoolean`, allocates `eIntArrArr` if null, and creates the first record (12114–12130).
+3. `arVoid()` itself allocates/reset the four 15-entry long tables only when `lBoolean == true` (15840–15860).
+
+Therefore the trigger-code-19 call occurs while inactive and its call to `arVoid()` is a no-op. Allocation/reset through `arVoid()` is evidenced on the stage-load case-3 path while the optional mode is already active. The previous statement that the trigger-code-19 path itself initializes all optional tables was incorrect and is withdrawn.
+
+This indicates two distinct entry paths: an existing active-mode stage-load reinitialization path, and an inactive-to-active trigger path that sets up the first record without calling the allocating branch of `arVoid()`. Native implementation must preserve the observed distinction until runtime/binary evidence resolves whether it is intentional or a quirk/defect in this source revision.
+
+### 12.2 Complete scalar writer inventory (observed assignments)
+
+| Field | Writer sites / transitions |
+|---|---|
+| `xByte` | Constructor 3; teardown 3; restore from `yByte`; `arVoid` 3; record completion 4; stage-record transition 2; setup completion 1; `lVoid` starts 5; `mVoid` starts 1 |
+| `alBoolean` | Constructor true; teardown false; trigger code 19 false; `arVoid` true; record completion true; per-frame update consumes it by setting false |
+| `dqInt` | Constructor/teardown/restore/activation reset -1; increment while active record timer; reset to 0 on interval; reset -1 on completion; set 0 at setup |
+| `drInt` | Teardown/activation 0; increments during record traversal; set 1 on one completion path; reset 0 on alternate setup path |
+| `dsInt` | Teardown/activation 0; otherwise restored from snapshot; no other direct assignment found in scanned method |
+| `vByte` | Teardown/activation 0; reset and computed from displacement ratio during record movement |
+| `dvInt`, `dwInt` | Teardown/activation 0; selected cell coordinates set by `lVoid`; cleared to -1 for one branch; restored on a different movement branch |
+| `dxInt` | Teardown/activation 0; set by `lVoid` from neighboring stage-grid occupancy; cleared on invalid setup branch |
+| `wByte` | Teardown/activation 0; selected active slot set from packed record lookup in `xByte=5` setup |
+| `dyInt` | Teardown/activation 0; derived movement/target coordinate set during setup |
+| `dzInt` | Constructor/teardown/activation -1; increments during record processing; reset to -1 or 0 on completion/re-entry paths |
+| `dtInt` | Teardown/activation 0; per-frame cursor incremented by one-shot `alBoolean` update; reset to 0 when exhausted |
+| `duInt` | Teardown/activation 0; incremented by `afVoid()` once per stage player-layer cell code 38; consumed as upper bound by `dtInt` cursor and reset with it |
+
+### 12.3 Additional lifecycle findings
+
+- `afVoid()` scans the complete stage grid and increments `duInt` for each player-layer cell equal to 38 (12611–12622). This establishes `duInt` as a count/bound for queued cell work, not an arbitrary opaque integer.
+- Per-frame update at 9521–9529 consumes one queued coordinate per `alBoolean` pulse: it reads record coordinates from the `dtInt`th packed record, calls `mVoid`, increments `dtInt`, and resets both cursor/count after exhaustion.
+- `lVoid(x,y)` sets `dxInt` from adjacent `eIntArrArr` occupancy and records selected coordinates; it enters setup state 5 only when a direction is found (16783–16795).
+- `mVoid(x,y)` finds a matching packed record, changes its type/state, clears the corresponding player-layer cell, and enters state 1 (16798–16811).
+- `xByte=1` advances to 2 on the next update; `xByte=4` rebuilds type-3 records and returns to 2; `xByte=5` creates/links records and enters 1; `xByte=3` is the interaction-ready state used by input/interaction guards.
+- The record table uses a 1-based accessor family for `aLongArr` and a 0-based accessor family for `bLongArr`. Do not normalize these APIs without tests.
+
+### 12.4 Bitfield caution
+
+The previous partial offset table is not yet a canonical packed-record schema. In particular, record creation writes a 7-bit field at offset 27 (15874–15880), while other paths read/write a 2-bit field at offset 26 (e.g. 15961, 15994, 16155, 16158). These accesses overlap and are likely context-dependent views/packed subfields; they must be modeled as observed accessors, not independent non-overlapping properties. Keep exact offset/width pairs and do not infer a flat struct until the complete write/read graph is reconciled.
