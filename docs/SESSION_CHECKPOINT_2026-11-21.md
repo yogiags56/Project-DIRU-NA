@@ -190,3 +190,27 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - This update is documentation/source-audit work only; no Native implementation or new automated tests were added.
 - Recheck GitHub Actions for the new documentation commit(s) before treating CI as green.
 - Preserve the previous last-known-good commit; do not merge PR #1 or change branches.
+
+
+## Resume update — 2026-11-25 (41-stage binary inventory)
+
+### Work completed
+- Retrieved and decoded all three pinned candidate stage resources as Base64.
+- Parsed 14 Angkor stages from `w0.bin`, 13 Scotland stages from `w1.bin`, and 14 Tibet stages from `w2.bin`.
+- Verified exact file exhaustion: 47,686 / 46,956 / 56,887 bytes respectively; no truncated stage payload and no trailing bytes.
+- Recorded all 41 dimensions and binary Git blob SHAs in source trace §20.
+- Confirmed candidate width range 23–104 and height range 11–75.
+- Reconciled fixed-coordinate predicates: q-branch bounds match 23 stages; r-branch 9; animator-slot-2 bounds match only Angkor world 0 stage 5 (30×75). These are bounds-only, not proof of runtime branch activation.
+- Updated source trace §20 and Evidence Matrix §25.
+
+### Current CS-2 focus
+1. Trace every stage-load path and allocation/nullability guarantees, including malformed/truncated resource handling.
+2. Trace q/r flag and animator-slot-2 activation sites; never infer activation from dimensions.
+3. Continue opaque scalar ownership and world/stage/profile separation.
+4. Define snapshot compatibility identity only from direct evidence.
+5. Keep Native provider implementation blocked until a real gameplay state owner exists.
+
+### Validation boundary
+- Binary parsing was executed against the pinned candidate resources. This is static candidate-resource validation, not runtime gameplay or retail-binary validation.
+- Documentation-only update; no Native code or automated tests added. CI must be checked for the final documentation commit.
+- Do not merge PR #1 or change branches without explicit authorization.
