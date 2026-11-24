@@ -551,3 +551,90 @@ Do not merge these fields into one enum or assume they share numeric semantics.
 - Keep xByte, offset28, offset0 kind, and offset47 operation mode as separate fields in the analysis model.
 - Model transitions with guards and stage-cell conditions, not as a simple enum progression.
 - Candidate restore must validate link target occupancy and cell backreferences for every occupied slot before commit.
+
+
+## 15. Accessor-family separation and packed-bit overlap catalog
+
+Pinned evidence source: `kubikaugustyn/DiamondRushSource/src/main/java/i.java`, revision `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 15.1 Three distinct accessor families
+
+The decompiled source overloads methods named `aInt` and `aVoid`. They do not all access the same packed object:
+
+1. **64-bit active record table**
+   - Read: `aInt(int slot1Based, byte offset, byte width)` reads `aLongArr[slot - 1]`.
+   - Write: `aVoid(int slot1Based, int value, byte offset, byte width)` updates `aLongArr[slot - 1]`.
+   - Slot numbering is 1..15.
+
+2. **64-bit secondary table**
+   - Read/write overloads taking a byte slot access `bLongArr[slot0Based]`.
+   - Slot numbering is 0..14.
+   - This table is not interchangeable with `aLongArr`; its use and snapshot ownership must remain separate.
+
+3. **Packed 32-bit stage-cell lanes**
+   - Read: `aInt(int packedCell, byte lane, byte offsetWithinLane, byte width)`.
+   - Write: `aVoid(int x, int y, byte lane, int value, byte offsetWithinLane, byte width)`.
+   - Each cell is treated as three 9-bit lanes (27 used bits).
+   - The lane index is 0..2; offsets such as 0, 3, and 7 are relative to the selected 9-bit lane, not absolute offsets in a 64-bit record.
+   - Cell lane offset 0 width 3 stores a slot reference; offset 3 width 4 stores a cell type/state; offset 7 width 2 stores a lane-local selector/flag.
+
+This overload distinction is critical: e.g. `aInt(..., 3, 4)` can mean a record-field read only if it uses the 64-bit-record overload; in the four-argument cell overload it is a cell-lane field.
+
+### 15.2 Observed 64-bit record accessors
+
+The following are observed offset/width pairs in the active record table. They are an accessor inventory, not a canonical non-overlapping struct.
+
+| Offset | Width | Evidence / observed use |
+|---:|---:|---|
+| 0 | 4 | Free/kind scan; kind/type initialization and classification |
+| 0 | 7 | Read during active processing; overlaps the low-nibble kind |
+| 3 | 4 | Record accessor occurs in some paths; overlaps the kind field and must remain contextual |
+| 4 | 2 | Operation/type argument used during rebuild |
+| 6 | 7 | Initialized during primary allocation; overlaps neighboring accessors |
+| 7 | 7 | Read as an auxiliary value/coordinate in active processing |
+| 13 | 7 | Coordinate lookup and allocation |
+| 14 | 6 | Active record coordinate |
+| 20 | 7 | Coordinate/allocation; overlaps the 20:6 accessor |
+| 20 | 6 | Active record coordinate |
+| 26 | 2 | Cell selector/subfield; overlaps the 27:7 write |
+| 27 | 7 | Allocation writes this field; overlaps 26:2 and 28:3 |
+| 28 | 3 | Record lifecycle/control |
+| 31 | 6 | Record coordinate |
+| 37 | 6 | Record coordinate |
+| 43 | 2 | Cell lane selector |
+| 45 | 2 | Direction/operation |
+| 47 | 2 | Per-record operation mode |
+| 49 | 5 | Interval/length |
+| 54 | 3 | One-based linked-slot reference |
+| 57 | 1 | Boolean flag |
+
+Some pairs above are accessed through helper paths and context-specific aliases. Do not infer semantic independence from the table.
+
+### 15.3 Overlap groups that block a flat struct
+
+The following ranges intersect:
+- `0:4`, `0:7`, and `3:4`.
+- `6:7` and `7:7`.
+- `13:7` and `14:6`.
+- `20:7` and `20:6`.
+- `26:2`, `27:7`, and `28:3`.
+- `28:3` and `31:6` are adjacent, not overlapping; retain their exact bit boundaries.
+- Any offset/width pair used by the 9-bit cell-lane overload is in a separate coordinate system and must never be added to this record overlap graph.
+
+A correct implementation should first preserve the raw 64-bit word and expose named, context-specific accessor functions. It should not serialize a guessed Java/Kotlin struct and reconstruct the original bits from assumed independent fields.
+
+### 15.4 Snapshot/decoder consequences
+
+- Preserve the complete raw `aLongArr` and `bLongArr` words without normalization.
+- Decode a field only through a named accessor that records its source table, slot index base, bit offset, width, and call context.
+- Keep stage-cell 9-bit lane accessors in a separate helper/API from record accessors.
+- Add golden test vectors for each observed overload and verify write-then-read masks only the intended bits for that overload.
+- Before any restore commit, validate slot references and coordinates using the matching accessor family.
+- Do not use the current provisional field labels as production domain-model property names.
+
+### 15.5 Remaining source questions
+
+- Complete use/ownership map for `bLongArr` versus `aLongArr` in all paths.
+- Whether any writes rely on sign extension or negative values before masking.
+- Exact semantics of record offsets 0:7, 3:4, 6:7, 7:7, 13:7, 14:6, 20:7, 20:6, 26:2, and 27:7.
+- Golden raw-word fixtures from original runtime captures are not yet available.
