@@ -320,3 +320,12 @@ Restore also contains branch-specific fixed-coordinate accesses:
 These are branch preconditions, not universal minimum dimensions for every stage. Validate the applicable branch before candidate restore and before mutating live state. The loader's flat-buffer mapping uses `x + y * width`; do not transpose without separate evidence.
 
 `cByteArrArr` is allocated at stage load but is absent from the inspected checkpoint copy pairs. Keep it excluded. CS-2 remains open: actual stage-resource dimension inventory, all setup-path allocation guarantees, opaque scalar ownership, compatibility-key evidence, and runtime/shipping-binary validation are incomplete.
+
+
+## 25. Complete candidate stage-resource dimension inventory — 2026-11-25
+
+Source trace §20 records the full binary evidence. The pinned candidate resources contain 41 stages: Angkor `w0.bin` 14, Scotland `w1.bin` 13, Tibet `w2.bin` 14. Each record is a four-byte little-endian unsigned-16-bit width/height header followed by exactly three layers of `width * height` bytes. All three files parsed to exact EOF with no truncated payload or trailing bytes.
+
+Dimension ranges: width 23–104; height 11–75. The only stage meeting the restore animator-slot-2 bounds (width >= 19, height >= 64) is Angkor world 0 stage 5 (30×75). q-branch bounds (width >= 40, height >= 8) match 23 stages; r-branch bounds (width >= 51, height >= 8) match 9. These are bounds-only counts, not proof of runtime branch activation.
+
+Native must retain per-stage dimensions, checked allocation arithmetic, exact layer order/indexing, and branch-specific prevalidation before mutation. The inventory does not prove all retail variants, profile ownership, or snapshot compatibility semantics. CS-2 remains in progress.
