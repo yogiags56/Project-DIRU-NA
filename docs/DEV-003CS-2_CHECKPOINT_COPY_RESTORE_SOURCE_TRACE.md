@@ -580,25 +580,22 @@ The decompiled source overloads methods named `aInt` and `aVoid`. They do not al
 
 This overload distinction is critical: e.g. `aInt(..., 3, 4)` can mean a record-field read only if it uses the 64-bit-record overload; in the four-argument cell overload it is a cell-lane field.
 
-### 15.2 Observed 64-bit record accessors
+### 15.2 Observed 64-bit accessors, separated by backing table
 
-The following are observed offset/width pairs in the active record table. They are an accessor inventory, not a canonical non-overlapping struct.
+These are distinct 64-bit arrays and their offset namespaces must not be combined.
+
+**Primary table `aLongArr` (one-based slot API)**
 
 | Offset | Width | Evidence / observed use |
 |---:|---:|---|
-| 0 | 4 | Free/kind scan; kind/type initialization and classification |
-| 0 | 7 | Read during active processing; overlaps the low-nibble kind |
-| 3 | 4 | Record accessor occurs in some paths; overlaps the kind field and must remain contextual |
-| 4 | 2 | Operation/type argument used during rebuild |
-| 6 | 7 | Initialized during primary allocation; overlaps neighboring accessors |
-| 7 | 7 | Read as an auxiliary value/coordinate in active processing |
-| 13 | 7 | Coordinate lookup and allocation |
+| 0 | 7 | Read as a record classification/value during active processing |
+| 6 | 7 | Written during primary allocation; no complete semantic reader map yet |
+| 7 | 7 | Read as auxiliary value/coordinate in active processing |
 | 14 | 6 | Active record coordinate |
-| 20 | 7 | Coordinate/allocation; overlaps the 20:6 accessor |
 | 20 | 6 | Active record coordinate |
-| 26 | 2 | Cell selector/subfield; overlaps the 27:7 write |
-| 27 | 7 | Allocation writes this field; overlaps 26:2 and 28:3 |
-| 28 | 3 | Record lifecycle/control |
+| 26 | 2 | Cell selector/subfield |
+| 27 | 7 | Written during allocation; overlaps 26:2 and 28:3 |
+| 28 | 3 | Per-record lifecycle/control |
 | 31 | 6 | Record coordinate |
 | 37 | 6 | Record coordinate |
 | 43 | 2 | Cell lane selector |
@@ -608,18 +605,36 @@ The following are observed offset/width pairs in the active record table. They a
 | 54 | 3 | One-based linked-slot reference |
 | 57 | 1 | Boolean flag |
 
-Some pairs above are accessed through helper paths and context-specific aliases. Do not infer semantic independence from the table.
+**Secondary table `bLongArr` (zero-based slot API)**
+
+| Offset | Width | Evidence / observed use |
+|---:|---:|---|
+| 0 | 4 | Free/kind scan and rebuild classification |
+| 4 | 2 | Operation/type argument used during rebuild |
+| 13 | 7 | Coordinate used by lookup/rebuild |
+| 20 | 7 | Coordinate used by lookup/rebuild |
+
+The two tables may encode related objects, but this audit does not establish that they share a single schema. Preserve them as separate raw-word arrays until ownership and cross-table relationships are proven.
+
+**Packed stage-cell lanes (not 64-bit record offsets)**
+
+| Lane-relative offset | Width | Observed use |
+|---:|---:|---|
+| 0 | 3 | Slot reference stored in a cell lane |
+| 3 | 4 | Cell type/state |
+| 7 | 2 | Lane-local selector/flag |
+
+These offsets are relative to one selected 9-bit lane inside a packed 32-bit stage cell.
 
 ### 15.3 Overlap groups that block a flat struct
 
-The following ranges intersect:
-- `0:4`, `0:7`, and `3:4`.
+Within `aLongArr`, the following ranges intersect:
 - `6:7` and `7:7`.
-- `13:7` and `14:6`.
-- `20:7` and `20:6`.
 - `26:2`, `27:7`, and `28:3`.
-- `28:3` and `31:6` are adjacent, not overlapping; retain their exact bit boundaries.
-- Any offset/width pair used by the 9-bit cell-lane overload is in a separate coordinate system and must never be added to this record overlap graph.
+
+Within `bLongArr`, the observed ranges `0:4`, `4:2`, `13:7`, and `20:7` are adjacent or separate; do not combine them with primary-table fields simply because their numeric offsets match.
+
+The stage-cell lane fields `0:3`, `3:4`, and `7:2` occupy a different coordinate system. They are adjacent within a 9-bit lane and must never be added to the record overlap graph.
 
 A correct implementation should first preserve the raw 64-bit word and expose named, context-specific accessor functions. It should not serialize a guessed Java/Kotlin struct and reconstruct the original bits from assumed independent fields.
 
@@ -634,7 +649,7 @@ A correct implementation should first preserve the raw 64-bit word and expose na
 
 ### 15.5 Remaining source questions
 
-- Complete use/ownership map for `bLongArr` versus `aLongArr` in all paths.
+- Complete use/ownership map and cross-table relationship for `bLongArr` versus `aLongArr` in all paths.
 - Whether any writes rely on sign extension or negative values before masking.
 - Exact semantics of record offsets 0:7, 3:4, 6:7, 7:7, 13:7, 14:6, 20:7, 20:6, 26:2, and 27:7.
 - Golden raw-word fixtures from original runtime captures are not yet available.
