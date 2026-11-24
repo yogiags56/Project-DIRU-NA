@@ -245,3 +245,21 @@ See source trace §13. New source-level findings:
 - The 3-bit lifecycle field at offset 28 controls update-loop branches; values 0–7 are observed, but semantic labels for 4–7 remain provisional.
 
 CS-2 remains open for complete graph topology, all overlapping bitfield accessors, coordinate bounds under every stage mode, and runtime/binary validation.
+
+
+## 19. Record lifecycle field refinement — 2026-11-24
+
+See source trace §14. Offset 28 width 3 is per-record lifecycle/control, separate from global xByte, offset-0 record kind, and offset-47 operation mode.
+
+Observed contexts:
+- 0: allocator/free value.
+- 1: initializing/movement transition.
+- 2: active timed processing.
+- 3: deferred clear; next slot scan clears entire 64-bit record.
+- 5: auxiliary movement record created by xByte=5 setup; no dedicated switch case found in xByte=2 update loop.
+- 6 and 7: movement/transition branch; state 7 has an additional boolean condition.
+- 4: no writer or dedicated consumer found; keep unclassified.
+
+Observed edges include 0→1, 0→7, 1→2, 2→3→0, 2→5, linked handoff 2→2 (target inherits link/context while source clears), 0→5, 6→2, and 0→6. These are guarded by stage-cell and mode conditions; they are not a simple linear enum.
+
+Native restore must preserve raw records and validate links/cell backreferences before committing. Do not execute unknown lifecycle values as known behavior.
