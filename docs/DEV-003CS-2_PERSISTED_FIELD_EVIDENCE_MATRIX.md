@@ -263,3 +263,15 @@ Observed contexts:
 Observed edges include 0→1, 0→7, 1→2, 2→3→0, 2→5, linked handoff 2→2 (target inherits link/context while source clears), 0→5, 6→2, and 0→6. These are guarded by stage-cell and mode conditions; they are not a simple linear enum.
 
 Native restore must preserve raw records and validate links/cell backreferences before committing. Do not execute unknown lifecycle values as known behavior.
+
+
+## 20. Accessor overload and backing-table correction — 2026-11-24
+
+Source trace §15 separates three namespaces that must never be merged:
+1. `aLongArr`: primary 64-bit records, one-based accessor API.
+2. `bLongArr`: secondary 64-bit table, zero-based accessor API.
+3. `eIntArrArr`: packed 32-bit stage cells, three 9-bit lanes per cell; lane-relative fields are slot ref 0:3, cell type/state 3:4, selector/flag 7:2.
+
+Correction to prior offset summaries: 0:4, 4:2, 13:7 and 20:7 belong to secondary `bLongArr` evidence, not primary `aLongArr`. The 3:4 field is a stage-cell lane-relative field, not a primary 64-bit record accessor. The primary table's observed fields and overlaps are listed separately in source trace §15.2.
+
+The primary record raw words must remain lossless. Do not build one flat struct across backing arrays or across the stage-cell lane coordinate system. Add golden vectors per accessor overload before implementation.
