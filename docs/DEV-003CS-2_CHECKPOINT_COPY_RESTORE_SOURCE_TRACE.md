@@ -874,3 +874,34 @@ These are conditional memory-safety preconditions, not universal minimum dimensi
 3. Trace remaining opaque scalar writers/reset points and classify stage-local versus durable-profile ownership.
 4. Define compatibility-key fields only after stage identity, world identity, mode discriminator, schema revision, and dimension rules have direct evidence.
 5. Add deterministic Native tests for dimension mismatch, missing buffers, fixed-coordinate preconditions, and mode-conditional failures when a real gameplay state owner exists.
+
+
+## 20. Complete world-resource stage dimension inventory — 2026-11-25
+
+Pinned candidate source: `kubikaugustyn/DiamondRushSource@215c71d04057d66a1b08419b1a4b1043ae3e0881`. Binary resources were fetched as Base64 and decoded:
+- `w0.bin`: Git blob `03b9c41145e60cffba3d04b60f40e443b0390064`, 47,686 bytes.
+- `w1.bin`: Git blob `55a39efea6b3b70002b64fcbe5855e250b2b6165`, 46,956 bytes.
+- `w2.bin`: Git blob `0a73caac7325af181433e8b2cf78de720f14c8c3`, 56,887 bytes.
+
+The loader (source lines 3407–3444) reads and ignores the first byte, then reads a one-byte stage count. Each stage record is a four-byte header containing little-endian unsigned 16-bit width and height, followed by three raw layers of exactly `width * height` bytes each. The skip path uses `width * height * 3`. Parsing all records consumed each resource exactly, with no truncated payload and no trailing bytes.
+
+World index is the array index in `worldFiles` (line 17759): 0 = Angkor/`w0.bin`, 1 = Scotland/`w1.bin`, 2 = Tibet/`w2.bin`; map names are mapped at source lines 1941–1952.
+
+| World | Resource | Count | Dimensions by zero-based stage index |
+|---|---|---:|---|
+| Angkor (0) | `w0.bin` | 14 | 0: 26×21; 1: 27×24; 2: 27×26; 3: 40×23; 4: 51×24; 5: 30×75; 6: 26×45; 7: 44×29; 8: 35×14; 9: 50×30; 10: 50×31; 11: 46×31; 12: 46×31; 13: 68×11 |
+| Scotland (1) | `w1.bin` | 13 | 0: 45×24; 1: 40×24; 2: 33×30; 3: 43×30; 4: 45×33; 5: 43×33; 6: 36×43; 7: 53×27; 8: 34×32; 9: 35×25; 10: 37×24; 11: 60×20; 12: 23×60 |
+| Tibet (2) | `w2.bin` | 14 | 0: 60×26; 1: 39×35; 2: 35×42; 3: 38×38; 4: 46×27; 5: 49×28; 6: 55×30; 7: 51×20; 8: 51×37; 9: 104×17; 10: 35×25; 11: 45×28; 12: 35×32; 13: 35×26 |
+
+Total: 41 stages. Candidate-set width range is 23–104; height range is 11–75. This inventory covers these three pinned candidate resources, not every retail/localization variant.
+
+Applying §19 fixed-coordinate predicates to the dimensions only:
+- q-branch (width >= 40, height >= 8): 23 dimension-eligible stages.
+- r-branch (width >= 51, height >= 8): 9 dimension-eligible stages.
+- animator-slot-2 (width >= 19, height >= 64): exactly Angkor world 0 stage 5 (30×75).
+
+Eligibility is only a memory-bounds fact; it does not prove the corresponding q/r flags or animator slot are active on those stages.
+
+Native implications: preserve per-stage dimensions, source layer order and `x + y * width` mapping; use checked multiplication for allocation sizes; validate positive dimensions, resource bounds and explicit safe memory limits before allocation; validate active fixed-coordinate branches before any state mutation. The observed 16-bit header range is not itself a safe allocation policy. World identity and stage index are distinct compatibility dimensions. This inventory does not settle profile ownership or snapshot compatibility semantics.
+
+Remaining: trace all stage-load paths and malformed-stream behavior; identify q/r and animator activation sites; continue opaque scalar ownership and world/stage/profile separation; define compatibility identity from direct evidence; defer Native provider/tests until the real gameplay state owner exists.
