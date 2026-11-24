@@ -275,3 +275,10 @@ Source trace §15 separates three namespaces that must never be merged:
 Correction to prior offset summaries: 0:4, 4:2, 13:7 and 20:7 belong to secondary `bLongArr` evidence, not primary `aLongArr`. The 3:4 field is a stage-cell lane-relative field, not a primary 64-bit record accessor. The primary table's observed fields and overlaps are listed separately in source trace §15.2.
 
 The primary record raw words must remain lossless. Do not build one flat struct across backing arrays or across the stage-cell lane coordinate system. Add golden vectors per accessor overload before implementation.
+
+
+## 21. Dual-table ownership and atomic checkpoint scope — 2026-11-24
+
+See source trace §16. Primary `aLongArr` and secondary `bLongArr` are separately allocated 15-word arrays with independent accessor index bases. They are not aliases and are not reconstructed from one another. During xByte=4, the primary table is scanned and matching secondary entries are cleared/used as a rebuild workspace. Both arrays are explicitly copied independently at checkpoint capture and restore (`aLongArr → cLongArr`, `bLongArr → dLongArr`).
+
+The coupled optional-mode checkpoint also includes packed stage-cell grid `eIntArrArr` (backup `fIntArrArr`) and phase/scalar fields. Persisting only the primary table is incomplete. Native round-trip must preserve all 30 raw words and the coupled grid/scalars atomically, while keeping the source index conventions at the accessor boundary.
