@@ -282,3 +282,18 @@ The primary record raw words must remain lossless. Do not build one flat struct 
 See source trace §16. Primary `aLongArr` and secondary `bLongArr` are separately allocated 15-word arrays with independent accessor index bases. They are not aliases and are not reconstructed from one another. During xByte=4, the primary table is scanned and matching secondary entries are cleared/used as a rebuild workspace. Both arrays are explicitly copied independently at checkpoint capture and restore (`aLongArr → cLongArr`, `bLongArr → dLongArr`).
 
 The coupled optional-mode checkpoint also includes packed stage-cell grid `eIntArrArr` (backup `fIntArrArr`) and phase/scalar fields. Persisting only the primary table is incomplete. Native round-trip must preserve all 30 raw words and the coupled grid/scalars atomically, while keeping the source index conventions at the accessor boundary.
+
+
+## 22. Secondary path-record field evidence — 2026-11-24
+
+See source trace §17. The four-argument allocator initializes a free `bLongArr` word with:
+- offset 0 width 4 = 1 (occupied/type marker in observed allocator path),
+- offset 4 width 2 = fourth argument,
+- offset 6 width 7 = first argument,
+- offset 13 width 7 = second argument,
+- offset 20 width 7 = third argument,
+- offset 27 width 7 = first argument again.
+
+The 7-bit fields at 6, 13, 20, 27 are adjacent within the secondary 64-bit word. `bByte(x,y)` scans all 15 secondary slots by offsets 13:7 and 20:7 and returns zero-based slot or -1. A later setup call locates the coordinate and sets offset 0:4 to 2. When `alBoolean` is active, the update path walks secondary entries in index order from `dtInt` through `duInt`, reading coordinates and calling `mVoid`.
+
+Do not apply the primary-table offset-28 lifecycle enum to this table. The meaning of offset 4 and values at offsets 6/27 remains contextual. Preserve raw words and test allocator, lookup, ordered traversal, and state marker transitions.
