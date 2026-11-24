@@ -338,3 +338,14 @@ Source trace §21 adds direct activation evidence. q/r flags start false and are
 The stage loader does not check the byte counts returned by `read(header)`, layer reads, or `skip()`; its outer loop has no explicit EOF exit. The source comments that requesting a non-existent stage can freeze. Native must use exact reads/checked cursor movement, validate stage index and dimensions before allocation, return typed failures for missing/truncated/out-of-range resources, and keep loading candidate-first so failure cannot partially replace active state.
 
 Animator slot 2 is checked for non-null during restore and then writes player-layer cell [18][63]. Assignment is at candidate source line 4992; full creation/destruction path remains to be traced. CS-2 remains open.
+
+
+## 27. Animator slot-2 lifecycle and q/r metadata boundary — 2026-11-25
+
+Source trace §22 establishes:
+- Slot 2 is assigned by the `/mm0.f` sprite chunk loader, not created by stage restore. Chunk 1 creates the animator and selects animation 0; chunk 2 falls through and reassigns slot 2 while also loading texture 27 and slot 1.
+- The global graphics/resource cleanup loop frees and nulls animator slots 0–5, including slot 2. No separate slot-2 null assignment was found in the inspected source revision.
+- Restore only checks non-null, resets slot 2 to animation 0, and writes player-layer [18][63]. The slot is an optional asset-lifecycle dependency, not a persisted stage identifier. Validate the coordinate only when the branch is active.
+- q/r trigger codes are composite foreground int values with low byte zero and high-byte 13/16. Initial stage foreground bytes alone do not establish the high-byte producer. Keep these codes opaque until every foreground writer chain is traced.
+
+CS-2 remains open; no Native provider or gameplay-state implementation is authorized by these findings.
