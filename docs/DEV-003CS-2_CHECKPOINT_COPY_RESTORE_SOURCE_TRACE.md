@@ -368,3 +368,16 @@ Additional transitions:
 - Confirm whether `cLongArr`/`dLongArr` are always pure snapshot buffers or are read by other runtime paths.
 - Determine exact valid coordinate bounds and slot-reference invariants for all stage dimensions.
 - Validate this model against runtime captures and the original shipping binary.
+
+
+### 11.6 Auxiliary-table ownership cross-check
+
+A complete occurrence scan of the pinned source revision found:
+- `cLongArr` is only declared, cleared during stage teardown, allocated during checkpoint capture if absent, written by copying `aLongArr`, and read back by checkpoint restore.
+- `dLongArr` has the equivalent lifecycle for `bLongArr`.
+- No other runtime reader/writer of `cLongArr` or `dLongArr` exists in this source revision. They are checkpoint backup buffers, not active simulation tables.
+- `aLongArr` and `bLongArr` are active 15-slot packed-record tables. They are initialized in mode activation and also allocated in global/runtime initialization; they are mutated by record helpers and update logic.
+- Do not confuse `aLongArr` (15-entry optional-mode records) with `aLongArrArr` (a separate 12×12 long grid used by unrelated stage/render logic).
+- `cLongArr` and `dLongArr` are allocated lazily by capture and are not allocated by `arVoid()`; `arVoid()` allocates the active source arrays and their snapshot peers.
+
+This confirms the active-vs-backup distinction for the two long-table pairs at static-source level.
