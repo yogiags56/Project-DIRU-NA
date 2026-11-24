@@ -170,3 +170,20 @@ Exact pairs now recorded:
 - Restore-side camera computation, transient resets, dirty-cell rebuild, special-cell mutations, and object-code-48 reconstruction are explicitly separated from captured payload.
 
 This closes the assignment-identification portion of CS-2 at static-source level. It does not close semantic naming, allocation/compatibility invariants, independent shipping-binary verification, or deterministic runtime round-trip validation.
+
+
+## 14. Scalar ownership evidence update — 2026-11-24
+
+See `DEV-003CS-2_CHECKPOINT_COPY_RESTORE_SOURCE_TRACE.md` §10.
+
+New semantic classifications supported by source use sites:
+- `aCInt`: checkpoint progression threshold; checkpoint tile handler compares encoded foreground value and advances it.
+- `aaInt`: stage-object remaining count loaded from cell metadata and decremented during object removal.
+- `cmInt`: selected door/lock group index tied directly to `mByteArr`; snapshot both coherently.
+- `cfInt` + `ceInt`: coupled directional/phase state for a staged foreground mechanism; do not restore/reset independently.
+- `aUInt` and `aVInt`: distinct pickup counters consumed by different foreground interactions; exact item names unresolved.
+- `bbInt`: pickup/progression counter; exact identity unresolved.
+- Optional `lBoolean` fields are initialized together in `arVoid()` and consumed by `asVoid()`; retain as one conditional sub-snapshot pending packed-record decoding.
+- Prior tentative `ayInt` “spawn/original-X” label is withdrawn; it remains opaque runtime gating/position-related state.
+
+This narrows schema ownership but does not close CS-2. Remaining work: trace all opaque scalar writers/reset points, decode optional-mode records, establish stage/profile ownership, and validate dimensions/compatibility and runtime round trips.
