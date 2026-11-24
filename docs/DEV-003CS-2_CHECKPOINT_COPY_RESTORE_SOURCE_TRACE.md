@@ -292,3 +292,79 @@ This section traces uses outside the checkpoint methods. Labels are intentionall
 - Determine exact item identities/UI meanings for `aUInt`, `aVInt`, and `bbInt`.
 - Establish whether `aZInt` is stage-local, checkpoint-local, or also profile-persistent.
 - Verify the relationship between `cmInt` and `mByteArr` under every door/lock mode.
+
+
+## 11. Optional mode lifecycle and packed-record structure
+
+Direct source: pinned i.java revision 215c71d04057d66a1b08419b1a4b1043ae3e0881.
+
+### 11.1 Activation and teardown
+
+- Constructor defaults set `alBoolean=true`, `dqInt=-1`, `dzInt=-1`, `xByte=3` (lines 691–694).
+- Stage teardown/reset nulls the four 15-entry long arrays, sets `alBoolean=false`, initializes the counters/coordinates, and sets `lBoolean=false` (4905–4924).
+- On foreground stage trigger code 19, `arVoid()` runs only if `lBoolean` is currently false; then `lBoolean=true`, `alBoolean=false`, the conditional integer grid is allocated if absent, and the mode-specific setup continues (12113–12130).
+- `arVoid()` allocates four distinct 15-entry long arrays and initializes mode fields (15840–15860). The four arrays are `aLongArr`, `cLongArr`, `bLongArr`, and `dLongArr`.
+- `asVoid()` immediately returns while `lBoolean=false` (15932–15935).
+- Restore has a conditional path for the same mode fields and arrays; the stage mode must be established before applying that conditional snapshot.
+
+### 11.2 Packed record evidence
+
+The optional mode uses 15 slots in each of two live record tables, `aLongArr` and `bLongArr`, with checkpoint copies `cLongArr` and `dLongArr`. The source helpers extract and replace bit ranges in each 64-bit slot. Observed bit ranges include:
+
+| Bit offset | Width | Evidence of use |
+|---:|---:|---|
+| 0 | 4 | Slot kind/state; zero means unused in allocation scan |
+| 4 | 2 | Small direction/operation code |
+| 6 | 7 | Coordinate or bounded value |
+| 13 | 7 | X-like coordinate in several record operations |
+| 20 | 7 | Y-like coordinate in several record operations |
+| 26 | 2 | Subtype/step selector |
+| 28 | 3 | Record lifecycle state; values 1–7 are switched on |
+| 31 | 6 | Record coordinate |
+| 37 | 6 | Record coordinate |
+| 43 | 2 | Axis/cell selector |
+| 45 | 2 | Direction/operation selector |
+| 47 | 2 | Record behavior mode |
+| 49 | 5 | Length/interval-like value |
+| 54 | 3 | Encoded linked-record/operation selector |
+| 57 | 1 | Boolean flag |
+
+The bit ranges above are directly observed accessor offsets and use sites, not a complete formal schema. Some values have context-dependent meanings and must not yet be assigned user-facing names. Bits 58–63 were not established by the inspected accessors.
+
+The accessor pair for `aLongArr` reads/writes slots by one-based index; the accessor pair for `bLongArr` reads/writes by zero-based index. Keep these APIs distinct in a Native decoder to avoid off-by-one corruption.
+
+### 11.3 Mode lifecycle state machine
+
+The `xByte` switch in `asVoid()` exposes these observed transitions:
+
+| xByte | Observed behavior |
+|---:|---|
+| 1 | Advances into record-processing state 2 on a subsequent update |
+| 2 | Iterates the 15 record slots, advances active records, and handles completion/removal |
+| 3 | Idle/ready state; `dBoolean()` permits mode interaction only in this state |
+| 4 | Completion/rebuild pass over records; returns to state 2 |
+| 5 | Builds/starts a mechanism operation from `dvInt`, `dwInt`, and `dxInt`; creates/updates packed records and enters state 1 |
+
+Additional transitions:
+- `lVoid(dvInt,dwInt)` only acts while `lBoolean` is true. It determines direction from adjacent `eIntArrArr` cells, sets `xByte=5`, and records the selected coordinates (16783–16796).
+- `mVoid(n,n2)` locates a record for the cell, updates the packed record and enters `xByte=1` (16798–16811).
+- During record processing, completion may clear a slot, set `xByte=3`, and set `alBoolean=true` (16218–16245).
+- The per-frame stage update uses `alBoolean` as a one-shot work gate; when set, it processes the next `dtInt` entry against the packed table, increments the cursor, and resets `dtInt/duInt` when exhausted (9521–9529).
+- `dqInt` and `dzInt` are active-record timers/cursors, `drInt` tracks a processing condition, and `vByte` is a small progress/offset value in the record processing path. Treat these interpretations as provisional until all branches are traced.
+
+### 11.4 Native snapshot contract implications
+
+1. Treat `lBoolean` as the activation discriminator for the entire optional-mode sub-snapshot.
+2. When active, capture/restore all four 15-entry long tables and the associated scalar set atomically: `xByte`, `alBoolean`, `dqInt`, `drInt`, `dsInt`, `vByte`, `dvInt`, `dwInt`, `dxInt`, `wByte`, `dyInt`, `dzInt`, `dtInt`, and `duInt`.
+3. Preserve the distinct indexing conventions of the two live table accessor families.
+4. Validate each packed record before use: known lifecycle/type values, in-range coordinates, valid slot references, and legal field widths. Do not silently normalize unknown values.
+5. Preserve stage grid + packed record tables + associated scalar state as one logical transaction; partial restore can leave records referring to absent or changed stage cells.
+6. When `lBoolean=false`, do not serialize stale optional-mode arrays as active state. The snapshot should encode the mode as inactive and use the source-defined reset/rebuild path.
+
+### 11.5 Remaining work
+
+- Trace exact meaning of every packed bitfield and linked-record reference.
+- Trace all writes to `xByte` and identify transitions caused outside `asVoid()`.
+- Confirm whether `cLongArr`/`dLongArr` are always pure snapshot buffers or are read by other runtime paths.
+- Determine exact valid coordinate bounds and slot-reference invariants for all stage dimensions.
+- Validate this model against runtime captures and the original shipping binary.
