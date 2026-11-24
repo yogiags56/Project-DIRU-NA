@@ -946,3 +946,38 @@ This is a Native safety requirement derived from observed source weaknesses, not
 2. Trace which stage foreground records can produce high-byte 13 and 16 and whether they occur in pinned stage resources.
 3. Keep q/r activation independent of dimension eligibility.
 4. Define Native typed stage-load failures and transactional commit semantics after the real stage/game owner exists.
+
+
+## 22. Animator slot-2 asset lifecycle and restore activation — 2026-11-25
+
+Pinned candidate source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 22.1 Creation path
+
+The sole direct assignment found for `i.aClassbArr[2]` is in `dVoid(int chunkI)` at source lines 4973–5000:
+- Chunk 0 opens `/mm0.f`, reads a chunk count, and loads its size table into `tmpBytes`.
+- Chunk 1 parses sprite chunk 2 (comment identifies “chunk 2, palette 0, all animations”), constructs `b_SpriteAnimator`, assigns slot 2, then selects animation 0.
+- Chunk 2 first assigns texture 27 from sprite chunk 3, then falls through into chunk 1 and also constructs/assigns slot 2 from sprite chunk 2; it then falls through into chunk 0 and constructs slot 1 with animation 2.
+- In the `kByte == 1` loader dispatch (source lines 4630–4637), `dVoid(n57)` is called for chunk indices; after chunk index 2 the shared input stream is closed.
+
+This establishes slot 2 as an asset-loader product, not a stage-specific animator constructed by the restore method. The chunk-2 fallthrough reassigns slot 2 after chunk 1; source does not explicitly dispose the prior slot-2 object before replacement. Treat that as observed source behavior, not a lifecycle contract to copy blindly.
+
+### 22.2 Destruction / availability
+
+The global cleanup path iterates `aClassbArr[0..5]`, frees each non-null animator sprite, and sets each slot to null (source lines 4876–4884). This includes slot 2. The inspected cleanup block also releases stage arrays and optional-mode buffers; it is a broad resource teardown, not evidence of an ordinary per-stage slot-2 destroy event.
+
+The restore branch only checks whether slot 2 is non-null, calls `setAnimation(0)`, and writes `crtStagePlayerLayer[18][63] = -1` (15340–15343). Thus the fixed coordinate is coupled to asset availability at restore time. The source does not establish a one-to-one relationship between slot-2 presence and a particular stage ID. Dimension inventory says only Angkor 0:5 is tall enough in the pinned candidate resources, but no runtime activation is inferred.
+
+### 22.3 Native boundary
+
+- Model the animator asset as an optional resource with explicit load state and ownership; do not encode its presence as a stage ID.
+- Candidate restore must know whether the corresponding animator resource will be present before commit. If the restore branch needs the [18][63] write, validate the player-layer dimensions first.
+- Avoid reproducing chunk-index fallthrough as implicit behavior; represent asset chunks and their dependencies explicitly and test replacement/disposal.
+- Keep asset lifecycle separate from persisted gameplay payload unless direct evidence shows the animator's internal frame/state is serialized. The checkpoint restore explicitly resets slot 2 to animation 0 rather than restoring an animator snapshot.
+- No direct slot-2 assignment to null was found outside the general six-slot cleanup loop in the inspected source revision.
+
+### 22.4 q/r foreground metadata: unresolved boundary
+
+The q/r trigger reads the signed int foreground cell as a composite value: low byte must be zero and the high-byte code is 13 or 16. The stage loader initially sign-extends one raw foreground byte into an int, so these composite values are not established by the raw stage foreground byte alone. Other gameplay paths mutate foreground cells and encode additional values, but this pass has not established the complete writer chain that produces high-byte 13/16. Do not claim these values are literal stage-file tile IDs or label their mechanics yet.
+
+Next trace must enumerate every writer to `crtStageForegrondLayer[x][y]`, classify raw-load versus runtime mutation, and identify the exact producer chain for the composite q/r values. Retain codes 13/16 as opaque trigger metadata pending that proof.
