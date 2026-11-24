@@ -233,3 +233,22 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 5. Reconcile compatibility identity after direct evidence.
 
 No Native runtime/provider implementation or new automated tests were added. Keep CS-2 in progress and PR #1 unmerged.
+
+
+## Resume update — 2026-11-25 (animator asset lifecycle)
+
+### Work completed
+- Traced the sole direct assignment to `aClassbArr[2]`: the `/mm0.f` chunk loader. Chunk 1 creates slot 2 and sets animation 0; chunk 2 falls through and assigns slot 2 again while loading texture 27 and slot 1.
+- Traced broad resource teardown: slots 0–5 are freed and nulled, including slot 2. No separate slot-2 null assignment was found in the inspected source revision.
+- Confirmed restore does not serialize animator state; it resets slot 2 to animation 0 and writes player-layer [18][63] when slot 2 is non-null.
+- Clarified q/r values are composite foreground ints (low byte 0, high-byte code 13/16). Raw stage foreground bytes do not alone prove their producer; keep semantic labels unresolved.
+- Added Source Trace §22 and Evidence Matrix §27.
+
+### Next
+1. Enumerate all writes to `crtStageForegrondLayer` and trace composite high-byte 13/16 producers.
+2. Inspect slot-2 chunk fallthrough and replacement semantics; do not port accidental fallthrough without an explicit asset-loading model.
+3. Continue opaque scalar ownership and world/stage/profile separation.
+4. Define compatibility identity only after direct evidence.
+5. Keep CS-2 open; no placeholder gameplay provider.
+
+This is static source analysis only. No Native implementation or automated tests were added. PR #1 remains unmerged absent explicit approval.
