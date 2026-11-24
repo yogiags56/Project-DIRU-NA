@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified content HEAD before this checkpoint refresh: `4afcd02f614244f5fb4ce74313401aa805d8e119`
+- Last verified content HEAD before this checkpoint refresh: `75f71dd935b4c8e7837530f202a2bb807365b7e8`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -66,10 +66,10 @@ CS-2 currently in progress:
 
 ## Current work
 
-Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after packed-record trace at `4afcd02f`):
+Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after active/backup long-table ownership trace at `75f71dd9`):
 1. Exact assignment ledger is complete at static-source level in source trace §9. Semantic ownership update in §10 classifies `aCInt`, `aaInt`, `cmInt`, `cfInt/ceInt`, pickup counters, and optional mode state. Remaining: opaque fields, allocation/compatibility invariants, and independent/runtime validation.
 2. Enumerate dimensions and allocation paths for all stage layers and byte arrays; exact row copy extent is width rows × height elements.
-3. Confirmed exact mapping: `bIntArrArr`→`cIntArrArr`; `bByteArrArr`→`dByteArrArr`; player layer→`eByteArrArr`; foreground→`dIntArrArr`; `cByteArrArr` has no copy path in these methods. Optional mode uses four 15-entry long arrays with partially mapped 64-bit packed records.
+3. Confirmed exact mapping: `bIntArrArr`→`cIntArrArr`; `bByteArrArr`→`dByteArrArr`; player layer→`eByteArrArr`; foreground→`dIntArrArr`; `cByteArrArr` has no copy path in these methods. Optional mode uses two active 15-entry packed-record tables and two capture/restore-only backup buffers; do not confuse `aLongArr` with separate `aLongArrArr` 12×12 grid.
 4. Preserve strict separation between durable profile save and in-memory checkpoint; continue opaque scalar ownership and `kByte`/`lBoolean` mode lifecycle trace.
 5. Optional mode activation/teardown and xByte lifecycle now traced at category level. Continue full bitfield semantics, all transition writers, coordinate/slot invariants, and first-build scope.
 6. Define canonical world/stage IDs and compatibility rules.
@@ -87,6 +87,9 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `580d7246` — verify active versus checkpoint-backup ownership of the optional mode long tables.
+- `75f71dd9` — record active/backup table distinction in the persisted-field matrix.
 
 - `683bfcc5` — document optional mode activation/teardown, 15-slot packed 64-bit records, bit offsets, and xByte lifecycle.
 - `4afcd02f` — update persisted-field matrix with optional mode lifecycle and packed-record evidence.
