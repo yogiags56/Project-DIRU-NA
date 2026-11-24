@@ -429,3 +429,62 @@ This indicates two distinct entry paths: an existing active-mode stage-load rein
 ### 12.4 Bitfield caution
 
 The previous partial offset table is not yet a canonical packed-record schema. In particular, record creation writes a 7-bit field at offset 27 (15874–15880), while other paths read/write a 2-bit field at offset 26 (e.g. 15961, 15994, 16155, 16158). These accesses overlap and are likely context-dependent views/packed subfields; they must be modeled as observed accessors, not independent non-overlapping properties. Keep exact offset/width pairs and do not infer a flat struct until the complete write/read graph is reconciled.
+
+
+## 13. Packed-record slot graph, allocation, and link semantics
+
+Direct evidence: pinned source revision 215c71d04057d66a1b08419b1a4b1043ae3e0881.
+
+### 13.1 Slot allocation and identity
+
+- The 15-slot active table is scanned for the first slot whose low 4-bit kind field at offset 0 is zero (15863–15883; 16719–16730).
+- The long-table accessors for `aLongArr` are one-based: slot 1 maps to array index 0. The `bLongArr` accessors are zero-based.
+- The primary allocator clears the chosen slot before populating it. It initializes record kind/type and writes lifecycle state, coordinates, cell selector, direction, and optional link.
+- A slot is cleared by setting the entire long value to zero (`fVoid(byte)`, 16658–16660). Thus a zero kind field is the free-slot marker.
+- The allocation scan can exhaust all 15 slots and returns -1 in the four-argument allocator. The six-argument allocator has no explicit full-table guard after its scan; it can reach slot 16 if no free slot exists. Native must add a safe capacity failure instead of reproducing an out-of-bounds write.
+
+### 13.2 Linked-record reference
+
+- Record field offset 54, width 3, stores a link/parent slot reference (16735–16738).
+- The reference is one-based, consistent with the `aLongArr` accessor family. Zero is the no-link sentinel; nonzero references are dereferenced to fetch the linked record's coordinate fields (16090).
+- When a record completes a handoff, the target record receives the current record's link reference, changes to lifecycle state 2, and the source record is cleared (16251–16260).
+- Another path creates a new child/continuation record using the current record's link field as the new record's link (16280–16290).
+- Therefore link validation must check: zero or 1..15, referenced slot is occupied, no self-reference unless a proven path permits it, and the referenced record has a compatible lifecycle/type for the operation. The exact allowed graph topology is still being mapped; do not assume a tree or chain yet.
+
+### 13.3 Record lifecycle field
+
+The 3-bit field at offset 28 is the record lifecycle discriminator used by the main update loop (16064–16077):
+- 0: free/unallocated (the allocator checks this in addition to kind field in different contexts).
+- 1: newly created/initializing record.
+- 2: active processing record.
+- 3: completed/cleanup path; the update loop clears it.
+- 4–5: intermediate/transition values written in completion and handoff paths.
+- 6: transitional state that may be reset/aborted by operation setup.
+- 7: terminal/alternate completion path.
+
+These labels describe observed control-flow categories, not stable public enum names. In particular, the allocator's free test uses offset 28 == 0, while the first allocator also tests offset 0 low nibble == 0; both conditions must be understood before treating either as the sole free predicate.
+
+### 13.4 Packed record coordinate and cell references
+
+- Record fields at offsets 31 and 37 (6 bits each) are used as stage-grid coordinates.
+- Offset 43 (2 bits) selects one of three cell sublayers/columns in the packed 9-bit cell representation.
+- The cell record embeds the 1-based slot index in a 3-bit field at offset 0 of the selected 9-bit cell lane (see `aByte` record allocation and `bByte(x,y)` lookup, 15917–15929, 16731–16742).
+- `bByte(x,y)` scans all 15 slots and returns the matching zero-based slot index for a coordinate; this differs from the one-based link reference stored at offset 54. Keep coordinate lookup result and link-reference representation distinct.
+- The `mVoid(x,y)` path uses coordinate lookup, marks the corresponding player-layer cell, and enters processing state 1 (16798–16811).
+
+### 13.5 Native validation requirements
+
+1. Decode and encode using exact bit-offset accessors; do not flatten overlapping accessors into assumed independent fields.
+2. Distinguish slot-index domains explicitly: `aLongArr` accessor/link reference is 1-based; `bByte(x,y)` result is 0-based.
+3. Validate link references before dereference; reject dangling, out-of-range, or incompatible references without mutating live state.
+4. Validate each occupied slot's lifecycle/type fields and stage coordinates against actual stage dimensions before any array access.
+5. Validate reverse cell-to-slot references: a packed stage cell pointing to a slot must resolve to an occupied record whose coordinates and sublayer agree.
+6. Reject a full-table allocation safely; never index slot 16.
+7. Restore the stage grids and record table as one candidate state, validate all forward/reverse references, then commit atomically.
+
+### 13.6 Still unresolved
+
+- Exact graph topology and whether a link is always parent/continuation or can be bidirectional.
+- Full semantic map for type nibble, lifecycle values 4–7, and overlapping bit ranges.
+- Whether all 15 slots are reachable/needed in every mode and the exact stage-bound constraints for 6-bit coordinates.
+- Runtime confirmation of source-level edge cases, especially full-table allocation and malformed link handling.
