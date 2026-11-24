@@ -202,3 +202,14 @@ Source evidence now establishes:
 - Optional-mode tables and their scalar control state must be captured/restored atomically with the stage grid and activation discriminator.
 
 Still open: complete bitfield semantics, all transition writers, valid coordinate/slot invariants, auxiliary-table reader audit, and runtime/binary verification.
+
+
+## 16. Active versus backup long-table ownership — 2026-11-24
+
+A complete occurrence scan of the pinned source revision confirms:
+- `aLongArr` and `bLongArr` are active 15-slot packed-record tables.
+- `cLongArr` and `dLongArr` are only checkpoint backup buffers. They are allocated lazily during capture, copied from the active tables, and read during restore; no other runtime reader/writer was found.
+- `aLongArrArr` is a separate 12×12 long grid and must not be conflated with `aLongArr`.
+- Mode teardown nulls the four 15-entry tables; global/runtime initialization also allocates active tables.
+
+Native schema should model active records and backup serialization separately; it should not treat the backup buffers as additional gameplay state.
