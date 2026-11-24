@@ -602,7 +602,7 @@ These are distinct 64-bit arrays and their offset namespaces must not be combine
 | 45 | 2 | Direction/operation |
 | 47 | 2 | Per-record operation mode |
 | 49 | 5 | Interval/length |
-| 54 | 3 | One-based linked-slot reference |
+| 54 | 3 | Secondary-table slot reference used by primary movement records; observed width limits decoded index to 0–7 |
 | 57 | 1 | Boolean flag |
 
 **Secondary table `bLongArr` (zero-based slot API)**
@@ -747,3 +747,68 @@ The secondary table is not merely a passive scratch buffer. It stores independen
 - Add test vectors for allocator field writes, free-slot scan, coordinate lookup, offset-0 state transition 1→2, and ordered traversal.
 - Validate coordinate bounds against actual stage dimensions before using coordinates; do not silently clamp.
 - Keep secondary table state atomic with primary records, stage-cell grid, and optional-mode scalars.
+
+
+## 18. Primary/secondary path handoff and capacity preconditions
+
+Pinned source revision: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 18.1 Secondary allocator and marker behavior
+
+The four-argument `aByte(byte x, byte y, byte z, byte mode)` allocator (15863–15884) scans `bLongArr[0..14]` for the first slot whose offset 0 width 4 is zero. On success it initializes the secondary fields documented in §17 and returns the zero-based slot. If no free slot exists, it returns -1.
+
+In the xByte=5 movement setup path (16512–16606), after stage traversal it calls this allocator with the computed path parameters, then independently looks up the coordinate with `bByte(x,y)` and sets the located secondary marker to 2. The allocator return value is not consumed at that call site. The code therefore relies on the subsequent coordinate lookup to find a valid slot; this precondition must be tested rather than assumed safe under full-table conditions.
+
+### 18.2 Primary movement record creation
+
+The six-argument `aByte(x,y,cellType, direction, lane, secondarySlot)` allocator (16719–16748) creates a record in `aLongArr`. It scans primary slots 1..15 for lifecycle offset 28 width 3 equal to zero, initializes a 64-bit word, then writes:
+- lifecycle offset 28 to 1 (or 7 for its special cellType=7 path),
+- offset 54 width 3 from the supplied secondary-slot argument,
+- stage-cell lane reference at the supplied coordinate/lane,
+- cell type at lane-relative offset 3 width 4,
+- primary coordinates at offsets 31:6 and 37:6,
+- lane at 43:2 and direction at 45:2.
+
+In xByte=5 traversal, this allocator is called with cellType 8, direction -2 (normalized to 2), lane 2, and secondary-slot argument 0; its returned primary slot is then moved to lifecycle state 5 and receives further coordinate/length data. This is a primary movement record associated with the secondary path.
+
+### 18.3 Secondary-slot pointer width correction
+
+Primary offset 54 is 3 bits, not a full 4-bit slot index. During active primary-record processing, source reads:
+- `b21 = primary.offset54` (0..7),
+- `b20 = bLongArr[b21].offset6:7`.
+
+It then updates the secondary record's offset 6:7 as path progress changes. The allocator initially writes the same first argument to secondary offsets 6:7 and 27:7; the observed update path mutates offset 6:7 while offset 27:7 is not shown being updated in this path.
+
+Therefore:
+- Offset 54 is an observed zero-based pointer into the first eight addressable secondary slots, not a one-based pointer to all 15 slots.
+- Do not widen or reinterpret it in the native format.
+- Secondary capacity 15 and primary pointer width 3 are not equivalent. The reason slots 8..14 are not reachable through this field remains unresolved.
+- Offset 6:7 behaves as a mutable progress/extent value in this path; offset 27:7 preserves the initially written value in the observed flow. These are provisional behavioral labels, not final domain names.
+
+### 18.4 Cross-table handoff during secondary path update
+
+The per-frame `alBoolean` path calls `mVoid(x,y)` using coordinates from secondary slots in order (9521–9528). `mVoid`:
+1. Looks up the secondary slot for the coordinate.
+2. If found, changes its offset 0:4 marker to 2.
+3. Clears the corresponding `crtStagePlayerLayer` cell.
+4. Switches to xByte=1.
+5. Creates a primary record at the next coordinate through the six-argument allocator, passing the located secondary slot as offset-54 input.
+
+During active primary processing, the primary record's offset-54 value is used to access and update the linked secondary record's offset-6 progress value. This is the concrete cross-table relationship; it is not a whole-record alias or copy.
+
+### 18.5 Capacity hazards observed in source
+
+- Secondary allocator has an explicit full-table return of -1.
+- At the xByte=5 call site, its return is ignored; the following coordinate lookup must succeed or the subsequent marker write can index an invalid slot. This is a source-level precondition/hazard, not proof that normal gameplay reaches the failure.
+- Primary allocator's scan exits when the 1-based candidate exceeds 15, but the following write indexes `aLongArr[candidate - 1]`. If invoked with all 15 primary slots occupied, candidate becomes 16 and the write is out of range. The inspected helper has no explicit full-table failure return.
+- Native implementation must never reproduce these unsafe failure paths. It should return typed allocation failure and leave both tables and the stage grid unchanged.
+
+### 18.6 Required tests
+
+- Secondary allocator first-free selection and full-table result -1.
+- xByte=5 path setup when the secondary table is full or coordinate lookup misses.
+- Primary allocator first-free selection and full-table safe failure.
+- Offset-54 round-trip for 0..7; reject or explicitly preserve unsupported pointer values without remapping.
+- Cross-table progress update: primary offset54 selects secondary slot, and only secondary offset6:7 changes.
+- Preserve secondary offset27:7 independently through checkpoint capture/restore.
+- Atomic rollback when either table allocation or stage-cell update fails.
