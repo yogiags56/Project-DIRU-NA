@@ -159,3 +159,34 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - Do not merge PR #1 or change branches without explicit authorization.
 - Do not overwrite the last known good checkpoint or silently reset state on failed restore.
 - Do not implement against guessed decompiler field meanings.
+
+
+## Resume update — 2026-11-25 (stage-dimension audit)
+
+### Verified repository state
+- Working branch: `dev-003cr-snapshot-provider-boundary`.
+- Verified branch HEAD before this documentation update: `4cf7723ecdc45b94631585ea1cf3fc8317ab9d46`.
+- PR #1 remains open, draft, and unmerged per the last verified checkpoint; do not merge without explicit authorization.
+- The workflow associated with HEAD `4cf7723ecdc45b94631585ea1cf3fc8317ab9d46` was observed completed with conclusion `success` (Android Build and Core Tests). This is not a result for the new documentation commits.
+
+### New CS-2 work completed
+- Inspected the pinned candidate source's stage header parsing and layer allocation.
+- Confirmed dimensions are read as two unsigned 16-bit values and live grids are allocated `[width][height]`.
+- Confirmed checkpoint buffers `cIntArrArr`, `dByteArrArr`, `eByteArrArr`, and `dIntArrArr` use the same dimensions; capture and restore copy width rows and height elements.
+- Confirmed `oByteArr` mirrors `mByteArr.length`.
+- Confirmed source flattening uses `x + y * width`; do not transpose based on assumptions.
+- Identified branch-specific restore coordinates: q-branch width >= 40/height >= 8; r-branch width >= 51/height >= 8; animator-slot-2 branch width >= 19/height >= 64. These are conditional branch preconditions, not universal stage minima.
+- Reconfirmed `cByteArrArr` is allocated but not included in the inspected checkpoint copy/restore methods.
+- Added evidence and remaining tasks to the CS-2 source trace and persisted-field matrix.
+
+### Current CS-2 focus
+1. Inventory dimensions across available stage resources and reconcile with fixed-coordinate restore branches.
+2. Trace every stage setup branch for allocation/nullability guarantees before capture and restore.
+3. Continue opaque scalar writer/reader/reset ownership and stage-vs-profile progression classification.
+4. Define compatibility-key fields only after direct source evidence.
+5. Keep CS-2 open until deterministic Native validation and independent runtime/binary evidence are available.
+
+### Validation boundary
+- This update is documentation/source-audit work only; no Native implementation or new automated tests were added.
+- Recheck GitHub Actions for the new documentation commit(s) before treating CI as green.
+- Preserve the previous last-known-good commit; do not merge PR #1 or change branches.
