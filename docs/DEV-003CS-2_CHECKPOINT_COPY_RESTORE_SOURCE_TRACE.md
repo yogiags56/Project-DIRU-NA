@@ -653,3 +653,54 @@ A correct implementation should first preserve the raw 64-bit word and expose na
 - Whether any writes rely on sign extension or negative values before masking.
 - Exact semantics of record offsets 0:7, 3:4, 6:7, 7:7, 13:7, 14:6, 20:7, 20:6, 26:2, and 27:7.
 - Golden raw-word fixtures from original runtime captures are not yet available.
+
+
+## 16. Dual-table checkpoint ownership and xByte=4 rebuild workspace
+
+Pinned source revision: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 16.1 Allocation and ownership evidence
+
+- `aLongArr` and `bLongArr` are separately allocated as independent `long[15]` arrays during global initialization (17752–17753).
+- Both arrays are re-created independently when optional mode initializes (15840–15845).
+- The one-based primary accessor reads/writes `aLongArr[slot - 1]` (15899–15906).
+- The zero-based secondary accessor reads/writes `bLongArr[slot]` (15909–15914).
+- The source does not show a direct whole-array conversion or copy from one table into the other during normal allocation. They must be treated as distinct persisted state, not aliases.
+
+### 16.2 Secondary-table use during rebuild
+
+The xByte=4 branch scans primary-table entries whose low 4-bit field at offset 0 equals 3. For each such primary slot:
+1. It reads the primary record's coordinates and 2-bit operation/type field.
+2. It clears the corresponding zero-based `bLongArr[slot0Based]` word.
+3. It derives a directional path/continuation from the operation field and neighboring stage coordinates.
+4. The helper chain may create or update records and cell references as the rebuild proceeds.
+5. After scanning, the phase advances to xByte=2.
+
+This establishes `bLongArr` as a distinct per-slot working/rebuild table associated by slot index with the primary table during this phase. It is not safe to call it merely a temporary cache: it is part of the game state and is explicitly included in checkpoint capture/restore.
+
+### 16.3 Explicit checkpoint capture and restore
+
+When optional mode is active (`lBoolean`):
+- Capture allocates backup arrays `cLongArr[15]` and `dLongArr[15]` if absent.
+- It copies all 15 primary words: `aLongArr → cLongArr`.
+- It copies all 15 secondary words: `bLongArr → dLongArr`.
+- Restore copies `cLongArr → aLongArr` and `dLongArr → bLongArr`.
+- The same capture/restore boundary also copies the packed stage-cell grid `eIntArrArr ↔ fIntArrArr` and the associated optional-mode scalar fields.
+
+Therefore a checkpoint that stores only `aLongArr` is incomplete. The paired `bLongArr` contents, packed stage-cell grid, phase byte, and associated scalar fields form one coupled optional-mode snapshot.
+
+### 16.4 Native persistence implications
+
+- Persist primary and secondary raw arrays independently, each with exactly 15 64-bit words for this observed source revision.
+- Preserve the 1-based versus 0-based accessor conventions at API boundaries; normalize only in a dedicated, tested adapter if necessary.
+- Capture/restore the arrays atomically with stage-cell lanes and associated scalar phase state.
+- Do not reconstruct `bLongArr` from `aLongArr`; source evidence shows independent allocation and explicit independent checkpoint copies.
+- Add tests proving mutation of one table does not alias or mutate the other, and round-trip tests preserving all 30 raw words.
+- The source uses a 15-entry backup copy sized from the source array length; native schema should record the revision-specific capacity and reject incompatible dimensions instead of silently truncating.
+
+### 16.5 Remaining questions
+
+- Complete semantic decode of each secondary-table bit range and the exact helper writes during xByte=4.
+- Whether all 15 secondary slots are meaningful for every optional-mode phase or some are dormant.
+- Cross-validation rules between primary records, secondary workspace entries, and stage-cell references.
+- Runtime captures/golden vectors for both tables are still unavailable.
