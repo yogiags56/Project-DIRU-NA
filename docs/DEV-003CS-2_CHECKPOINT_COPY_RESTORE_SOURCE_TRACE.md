@@ -905,3 +905,44 @@ Eligibility is only a memory-bounds fact; it does not prove the corresponding q/
 Native implications: preserve per-stage dimensions, source layer order and `x + y * width` mapping; use checked multiplication for allocation sizes; validate positive dimensions, resource bounds and explicit safe memory limits before allocation; validate active fixed-coordinate branches before any state mutation. The observed 16-bit header range is not itself a safe allocation policy. World identity and stage index are distinct compatibility dimensions. This inventory does not settle profile ownership or snapshot compatibility semantics.
 
 Remaining: trace all stage-load paths and malformed-stream behavior; identify q/r and animator activation sites; continue opaque scalar ownership and world/stage/profile separation; define compatibility identity from direct evidence; defer Native provider/tests until the real gameplay state owner exists.
+
+
+## 21. Fixed-branch activation and stage-loader failure-path audit — 2026-11-25
+
+### 21.1 q/r restore branch activation is gameplay-state driven
+
+The q/r flags are initialized false in the game-state constructor (source lines 631–632) and reset false at stage setup (3381–3382). In the gameplay update path, only while `kByte == 2`, the code checks the player's current foreground cell (source lines 9561–9572):
+- If the low byte of `crtStageForegrondLayer[playerX][playerY]` is zero and the high-byte code is 13, set `qBoolean = true`.
+- Under the same low-byte condition, high-byte code 16 sets `rBoolean = true`.
+
+The restore path consumes these flags (15264–15280), resets the corresponding flag, and writes fixed coordinates:
+- q: sets `bmInt = 15`, clears `dIntArrArr[37][7]` and `dIntArrArr[39][5]`.
+- r: sets `bmInt = 17`, clears `dIntArrArr[46][7]` and `dIntArrArr[50][7]`.
+
+Therefore dimension eligibility in §20 cannot be used to infer activation. The flags are triggered by a runtime foreground-cell encoding under a particular gameplay mode. Native restore must validate both the exact active flag and its coordinate bounds before mutation. The mapping from foreground high-byte values 13/16 to human-facing stage mechanics remains unproven.
+
+### 21.2 Animator slot 2
+
+The restore path checks `i.aClassbArr[2] != null`, resets that animation to frame 0, and writes `crtStagePlayerLayer[18][63] = -1` (source lines 15340–15343). The animator slot is populated at source line 4992. The condition is object-presence driven, not shown to be a universal stage property. The 30×75 Angkor stage is the only resource dimensionally capable of satisfying this access among the three pinned files, but actual slot-2 creation/restore activation must be established by tracing the exact assignment context and runtime behavior.
+
+### 21.3 Stage-loader malformed-input and missing-stage behavior
+
+The stage loader (3408–3444) uses `InputStream.read()`, `read(header)`, and `skip(width * height * 3)` without checking the returned byte counts. The outer `while (shouldExit == 0)` has no explicit EOF/failure exit. The source itself comments that the loop freezes when a non-existent stage is requested (line 3410). When the requested stage index is beyond the available stage count, the loader can continue its outer loop after EOF rather than returning a typed missing-stage error.
+
+Consequences for Native:
+- Never port the source's unbounded retry loop.
+- Require exact reads for the one-byte header, four-byte stage header, and each layer payload; a short read is a parse failure.
+- Validate stage index against the parsed stage count before loading.
+- Validate positive width/height, checked multiplication, and remaining resource bytes before allocating or advancing.
+- Treat missing world resource, EOF, truncated header, truncated layer, invalid dimensions, and out-of-range stage index as distinct typed failures.
+- Stage parsing must be candidate-first: failure must not replace the currently active stage or partially mutate gameplay state.
+- Do not trust `skip()` to consume the requested count; use a checked cursor or loop until the exact payload length is consumed.
+
+This is a Native safety requirement derived from observed source weaknesses, not a claim that the original game intentionally supports malformed resources.
+
+### 21.4 Remaining
+
+1. Inspect full context around animator slot-2 assignment at source line 4992 and all creation/destruction paths.
+2. Trace which stage foreground records can produce high-byte 13 and 16 and whether they occur in pinned stage resources.
+3. Keep q/r activation independent of dimension eligibility.
+4. Define Native typed stage-load failures and transactional commit semantics after the real stage/game owner exists.
