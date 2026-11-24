@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified content HEAD before this checkpoint refresh: `4af28bcde9e5558deca5fc75205afab1c7f64290`
+- Last verified content HEAD before this checkpoint refresh: `bb2aa92f76e56a8b8c5f16b7960155876f4c0209`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -66,12 +66,12 @@ CS-2 currently in progress:
 
 ## Current work
 
-Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after dual-table ownership and atomic checkpoint scope audit at `4af28bcd`):
+Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after secondary path-record allocator, coordinate lookup, and ordered traversal audit at `bb2aa92f`):
 1. Exact assignment ledger is complete at static-source level in source trace §9. Semantic ownership update in §10 classifies `aCInt`, `aaInt`, `cmInt`, `cfInt/ceInt`, pickup counters, and optional mode state. Remaining: opaque fields, allocation/compatibility invariants, and independent/runtime validation.
 2. Enumerate dimensions and allocation paths for all stage layers and byte arrays; exact row copy extent is width rows × height elements.
 3. Confirmed exact mapping: `bIntArrArr`→`cIntArrArr`; `bByteArrArr`→`dByteArrArr`; player layer→`eByteArrArr`; foreground→`dIntArrArr`; `cByteArrArr` has no copy path in these methods. Optional mode uses two active 15-entry packed-record tables and two capture/restore-only backup buffers; do not confuse `aLongArr` with separate `aLongArrArr` 12×12 grid.
 4. Preserve strict separation between durable profile save and in-memory checkpoint; continue opaque scalar ownership and `kByte`/`lBoolean` mode lifecycle trace.
-5. Optional mode activation order corrected: trigger-19 calls arVoid while inactive (no-op); stage-load case 3 calls it while active and allocates/resets tables. Full scalar writer inventory and dtInt/duInt queued-work semantics recorded. Packed-record slot allocation/link semantics, reverse cell references, and per-record lifecycle states/transitions 0–7 now traced at source level. Primary and secondary tables are confirmed as independent 15-word arrays, both explicitly checkpointed. xByte=4 uses the secondary table as a per-slot rebuild workspace while scanning primary records. Continue exact secondary bitfield/helper semantics, state-5 path, graph cross-validation, stage-coordinate/dimension invariants, and runtime/binary verification. Preserve all 30 raw words plus packed stage-cell grid and coupled scalars atomically.
+5. Optional mode activation order corrected: trigger-19 calls arVoid while inactive (no-op); stage-load case 3 calls it while active and allocates/resets tables. Full scalar writer inventory and dtInt/duInt queued-work semantics recorded. Packed-record slot allocation/link semantics, reverse cell references, and per-record lifecycle states/transitions 0–7 now traced at source level. Primary and secondary tables are independent 15-word arrays and explicitly checkpointed. Secondary bLongArr has its own allocator: offsets 0:4 marker, 4:2 argument, 6:7, 13:7, 20:7, 27:7 values; coordinate lookup uses 13:7/20:7 and sequential update traversal uses dtInt..duInt. Do not apply primary offset-28 lifecycle schema to bLongArr. Continue contextual semantics for secondary fields 4/6/27, exact xByte=4 helper behavior, state-5 path, graph cross-validation, stage-coordinate invariants, and runtime/binary verification.
 6. Define canonical world/stage IDs and compatibility rules.
 7. Reconcile snapshot schema with first reproducible gameplay milestone in DEV-002.
 8. Update matrix and roadmap; keep CS-2 in progress until all critical questions are answered.
@@ -87,6 +87,9 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `771fd9e3` — document secondary-table allocator schema, coordinate lookup, and sequential traversal evidence.
+- `bb2aa92f` — add secondary path-record field evidence to the matrix.
 
 - `7630dd0f` — trace independent allocation, xByte=4 rebuild workspace use, and paired checkpoint copies of primary/secondary tables.
 - `4af28bcd` — add dual-table ownership and coupled checkpoint scope to the evidence matrix.
