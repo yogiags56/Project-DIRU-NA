@@ -231,3 +231,17 @@ Additional field evidence:
 - Packed bit accesses overlap (e.g. 7-bit offset 27 write versus 2-bit offset 26 read/write). The earlier bitfield list remains a set of observed accessors, not a canonical flat struct.
 
 CS-2 remains open for full record graph/linked-slot invariants, stage-dimension safety, compatibility key, and runtime/binary verification.
+
+
+## 18. Packed-record slot graph and validation — 2026-11-24
+
+See source trace §13. New source-level findings:
+- Active table capacity is 15. Allocator scans for free slots; one allocation path returns -1 on exhaustion, while a second path has no explicit capacity guard and may reach slot 16. Native must fail safely at capacity.
+- Offset 54 (3 bits) stores a one-based linked-slot reference; zero is the no-link sentinel.
+- Coordinate lookup `bByte(x,y)` returns a zero-based slot index. It must not be confused with the one-based link representation.
+- Stage cell lanes contain a slot reference that must agree with the record's stored coordinates and sublayer.
+- Record coordinates are 6-bit values and require validation against actual stage dimensions before grid access.
+- Restore validation must check both forward record→cell/link references and reverse cell→record references before committing candidate state.
+- The 3-bit lifecycle field at offset 28 controls update-loop branches; values 0–7 are observed, but semantic labels for 4–7 remain provisional.
+
+CS-2 remains open for complete graph topology, all overlapping bitfield accessors, coordinate bounds under every stage mode, and runtime/binary validation.
