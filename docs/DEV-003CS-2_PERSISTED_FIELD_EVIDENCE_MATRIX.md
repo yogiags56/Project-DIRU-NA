@@ -213,3 +213,21 @@ A complete occurrence scan of the pinned source revision confirms:
 - Mode teardown nulls the four 15-entry tables; global/runtime initialization also allocates active tables.
 
 Native schema should model active records and backup serialization separately; it should not treat the backup buffers as additional gameplay state.
+
+
+## 17. Optional-mode lifecycle correction and writer audit — 2026-11-24
+
+See source trace §12. Corrected an earlier interpretation of `arVoid()`:
+- Trigger code 19 calls `arVoid()` while `lBoolean=false`, so the method's `if (lBoolean)` body does not execute on that path.
+- Stage-load switch case 3 calls `arVoid()` only while `lBoolean=true`; this is the observed path that allocates/resets all four 15-entry long tables.
+- Trigger code 19 then sets `lBoolean=true`, clears `alBoolean`, allocates `eIntArrArr` if absent, and creates the first record.
+- The two entry paths must remain distinct in the Native behavioral model until runtime/original-binary validation resolves their intended relationship.
+
+Additional field evidence:
+- `duInt` counts player-layer cells with code 38 during `afVoid()`; it is the upper bound for the `dtInt` one-shot queued-work cursor.
+- `dtInt` is consumed once per `alBoolean` pulse and resets with `duInt` when the queue is exhausted.
+- `dxInt` is selected from neighboring stage-grid occupancy by `lVoid()`; `dvInt/dwInt` hold selected coordinates; `wByte` selects a packed-record slot; `dyInt` is a derived target coordinate.
+- The `xByte` writer inventory now covers constructor, teardown, restore, mode setup, record completion, and input interaction paths.
+- Packed bit accesses overlap (e.g. 7-bit offset 27 write versus 2-bit offset 26 read/write). The earlier bitfield list remains a set of observed accessors, not a canonical flat struct.
+
+CS-2 remains open for full record graph/linked-slot invariants, stage-dimension safety, compatibility key, and runtime/binary verification.
