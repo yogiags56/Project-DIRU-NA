@@ -329,3 +329,12 @@ Source trace §20 records the full binary evidence. The pinned candidate resourc
 Dimension ranges: width 23–104; height 11–75. The only stage meeting the restore animator-slot-2 bounds (width >= 19, height >= 64) is Angkor world 0 stage 5 (30×75). q-branch bounds (width >= 40, height >= 8) match 23 stages; r-branch bounds (width >= 51, height >= 8) match 9. These are bounds-only counts, not proof of runtime branch activation.
 
 Native must retain per-stage dimensions, checked allocation arithmetic, exact layer order/indexing, and branch-specific prevalidation before mutation. The inventory does not prove all retail variants, profile ownership, or snapshot compatibility semantics. CS-2 remains in progress.
+
+
+## 26. Restore branch activation and malformed stage-loader behavior — 2026-11-25
+
+Source trace §21 adds direct activation evidence. q/r flags start false and are reset during stage setup. During gameplay mode `kByte == 2`, a player standing on a foreground cell with low byte zero sets q when its high-byte code is 13, or r when the code is 16. Restore then mutates fixed coordinates and resets the active flag. Thus dimension eligibility counts in §25 are only bounds facts, not activation evidence.
+
+The stage loader does not check the byte counts returned by `read(header)`, layer reads, or `skip()`; its outer loop has no explicit EOF exit. The source comments that requesting a non-existent stage can freeze. Native must use exact reads/checked cursor movement, validate stage index and dimensions before allocation, return typed failures for missing/truncated/out-of-range resources, and keep loading candidate-first so failure cannot partially replace active state.
+
+Animator slot 2 is checked for non-null during restore and then writes player-layer cell [18][63]. Assignment is at candidate source line 4992; full creation/destruction path remains to be traced. CS-2 remains open.
