@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified content HEAD before this checkpoint refresh: `bb2aa92f76e56a8b8c5f16b7960155876f4c0209`
+- Last verified content HEAD before this checkpoint refresh: `d019cc911de06f0bd31ea5025b55bdef5bd8895a`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -66,12 +66,12 @@ CS-2 currently in progress:
 
 ## Current work
 
-Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after secondary path-record allocator, coordinate lookup, and ordered traversal audit at `bb2aa92f`):
+Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after primary/secondary pointer handoff and allocator capacity hazard audit at `d019cc91`):
 1. Exact assignment ledger is complete at static-source level in source trace §9. Semantic ownership update in §10 classifies `aCInt`, `aaInt`, `cmInt`, `cfInt/ceInt`, pickup counters, and optional mode state. Remaining: opaque fields, allocation/compatibility invariants, and independent/runtime validation.
 2. Enumerate dimensions and allocation paths for all stage layers and byte arrays; exact row copy extent is width rows × height elements.
 3. Confirmed exact mapping: `bIntArrArr`→`cIntArrArr`; `bByteArrArr`→`dByteArrArr`; player layer→`eByteArrArr`; foreground→`dIntArrArr`; `cByteArrArr` has no copy path in these methods. Optional mode uses two active 15-entry packed-record tables and two capture/restore-only backup buffers; do not confuse `aLongArr` with separate `aLongArrArr` 12×12 grid.
 4. Preserve strict separation between durable profile save and in-memory checkpoint; continue opaque scalar ownership and `kByte`/`lBoolean` mode lifecycle trace.
-5. Optional mode activation order corrected: trigger-19 calls arVoid while inactive (no-op); stage-load case 3 calls it while active and allocates/resets tables. Full scalar writer inventory and dtInt/duInt queued-work semantics recorded. Packed-record slot allocation/link semantics, reverse cell references, and per-record lifecycle states/transitions 0–7 now traced at source level. Primary and secondary tables are independent 15-word arrays and explicitly checkpointed. Secondary bLongArr has its own allocator: offsets 0:4 marker, 4:2 argument, 6:7, 13:7, 20:7, 27:7 values; coordinate lookup uses 13:7/20:7 and sequential update traversal uses dtInt..duInt. Do not apply primary offset-28 lifecycle schema to bLongArr. Continue contextual semantics for secondary fields 4/6/27, exact xByte=4 helper behavior, state-5 path, graph cross-validation, stage-coordinate invariants, and runtime/binary verification.
+5. Optional mode activation order corrected: trigger-19 calls arVoid while inactive (no-op); stage-load case 3 calls it while active and allocates/resets tables. Full scalar writer inventory and dtInt/duInt queued-work semantics recorded. Packed-record slot allocation/link semantics, reverse cell references, and per-record lifecycle states/transitions 0–7 now traced at source level. Primary and secondary tables are independent 15-word arrays and explicitly checkpointed. Secondary bLongArr allocator initializes marker 0:4, argument 4:2, fields 6:7, 13:7, 20:7, 27:7. Coordinate lookup uses 13:7/20:7; ordered update traversal uses dtInt..duInt. Primary offset54:3 is a zero-based pointer to bLongArr slots 0..7; primary processing updates linked secondary offset6:7 progress while offset27:7 retains initial value in observed path. Secondary allocator returns -1 when full but one xByte=5 caller ignores it; primary allocator can index past end when full. Native code must use typed failure and atomic no-mutation semantics. Continue validating xByte=5 failure paths, state-5 path, exact xByte=4 helper chain, coordinate invariants, and runtime/golden vectors.
 6. Define canonical world/stage IDs and compatibility rules.
 7. Reconcile snapshot schema with first reproducible gameplay milestone in DEV-002.
 8. Update matrix and roadmap; keep CS-2 in progress until all critical questions are answered.
@@ -87,6 +87,9 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `313c6da4` — document primary-to-secondary pointer, progress updates, xByte=5 handoff, and both allocator capacity hazards.
+- `d019cc91` — add pointer-width and capacity-failure evidence to the matrix.
 
 - `771fd9e3` — document secondary-table allocator schema, coordinate lookup, and sequential traversal evidence.
 - `bb2aa92f` — add secondary path-record field evidence to the matrix.
