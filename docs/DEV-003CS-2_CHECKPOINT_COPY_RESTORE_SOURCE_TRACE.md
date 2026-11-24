@@ -488,3 +488,66 @@ These labels describe observed control-flow categories, not stable public enum n
 - Full semantic map for type nibble, lifecycle values 4–7, and overlapping bit ranges.
 - Whether all 15 slots are reachable/needed in every mode and the exact stage-bound constraints for 6-bit coordinates.
 - Runtime confirmation of source-level edge cases, especially full-table allocation and malformed link handling.
+
+
+## 14. Lifecycle transition graph refinement (record field offset 28)
+
+This section refines §13.3. The field at offset 28 width 3 is a record lifecycle/control field, distinct from the xByte global mode phase and distinct from the low-nibble record kind at offset 0.
+
+### 14.1 Observed state consumers
+
+The xByte=2 update loop scans slots 1..15 and dispatches on offset28:
+- State 0: no update branch; allocator/free checks use zero.
+- State 1: movement/transition processing branch.
+- State 2: active timed record-processing branch.
+- State 3: record is cleared (fVoid(slot) sets the whole long to zero).
+- State 5: observed as a newly created auxiliary record in xByte=5 setup; no dedicated state-5 branch exists in the main xByte=2 switch, so it is not yet safe to assign a standalone behavior label.
+- State 6 and state 7: movement/transition processing branch, with state 7 distinguished by a boolean flag used by movement/cleanup logic.
+- State 4: no writer or dedicated consumer was found in the scanned source revision. Do not label it as an established lifecycle state; retain as an unclassified 3-bit value.
+
+### 14.2 Observed transitions
+
+| From | To | Trigger/evidence |
+|---|---|---|
+| Free (0) | Initializing (1) | Allocator creates a normal record; writes link, cell back-reference, type, coordinates and selector (16734–16746) |
+| Free (0) | Special/terminal (7) | Allocator special case when record type argument is 7; clears cell lane and marks state 7 (16731–16733) |
+| 1 | 2 | Global xByte=1 phase advances to xByte=2; record is then processed in the main loop (16451–16453) |
+| 2 | 3 | Timed record completes; main loop marks state 3 (16142) |
+| 3 | Free (0) | Main loop clears entire slot on next scan (16075–16078) |
+| 2 | 5 | Completion/handoff path marks source record state 5 when a linked record exists and current operation reaches terminal branch (16143–16149) |
+| 2 | 2 | Handoff initializes linked record as state 2, copies link and coordinate/cell context, clears source slot (16251–16260) |
+| Free (0) | 5 | xByte=5 setup creates an auxiliary movement record and changes it to state 5 (16573–16575) |
+| 5 | 2 | No direct state-5 case is present in the main switch; transition path is indirect/contextual and remains unresolved |
+| 6 | 2 | Obstacle/continuation path resets movement counters and marks current record state 2 (16353–16359) |
+| Free (0) | 6 | xByte=5 setup marks a selected record state 6 before abort/reset path (16643–16645) |
+| 6/7 | Free (0) | State 7 may clear itself on terminal linked-cell condition; state 6 shares the movement branch but exact terminal cases remain context-dependent (16218–16245) |
+
+The table records only transitions directly visible in the pinned source; it is not a complete formal state machine. Some transitions are controlled by xByte and stage-grid conditions, so they cannot be modeled as unconditional state-to-state edges.
+
+### 14.3 Link handoff semantics
+
+A confirmed handoff path in the state-1/6/7 movement branch:
+1. Detects a neighboring stage cell whose packed lane contains another record slot.
+2. Reads that record's one-based slot reference.
+3. Copies the current record's link reference into the target record's link field.
+4. Sets target lifecycle to 2 and updates its mode/direction/coordinate fields.
+5. Clears the source record.
+
+This is consistent with a continuation/handoff graph, but does not prove that every link graph is a simple singly linked list. Multiple creation paths and shared cell lanes still require reconciliation.
+
+### 14.4 Important separation of control fields
+
+- xByte: global optional-mode phase (1–5).
+- Record offset 28 (3 bits): per-record lifecycle/control.
+- Record offset 0 low nibble / 4-bit kind: record kind/type, with zero used by a separate allocator free test and other values used in rebuild/record classification.
+- Record offset 47 (2 bits): per-record operation mode (switch cases 0 and 1 observed).
+
+Do not merge these fields into one enum or assume they share numeric semantics.
+
+### 14.5 Native schema constraints
+
+- Preserve raw 64-bit records losslessly until the overlapping accessor graph is fully decoded.
+- Validate known state values by context; do not reject state 4 solely because no writer was found, but mark it unclassified and do not execute it as a known transition.
+- Keep xByte, offset28, offset0 kind, and offset47 operation mode as separate fields in the analysis model.
+- Model transitions with guards and stage-cell conditions, not as a simple enum progression.
+- Candidate restore must validate link target occupancy and cell backreferences for every occupied slot before commit.
