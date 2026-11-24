@@ -214,3 +214,22 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - Binary parsing was executed against the pinned candidate resources. This is static candidate-resource validation, not runtime gameplay or retail-binary validation.
 - Documentation-only update; no Native code or automated tests added. CI must be checked for the final documentation commit.
 - Do not merge PR #1 or change branches without explicit authorization.
+
+
+## Resume update — 2026-11-25 (restore activation and loader failure audit)
+
+### New source findings
+- q/r activation is runtime-driven: while `kByte == 2`, player foreground low byte 0 plus high-byte code 13 sets q; code 16 sets r (candidate source line 9561–9572).
+- Restore consumes q/r and clears fixed cells; dimension eligibility does not prove activation.
+- Animator slot 2 is checked for non-null and reset; restore writes player-layer [18][63]. Assignment site is line 4992 and requires deeper lifecycle trace.
+- Stage loader ignores short-read/skip counts and has no explicit EOF exit in its outer loop. Source comment identifies freeze for non-existent stage. Native must use exact reads, bounds checks, typed errors, and candidate-first commit.
+- Added source trace §21 and Evidence Matrix §26.
+
+### Next
+1. Inspect animator slot-2 assignment context and lifecycle.
+2. Trace foreground high-byte codes 13 and 16 to their stage-resource origins and mechanics.
+3. Define typed Native resource parser failures and transactional stage replacement.
+4. Continue opaque scalar ownership and world/stage/profile separation.
+5. Reconcile compatibility identity after direct evidence.
+
+No Native runtime/provider implementation or new automated tests were added. Keep CS-2 in progress and PR #1 unmerged.
