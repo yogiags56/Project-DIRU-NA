@@ -812,3 +812,65 @@ During active primary processing, the primary record's offset-54 value is used t
 - Cross-table progress update: primary offset54 selects secondary slot, and only secondary offset6:7 changes.
 - Preserve secondary offset27:7 independently through checkpoint capture/restore.
 - Atomic rollback when either table allocation or stage-cell update fails.
+
+
+## 19. Stage allocation, dimension, and restore precondition audit — 2026-11-25
+
+Pinned candidate source: `kubikaugustyn/DiamondRushSource@215c71d04057d66a1b08419b1a4b1043ae3e0881`. This is static-source evidence only, not runtime or shipping-binary validation.
+
+### 19.1 Stage dimensions and live layer allocation
+
+The stage loader reads a four-byte dimension header as two unsigned 16-bit values: `width = unpackUint16(header, 0)` and `height = unpackUint16(header, 2)` (source lines 3418–3424). For the selected stage it assigns these to `crtStageWidth` and `crtStageHeight`.
+
+The following live grids are allocated as `[crtStageWidth][crtStageHeight]`:
+- `crtStagePlayerLayer`: byte, line 3433.
+- `cByteArrArr`: byte, line 3434.
+- `crtStageForegrondLayer`: int, line 3435.
+- `bByteArrArr`: byte, line 3447.
+- `bIntArrArr`: int, line 3448.
+
+The loader reads each layer into a flat byte buffer of `width * height` bytes (line 3438), then assigns cells using `x < width`, `y < height` and flat index `x + y * width` (lines 3440–3443, 3450–3453, 3457–3461). Preserve this mapping; do not transpose based on assumptions.
+
+### 19.2 Checkpoint-buffer allocation and copy extents
+
+The checkpoint-buffer initialization path allocates:
+- `cIntArrArr`: int [width][height] (4584).
+- `dByteArrArr`: byte [width][height] (4585).
+- `eByteArrArr`: byte [width][height] (4586).
+- `dIntArrArr`: int [width][height] (4587).
+- `oByteArr`: byte [mByteArr.length] when `mByteArr != null` (4588–4589).
+
+Capture copies exactly `crtStageWidth` rows and `crtStageHeight` elements per row for the four stage grids (15210–15214). Restore uses the same extents (15325–15329). The optional `mByteArr` copy uses `mByteArr.length` (15207–15208, 15322–15323).
+
+The conditional metadata grid `eIntArrArr` is allocated as [width][height] on the active-mode stage-load case-3 path (4594–4599), and its checkpoint buffer `fIntArrArr` is lazily allocated with the same dimensions before copying (15216–15222). The separate trigger-code-19 path can allocate `eIntArrArr` if null (source lines 12114–12130); keep that path distinct from stage-load reinitialization.
+
+### 19.3 Restore-only fixed-coordinate preconditions
+
+The inspected restore method contains fixed-coordinate writes/reads not guarded by dimension checks at the access sites:
+- `dIntArrArr[37][7]` and `dIntArrArr[39][5]` on the `qBoolean` branch (15264–15280).
+- `dIntArrArr[46][7]` and `dIntArrArr[50][7]` on the `rBoolean` branch (15271–15280).
+- `crtStagePlayerLayer[18][63]` when animator slot 2 exists (15340–15343).
+
+The branch-specific minimum extents are therefore:
+- q-branch: width >= 40 and height >= 8.
+- r-branch: width >= 51 and height >= 8.
+- animator-slot-2 branch: width >= 19 and height >= 64.
+
+These are conditional memory-safety preconditions, not universal minimum dimensions for every stage. Native restore must validate the active branch's required coordinates before touching candidate arrays.
+
+### 19.4 Snapshot classification and invariants
+
+- `cByteArrArr` is allocated at stage load but is not copied by the inspected `saveCheckpoint()` or `restoreCheckpoint()`; keep it excluded unless new direct evidence changes this.
+- The four unconditional stage-grid pairs remain `bIntArrArr ↔ cIntArrArr`, `bByteArrArr ↔ dByteArrArr`, `crtStagePlayerLayer ↔ eByteArrArr`, and `crtStageForegrondLayer ↔ dIntArrArr`.
+- All four pairs require exact dimension equality before capture or restore. A mismatch must fail before any live array is mutated.
+- `mByteArr ↔ oByteArr` requires equal lengths and a coherent `cmInt` index into the associated door/lock data.
+- `eIntArrArr ↔ fIntArrArr` exists only under the active optional-mode discriminator and must be validated with both packed-record tables and their scalar controller state.
+- The source reads dimensions from a 16-bit header, but this audit has not established accepted min/max values or a canonical compatibility key. Native code must impose explicit safe bounds only when supported by verified format constraints.
+
+### 19.5 Remaining work
+
+1. Trace every stage setup branch and verify allocation/nullability guarantees before checkpoint capture/restore.
+2. Inventory actual stage-resource dimensions and reconcile them with fixed-coordinate restore branches.
+3. Trace remaining opaque scalar writers/reset points and classify stage-local versus durable-profile ownership.
+4. Define compatibility-key fields only after stage identity, world identity, mode discriminator, schema revision, and dimension rules have direct evidence.
+5. Add deterministic Native tests for dimension mismatch, missing buffers, fixed-coordinate preconditions, and mode-conditional failures when a real gameplay state owner exists.
