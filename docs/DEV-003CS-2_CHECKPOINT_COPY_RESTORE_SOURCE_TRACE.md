@@ -257,3 +257,38 @@ Closed at static-source assignment level: exact unconditional scalar pairs; mode
 Still open before CS-2 can close: semantic ownership for opaque scalars; stage dimension/allocation invariants and source null/length preconditions; complete lBoolean activation/lifecycle; world/stage/mode compatibility key; independent comparison against original shipping binary; deterministic runtime round-trip tests.
 
 Do not invent friendly names for opaque decompiler identifiers. Assign Native semantic names only after tracing their writers/readers and mode-specific behavior.
+
+
+## 10. Scalar semantic ownership trace — source revision 215c71d
+
+This section traces uses outside the checkpoint methods. Labels are intentionally conservative: a variable is assigned a gameplay role only where its writers/readers support that role.
+
+| Field(s) | Additional source evidence | Conservative interpretation | Snapshot/schema consequence |
+|---|---|---|---|
+| `aCInt` | Checkpoint tile handler reads foreground high bits, requires value >= current `aCInt`, then sets `aCInt = n11 + 1` (12159–12162); restored from `bZInt` at 15288 | Checkpoint progression threshold / next checkpoint marker | Strong semantic evidence; preserve as checkpoint progression scalar, not generic checkpoint ID |
+| `aaInt` | Stage setup assigns it from a cell's background value (3793); decremented on collection and compared with zero to remove checkpoint/associated cell (15437–15440) | Remaining count for a stage object/collectible group | Snapshot field is required for consistent stage object state; exact UI label remains unknown |
+| `aZInt` | Incremented when qualifying object is collected (15434); used with other stage progress logic; retry path also mutates it (11235) | Collected-object/progress counter candidate | Include as opaque progression counter until all writers and reset rules are mapped |
+| `aUInt`, `aVInt` | Incremented in pickup cases 4/5 (11244–11251); checked as positive before interaction with foreground types 9/8 (13184) | Two distinct consumable/key-like inventory counters | Keep distinct typed counters; do not merge |
+| `bbInt` | Incremented in pickup case 2 (11254–11257) | Pickup/progression counter; exact item identity unresolved | Preserve separately; do not label currency or score without UI/source proof |
+| `cmInt` | Set from foreground cell high bits for a door interaction (12972); bounds-checked against `mByteArr.length` (12974–12976); decremented in `alVoid()` and used to locate matching door cells (14793–14804) | Selected door/lock group index into `mByteArr` | Pair `cmInt` with `mByteArr` snapshot; restore ordering and bounds validation are critical |
+| `cfInt`, `ceInt` | `dBoolean()` sets `cfInt` to ±1 based on `ceInt` (9440–9455); update loop advances `ceInt`, stops at 0 or 9, and scans/rebuilds affected cells at phase 5 (10500–10520) | Direction and phase/progress for a staged foreground mechanism/animation | These are active simulation state, not presentation-only; both must be captured together |
+| `ayInt` | Read by runtime gate at 12519; copied into `bWInt` and restored at 15344; also written in stage/runtime logic | Runtime gating/position-related state; semantic role not established | Remain opaque; don't call it spawn X until exact writer/reader path is proven |
+| `aiInt` | Used as argument to `lVoid(int)` (14462–14476), and updated in other gameplay flow | State/operation code associated with object interaction | Opaque enum/state code; preserve exact integer value |
+| `xByte` and `dqInt`...`duInt`, `vByte`, `wByte`, `dvInt`...`dzInt` | Initialized together by `arVoid()` when `lBoolean` is true (15840–15860); consumed by `asVoid()` (15932 onward) and mode-specific movement/reconstruction branches (16512 onward) | Coherent optional mode engine state; fields include mode, phase/counters, coordinates/scan bounds, and selected encoded record | Treat as one conditional sub-snapshot. Do not individually rename fields until packed-record bitfields and all mode branches are traced |
+| `chInt`, `cgInt`, `afInt`, `bZInt`, `bXInt`, `bYInt`, `aUInt`, `aVInt`, `bUInt`, `bVInt`, `bWInt`, `ajInt`, `cnInt` | Some have partial use sites, but not enough to establish a stable semantic identity across all stage modes | Opaque scalar pairs except the specific interpretations above | Preserve source-width/type and exact pairing; defer friendly Native names |
+
+### 10.1 Important correction to earlier provisional labels
+
+- `aCInt` is supported as checkpoint threshold/progression state; it is not merely an opaque counter.
+- `aaInt` is loaded from stage cell metadata and decremented with object/collectible removal; it must be restored consistently with stage grids.
+- `cmInt` is a door/lock group selector tied to `mByteArr`; it is not a general stage ID.
+- `cfInt` and `ceInt` form a coupled directional phase mechanism. Resetting one without the other can leave the stage mechanism inconsistent.
+- The prior tentative “spawn/original-X” label for `ayInt` is withdrawn; current evidence only supports an opaque runtime gating/position-related role.
+
+### 10.2 Remaining semantic gaps
+
+- Trace all writers/readers and reset points for the remaining opaque unconditional scalar pairs.
+- Decode the optional-mode packed record format and map each mode field to stable semantics.
+- Determine exact item identities/UI meanings for `aUInt`, `aVInt`, and `bbInt`.
+- Establish whether `aZInt` is stage-local, checkpoint-local, or also profile-persistent.
+- Verify the relationship between `cmInt` and `mByteArr` under every door/lock mode.
