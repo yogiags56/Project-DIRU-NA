@@ -306,3 +306,17 @@ See source trace §18. Primary record offset 54 width 3 is a zero-based pointer 
 The secondary allocator returns -1 when all 15 slots are occupied, but the xByte=5 setup call ignores the allocator return and relies on coordinate lookup succeeding. Primary allocator has no explicit full-table failure return in the inspected helper; with all 15 primary slots occupied, its candidate advances to 16 before indexing the array. Native code must replace both unsafe cases with typed failure and atomic no-mutation semantics.
 
 Tests required: allocator full-table behavior for both tables, xByte=5 lookup miss, offset54 values 0..7, progress update isolation to secondary offset6, preservation of offset27, and rollback across table/grid mutations.
+
+
+## 24. Stage dimensions and restore bounds — 2026-11-25
+
+See source trace §19. The candidate stage loader reads width and height from two unsigned 16-bit header values and allocates the player, foreground, background, and per-cell byte layers as `[width][height]`. Checkpoint buffers for background, player, foreground, and byte state use the same dimensions. Capture/restore copy `width` rows and `height` elements per row; the door/lock byte buffer uses `mByteArr.length`.
+
+Restore also contains branch-specific fixed-coordinate accesses:
+- q-branch: `dIntArrArr[37][7]` and `[39][5]` require width >= 40, height >= 8.
+- r-branch: `dIntArrArr[46][7]` and `[50][7]` require width >= 51, height >= 8.
+- animator-slot-2 branch: `crtStagePlayerLayer[18][63]` requires width >= 19, height >= 64.
+
+These are branch preconditions, not universal minimum dimensions for every stage. Validate the applicable branch before candidate restore and before mutating live state. The loader's flat-buffer mapping uses `x + y * width`; do not transpose without separate evidence.
+
+`cByteArrArr` is allocated at stage load but is absent from the inspected checkpoint copy pairs. Keep it excluded. CS-2 remains open: actual stage-resource dimension inventory, all setup-path allocation guarantees, opaque scalar ownership, compatibility-key evidence, and runtime/shipping-binary validation are incomplete.
