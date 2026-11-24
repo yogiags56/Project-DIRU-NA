@@ -297,3 +297,12 @@ See source trace §17. The four-argument allocator initializes a free `bLongArr`
 The 7-bit fields at 6, 13, 20, 27 are adjacent within the secondary 64-bit word. `bByte(x,y)` scans all 15 secondary slots by offsets 13:7 and 20:7 and returns zero-based slot or -1. A later setup call locates the coordinate and sets offset 0:4 to 2. When `alBoolean` is active, the update path walks secondary entries in index order from `dtInt` through `duInt`, reading coordinates and calling `mVoid`.
 
 Do not apply the primary-table offset-28 lifecycle enum to this table. The meaning of offset 4 and values at offsets 6/27 remains contextual. Preserve raw words and test allocator, lookup, ordered traversal, and state marker transitions.
+
+
+## 23. Primary/secondary pointer and allocator failure evidence — 2026-11-25
+
+See source trace §18. Primary record offset 54 width 3 is a zero-based pointer into the first eight addressable `bLongArr` slots (0..7), not a 1-based pointer to all 15 entries. Active primary processing follows this pointer and updates secondary offset 6:7 as path progress changes. Secondary offset 27:7 retains its initial allocator value in the inspected path.
+
+The secondary allocator returns -1 when all 15 slots are occupied, but the xByte=5 setup call ignores the allocator return and relies on coordinate lookup succeeding. Primary allocator has no explicit full-table failure return in the inspected helper; with all 15 primary slots occupied, its candidate advances to 16 before indexing the array. Native code must replace both unsafe cases with typed failure and atomic no-mutation semantics.
+
+Tests required: allocator full-table behavior for both tables, xByte=5 lookup miss, offset54 values 0..7, progress update isolation to secondary offset6, preservation of offset27, and rollback across table/grid mutations.
