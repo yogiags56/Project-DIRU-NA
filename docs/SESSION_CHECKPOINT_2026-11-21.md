@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified content HEAD before this checkpoint refresh: `a84194e1e9c4663326bd3cc7fb0353b1a4d200f2`
+- Last verified content HEAD before this checkpoint refresh: `8ff64c0033e4ec221a57403f9285be97069cbf32`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -66,12 +66,12 @@ CS-2 currently in progress:
 
 ## Current work
 
-Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after packed-record allocation, linked-slot, and reverse-reference audit at `a84194e1`):
+Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after per-record lifecycle transition graph refinement at `8ff64c00`):
 1. Exact assignment ledger is complete at static-source level in source trace §9. Semantic ownership update in §10 classifies `aCInt`, `aaInt`, `cmInt`, `cfInt/ceInt`, pickup counters, and optional mode state. Remaining: opaque fields, allocation/compatibility invariants, and independent/runtime validation.
 2. Enumerate dimensions and allocation paths for all stage layers and byte arrays; exact row copy extent is width rows × height elements.
 3. Confirmed exact mapping: `bIntArrArr`→`cIntArrArr`; `bByteArrArr`→`dByteArrArr`; player layer→`eByteArrArr`; foreground→`dIntArrArr`; `cByteArrArr` has no copy path in these methods. Optional mode uses two active 15-entry packed-record tables and two capture/restore-only backup buffers; do not confuse `aLongArr` with separate `aLongArrArr` 12×12 grid.
 4. Preserve strict separation between durable profile save and in-memory checkpoint; continue opaque scalar ownership and `kByte`/`lBoolean` mode lifecycle trace.
-5. Optional mode activation order corrected: trigger-19 calls arVoid while inactive (no-op); stage-load case 3 calls it while active and allocates/resets tables. Full scalar writer inventory and dtInt/duInt queued-work semantics recorded. Packed-record slot allocation/link semantics and reverse cell references now traced at source level. Continue exact graph topology, overlapping bitfield accessor map, stage-coordinate/dimension invariants, and runtime/binary verification.
+5. Optional mode activation order corrected: trigger-19 calls arVoid while inactive (no-op); stage-load case 3 calls it while active and allocates/resets tables. Full scalar writer inventory and dtInt/duInt queued-work semantics recorded. Packed-record slot allocation/link semantics, reverse cell references, and per-record lifecycle states/transitions 0–7 now traced at source level. Continue unresolved state-5 path, exact graph topology, overlapping bitfield accessor map, stage-coordinate/dimension invariants, and runtime/binary verification.
 6. Define canonical world/stage IDs and compatibility rules.
 7. Reconcile snapshot schema with first reproducible gameplay milestone in DEV-002.
 8. Update matrix and roadmap; keep CS-2 in progress until all critical questions are answered.
@@ -87,6 +87,9 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `87136cb4` — document record lifecycle states 0–7, guarded transitions, handoff semantics, and separation from xByte/kind/operation fields.
+- `8ff64c00` — update evidence matrix with per-record lifecycle transition evidence.
 
 - `b4b6950a` — map 15-slot allocation, one-based link references, zero-based coordinate lookup, cell backreferences, and capacity hazards.
 - `a84194e1` — update evidence matrix with packed-record graph and restore validation requirements.
