@@ -6,7 +6,7 @@
 
 - Repository: `yogiags56/Project-DIRU-NA`
 - Working branch: `dev-003cr-snapshot-provider-boundary`
-- Last verified content HEAD before this checkpoint refresh: `75f71dd935b4c8e7837530f202a2bb807365b7e8`
+- Last verified content HEAD before this checkpoint refresh: `e13ed13d873cf6458a4b0c9f1512f82c00381d4f`
 - PR #1: https://github.com/yogiags56/Project-DIRU-NA/pull/1
 - PR #1 was still open, draft, and unmerged at last verification. Do not merge without explicit authorization.
 - Main branch is not the working branch. All current DEV-003CS proposal and progress documents are on the working branch.
@@ -66,12 +66,12 @@ CS-2 currently in progress:
 
 ## Current work
 
-Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after active/backup long-table ownership trace at `75f71dd9`):
+Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (updated after corrected optional-mode activation and complete scalar-writer audit at `e13ed13d`):
 1. Exact assignment ledger is complete at static-source level in source trace §9. Semantic ownership update in §10 classifies `aCInt`, `aaInt`, `cmInt`, `cfInt/ceInt`, pickup counters, and optional mode state. Remaining: opaque fields, allocation/compatibility invariants, and independent/runtime validation.
 2. Enumerate dimensions and allocation paths for all stage layers and byte arrays; exact row copy extent is width rows × height elements.
 3. Confirmed exact mapping: `bIntArrArr`→`cIntArrArr`; `bByteArrArr`→`dByteArrArr`; player layer→`eByteArrArr`; foreground→`dIntArrArr`; `cByteArrArr` has no copy path in these methods. Optional mode uses two active 15-entry packed-record tables and two capture/restore-only backup buffers; do not confuse `aLongArr` with separate `aLongArrArr` 12×12 grid.
 4. Preserve strict separation between durable profile save and in-memory checkpoint; continue opaque scalar ownership and `kByte`/`lBoolean` mode lifecycle trace.
-5. Optional mode activation/teardown and xByte lifecycle now traced at category level. Continue full bitfield semantics, all transition writers, coordinate/slot invariants, and first-build scope.
+5. Optional mode activation order corrected: trigger-19 calls arVoid while inactive (no-op); stage-load case 3 calls it while active and allocates/resets tables. Full scalar writer inventory and dtInt/duInt queued-work semantics recorded. Continue packed-record graph/linked-slot invariants, coordinate/dimension safety, and runtime/binary verification.
 6. Define canonical world/stage IDs and compatibility rules.
 7. Reconcile snapshot schema with first reproducible gameplay milestone in DEV-002.
 8. Update matrix and roadmap; keep CS-2 in progress until all critical questions are answered.
@@ -87,6 +87,9 @@ Continue CS-2 semantic ownership, optional-mode lifecycle, and invariant audit (
 - Separately: PR #1 review/merge after authorization.
 
 ## Latest commits from this session
+
+- `d95a9b93` — correct optional-mode activation ordering and add full scalar writer/transition inventory, queued-work semantics, and overlapping bitfield-access warning.
+- `e13ed13d` — update persisted-field matrix with corrected lifecycle and writer evidence.
 
 - `580d7246` — verify active versus checkpoint-backup ownership of the optional mode long tables.
 - `75f71dd9` — record active/backup table distinction in the persisted-field matrix.
