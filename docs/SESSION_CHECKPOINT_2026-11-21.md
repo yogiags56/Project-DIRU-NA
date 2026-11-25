@@ -314,3 +314,23 @@ Static source audit only. No Native runtime code or tests added. PR #1 remains u
 5. Keep CS-2 open; no provider until real Native gameplay owner exists.
 
 Static source audit only. No Native runtime code or tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-26 (cross-layer snapshot ownership)
+
+### Work completed
+- Audited allocation and initialization of player, background-derived metadata, foreground, and two runtime auxiliary grids.
+- Confirmed `bIntArrArr` is packed 32-bit gameplay metadata and is copied into/out of `cIntArrArr` by checkpoint capture/restore.
+- Confirmed `crtStagePlayerLayer` occupancy/object codes are copied into/out of `eByteArrArr`.
+- Confirmed `bByteArrArr` contains movement/progress/timing values that affect gameplay and is copied into/out of `dByteArrArr`.
+- Confirmed `cByteArrArr` is initialized and mutated as dirty/update scheduling markers but is not copied by checkpoint; restore triggers visual/update invalidation. Treat as derived state pending full scheduler trace.
+- Added Source Trace §26 and Evidence Matrix §31.
+
+### Next
+1. Decode `bIntArrArr` packed field contexts without assuming one universal struct.
+2. Trace `bByteArrArr` contexts and exact signed-byte/wrap behavior.
+3. Trace `cByteArrArr` marker consumers, scheduling cadence, and rebuild contract.
+4. Define stage identity/dimension compatibility and transactional snapshot validation.
+5. Continue world/profile ownership and opaque scalar audit; keep CS-2 open.
+
+Static source analysis only. No Native gameplay/provider code or tests added. PR #1 remains unmerged absent explicit approval.
