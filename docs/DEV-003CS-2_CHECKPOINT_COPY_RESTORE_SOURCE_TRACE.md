@@ -1163,3 +1163,60 @@ A helper invocation may update more than one grid; do not infer that all side ef
 - Replace recursive connected-cell traversal with bounded iterative traversal, guarding dimensions and cycles while matching source's directional walk.
 - Test door open/close connected-cell bit 0x200 behavior, low-byte-preserving upper metadata, top-nibble animation flag lifecycle, and `nVoid` low-byte replacement.
 - Static call graph is partial: methods with obfuscated names and overloaded `aVoid` signatures require descriptor-aware mapping. The listed contracts are grounded in the inspected methods and call sites, not a claim that every project helper has been semantically decoded.
+
+
+## 26. Cross-layer snapshot ownership audit — 2026-11-26
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 26.1 Allocation and source-layer initialization
+
+At stage load, all four runtime grids use dimensions `[crtStageWidth][crtStageHeight]` (3427–3449):
+- `crtStagePlayerLayer`: raw player layer, byte grid.
+- `bIntArrArr`: raw background layer widened from byte to int, then normalized and mutated as packed stage metadata.
+- `bByteArrArr`: newly allocated byte grid; initialized to zero during stage normalization.
+- `cByteArrArr`: newly allocated byte grid; initialized to zero during stage normalization.
+
+The three resource layers are player, background, foreground. `bByteArrArr` and `cByteArrArr` are not raw resource layers; they are runtime auxiliary grids.
+
+### 26.2 `bIntArrArr`: persisted gameplay metadata
+
+The grid is initialized/rewritten during stage normalization according to player/background codes (e.g. player 48, 41, 11, 43, 30, 37, 10, 7, and connected mechanism types; lines 3716–3975). Runtime consumers decode multiple packed fields: low 3 bits, flags 0x8/0x10, 5-bit and 7-bit subfields, offsets 8/10/12/13, 22+, sign bit, and others. Runtime update paths mutate it in concert with player occupancy and timers.
+
+Checkpoint capture copies every row into `cIntArrArr` (15211); restore copies back (15326). Therefore this grid is explicitly part of the in-memory checkpoint payload. Do not interpret it as static background pixels or as a single enum. It is packed gameplay/object state and needs lossless 32-bit preservation until all bitfields are decoded.
+
+### 26.3 `crtStagePlayerLayer`: persisted occupancy/object state
+
+The byte grid is loaded from the player resource layer, then normalized (e.g. spawn/player markers, moving objects, special codes) and heavily mutated during gameplay. It stores occupancy/object codes, including negative empty values and codes such as 48 used for reconstructable moving objects.
+
+Checkpoint capture copies it into `eByteArrArr` (15213); restore copies back (15328). It is explicitly persisted in the temporary checkpoint. Values must preserve signed Java byte semantics; do not convert to unsigned byte without a separate exact representation.
+
+### 26.4 `bByteArrArr`: persisted runtime counters/timing
+
+This grid is initialized to zero (3503) and later stores movement progress, animation/timing counters, and per-object update values. Consumers include movement/render calculations (e.g. 6924–6926, 7121, 7151–7180, 7252–7262, 8878–8893); writers include object movement/animation paths (e.g. 10728–10731, 14753–14786, 14941–15043). Its values are not merely visual dirty markers: they affect movement positions and state transitions.
+
+Checkpoint capture copies it into `dByteArrArr` (15212); restore copies back (15327). Thus it belongs in the temporary gameplay checkpoint even though many uses look timing-related. Preserve raw signed bytes and exact wrap/clamp behavior; semantic subfields remain partially unresolved.
+
+### 26.5 `cByteArrArr`: derived dirty/update scheduling grid
+
+This grid is initialized to zero (3504), then receives values such as 24, 30, 48, and 127 from stage setup and gameplay mutations. The update path uses it to mark cells/regions for refresh (including 24/30/48 assignments in movement, animation, and mechanism paths); renderer/update scheduling consumes these markers. Crucially, it is not copied in checkpoint capture or restore: the four base grids copied are `bIntArrArr`, `bByteArrArr`, `crtStagePlayerLayer`, and foreground. The restore path subsequently calls `kVoid` for relevant player/foreground cells to rebuild visual/update state.
+
+This is strong evidence that `cByteArrArr` is derived invalidation/scheduling state rather than checkpoint payload. Do not serialize it as an authoritative gameplay field unless further evidence contradicts this. On Native restore, rebuild invalidation/dirty state from restored authoritative grids and force appropriate renderer refresh.
+
+### 26.6 Snapshot domain matrix
+
+| Grid | Raw resource layer? | Checkpoint copied? | Current classification |
+|---|---|---|---|
+| `bIntArrArr` | Background-derived | Yes | Authoritative packed gameplay metadata |
+| `crtStagePlayerLayer` | Player-derived | Yes | Authoritative occupancy/object codes |
+| `bByteArrArr` | No | Yes | Authoritative runtime counters/progress |
+| `cByteArrArr` | No | No | Derived dirty/update scheduling |
+
+Foreground is separately checkpointed as packed int grid. Optional mode adds `eIntArrArr` and the two active 15-word long tables with their backups.
+
+### 26.7 Remaining uncertainty
+
+- Full field-level bitfield semantics of `bIntArrArr` are not yet canonical; accessors overlap.
+- `bByteArrArr` contains multiple context-dependent values; do not assign one universal meaning such as “animation timer”.
+- `cByteArrArr` exact scheduler cadence and all marker consumers need additional tracing, but its exclusion from snapshot plus post-restore invalidation supports derived-state classification.
+- Confirm snapshot copy dimensions and lifecycle invariants for every allocated grid; candidate-first restore must reject mismatched dimensions before any mutation.
