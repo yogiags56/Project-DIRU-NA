@@ -349,3 +349,12 @@ Source trace §22 establishes:
 - q/r trigger codes are composite foreground int values with low byte zero and high-byte 13/16. Initial stage foreground bytes alone do not establish the high-byte producer. Keep these codes opaque until every foreground writer chain is traced.
 
 CS-2 remains open; no Native provider or gameplay-state implementation is authorized by these findings.
+
+
+## 28. q/r trigger producer and resource candidate cells — 2026-11-26
+
+The q/r composite trigger producer is now identified. Stage initialization case 0 combines the raw foreground byte with the signed background-layer byte: `foregroundInt = (background << 8) | (foreground & 0xFF)`. For foreground byte 0, background value 13 sets q when the player reaches the cell in gameplay mode 2; background value 16 sets r. These are background metadata values, not foreground tile IDs 13/16.
+
+Scanning the three pinned world resources in loader layer order found exactly three raw candidate cells, all in Angkor world 0 stage 13 (68×11): (0,0) background 16/player 85; (37,7) background 13/player 255; (46,7) background 16/player 255. Scotland and Tibet have no matching cells. This is static resource evidence only; runtime reachability and actual flag activation remain unverified.
+
+Native must preserve signed-byte widening, keep low-byte foreground identity separate from high-byte metadata, and test these golden vectors. The foreground assignment inventory is not yet exhaustive because local row-array aliases and helper mutation paths still need a write-set audit. CS-2 remains open.
