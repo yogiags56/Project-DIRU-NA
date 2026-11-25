@@ -396,3 +396,14 @@ The checkpoint copy/restore code provides a decisive distinction among four stag
 All are allocated at stage width × height. The three resource layers are player, background, foreground; the two byte auxiliary grids are runtime-created, not source layers. Capture copies the first three authoritative grids plus foreground; restore copies them back, then invokes renderer/update invalidation. `cByteArrArr` is initialized and mutated with marker values 24/30/48/127 but excluded from capture/restore, supporting a derived-state classification.
 
 `bIntArrArr` is a packed 32-bit state grid with overlapping/context-specific fields; `crtStagePlayerLayer` and the auxiliary bytes require signed-byte fidelity. `bByteArrArr` affects movement and state progression, so it is not merely visual. Do not give either byte grid one global semantic label. CS-2 remains open for bitfield decoding, scheduler cadence, and dimension/compatibility invariants.
+
+
+## 32. Scheduler and cross-grid transaction refinement — 2026-11-26
+
+Correction/refinement to §31: `cByteArrArr` is excluded from the checkpoint and is rebuilt by restore, but it is not merely a renderer dirty bitmap. `ahVoid()` scans a player-centered region, processes cells whose scheduler byte is positive, decrements the byte by 6, and dispatches object/foreground update logic. Values 24 and 48 represent multi-pass scheduling windows; `kVoid()` writes 48 into a 3×3 neighborhood. Values 30 and 127 also occur but their complete lifecycle remains unresolved. The original restore scans restored player/foreground cells and calls `kVoid()` to rebuild scheduler work. This proves deliberate reconstruction, not exact mid-tick phase equivalence.
+
+`bByteArrArr` remains authoritative checkpoint data but is context-dependent progress/timing state: values such as 18 may be decremented by 6, while other object families increment, reset, threshold-check, or use it as animation displacement/frame input. Preserve raw signed bytes; do not name the whole grid “animation timer”.
+
+`bIntArrArr` exposes overlapping context-specific masks (low 3 bits, bit 3, bits 3–5, 5–12, 10–12, 13–20, 22–27 and top-byte/sign metadata). These are not a canonical struct. Preserve all 32 bits and define per-consumer views.
+
+Snapshot/restore must treat foreground, player occupancy, packed metadata, and progress bytes as coupled authoritative grids, mutated transactionally on the game-owner thread. Capture requires a consistent tick boundary or immutable state view. Restore validates first, commits authoritative grids, then rebuilds scheduler/renderer-derived state. Exact mid-tick replay remains unproven.
