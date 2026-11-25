@@ -272,3 +272,23 @@ This is static source analysis only. No Native implementation or automated tests
 5. Keep CS-2 open; no provider implementation until real Native gameplay owner.
 
 Static candidate-resource analysis only; no runtime behavior or retail variants claimed. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-26 (foreground write-set audit)
+
+### Work completed
+- Enumerated direct global foreground references and identified confirmed local row-array aliases.
+- Classified stage raw loading/normalization, gameplay interaction, door/lock updates, moving/animated object updates, bulk clears, top-nibble event/animation updates, and checkpoint restore as separate mutation families.
+- Confirmed helper `iVoid` mutates through local row aliases by masking low byte and OR-ing 14.
+- Confirmed animation/object update code mutates rows through aliases for tile codes 32/34/35/36/37 and high-byte/top-nibble animation fields.
+- Reaffirmed packed signed 32-bit cell semantics: low byte, contextual bits 8–27, top nibble 28–31; signed shift, unsigned mask, and byte cast differ.
+- Added Source Trace §24 and Evidence Matrix §29.
+
+### Next
+1. Build helper/call-site graph for every method receiving/capturing foreground row arrays.
+2. Trace helper mutations and separate foreground writes from player-layer/metadata writes.
+3. Establish top-nibble and signed high-byte semantics with golden vectors.
+4. Reconcile foreground cell ownership with snapshot compatibility and world/stage/profile boundaries.
+5. Keep CS-2 open; do not implement placeholder gameplay provider.
+
+Static source audit only. No Native runtime code or tests added. PR #1 remains unmerged absent explicit approval.
