@@ -358,3 +358,12 @@ The q/r composite trigger producer is now identified. Stage initialization case 
 Scanning the three pinned world resources in loader layer order found exactly three raw candidate cells, all in Angkor world 0 stage 13 (68×11): (0,0) background 16/player 85; (37,7) background 13/player 255; (46,7) background 16/player 255. Scotland and Tibet have no matching cells. This is static resource evidence only; runtime reachability and actual flag activation remain unverified.
 
 Native must preserve signed-byte widening, keep low-byte foreground identity separate from high-byte metadata, and test these golden vectors. The foreground assignment inventory is not yet exhaustive because local row-array aliases and helper mutation paths still need a write-set audit. CS-2 remains open.
+
+
+## 29. Foreground packed-cell mutation inventory — 2026-11-26
+
+Source trace §24 catalogs direct foreground writes and confirmed row-alias writes. Mutation families include raw stage normalization; player/object interaction; door and lock metadata; moving/animated objects; connected 8/9 mechanism flags; bulk clear operations; top-nibble animation/event updates; and checkpoint restore. The inventory distinguishes read-only q/r trigger checks from writes and distinguishes initialization/restore from gameplay mutation.
+
+Confirmed row aliases mean a direct global-name assignment search is insufficient: local `int[]` references to `crtStageForegrondLayer[row]` are mutated in helpers such as `iVoid`, animation update, and object interaction. The foreground cell is a packed signed 32-bit value: low-byte code, contextual bits 8–27, and top-nibble flags 28–31. Signed right shift, unsigned masking, and byte casts have distinct semantics. Example negative composite `(-193 << 8) | 7` must round-trip exactly.
+
+This is a substantial mutation-family inventory, not a formally exhaustive call graph for every helper accepting row arrays. Continue helper/call-site analysis and preserve lossless raw cell values in Native. CS-2 remains open.
