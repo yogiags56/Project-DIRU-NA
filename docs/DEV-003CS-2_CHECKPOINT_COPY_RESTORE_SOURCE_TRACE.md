@@ -1220,3 +1220,70 @@ Foreground is separately checkpointed as packed int grid. Optional mode adds `eI
 - `bByteArrArr` contains multiple context-dependent values; do not assign one universal meaning such as “animation timer”.
 - `cByteArrArr` exact scheduler cadence and all marker consumers need additional tracing, but its exclusion from snapshot plus post-restore invalidation supports derived-state classification.
 - Confirm snapshot copy dimensions and lifecycle invariants for every allocated grid; candidate-first restore must reject mismatched dimensions before any mutation.
+
+
+## 27. Auxiliary scheduler semantics and checkpoint reconstruction — 2026-11-26
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 27.1 Correction: `cByteArrArr` is not merely a renderer dirty grid
+
+The prior §26 classification as derived/non-snapshotted state remains correct, but the phrase “dirty/update scheduling” needs precision. `cByteArrArr` is an active transient object-update scheduler, not just a renderer invalidation bitmap.
+
+The bounded update scan in `ahVoid()` (12803–12845) visits a player-centered region (approximately ±8 cells, clipped to the interior stage bounds). A cell is eligible when `cByteArrArr[x][y] > 0` and it is not the currently excluded cell. The scheduler decrements the byte by 6 and dispatches behavior based on the signed low byte of the foreground cell. Depending on the foreground code, the handler may advance animation metadata, move player/object occupancy, update packed background metadata, decrement `bByteArrArr`, clear cells, or schedule another pass.
+
+Observed scheduler values:
+- 24: commonly schedules a short update window; the scan decrements by 6 per eligible pass.
+- 48: schedules a longer update window and is also written by `kVoid(x,y)` to a 3×3 neighborhood (15174–15187).
+- 30: used by selected interactions/updates; exact cadence must be tested because decrement-by-6 produces a different sequence.
+- 127: assigned during stage normalization at specific cells; its full lifecycle and signed-byte behavior need separate tracing.
+
+Thus the byte is not simply “dirty yes/no”; its magnitude controls how many eligible update passes remain. Since values are signed Java bytes, 127 remains positive, while values can become negative during decrement and then fail the `> 0` eligibility test.
+
+### 27.2 Restore rebuild evidence
+
+The original restore does not copy `cByteArrArr`. After restoring the four authoritative grids, it scans interior cells and calls `kVoid(x,y)` for cells with player-layer code in 0..79 or foreground low byte in 0..79 (15331–15338). `kVoid` writes 48 to the surrounding 3×3 scheduler region. This is direct evidence that the scheduler is deliberately rebuilt after restore rather than restored byte-for-byte.
+
+This rebuild is not a proof that every transient timing phase is bit-identical to pre-checkpoint execution. It establishes the original game's own restore contract: rebuild eligible update work from restored authoritative stage state. Native should reproduce this contract and separately test whether gameplay-visible outcomes remain deterministic.
+
+### 27.3 `bByteArrArr` refinement: context-dependent progress values
+
+`bByteArrArr` is authoritative checkpoint data, but it has no single global semantic. Examples:
+- Value 18 is assigned when movement/object processing is initialized, then some handlers decrement it by 6 until completion (e.g. object update paths around 12880–12940 and `dVoid`, 14253–14300).
+- Some animation paths read it as frame/progress input, including multiplication by direction vectors (8874–8879), animation frame selection (7252–7263), and bounded visual displacement (7377–7395).
+- Other paths increment it, reset it to zero, or use threshold checks; values such as 10, 12, 18 and 24 occur in distinct object families.
+- Movement/object collision and state transitions read it together with `bIntArrArr` and player occupancy.
+
+Therefore preserve its raw signed byte and exact arithmetic. A future Native model may expose typed views for individual object families, but the snapshot codec must retain the original byte values.
+
+### 27.4 `bIntArrArr` accessor overlap: known contextual slices only
+
+Observed readers include:
+- low 3 bits (`& 0x7`) for movement/direction/type dispatch;
+- bit 3 (`0x8`) as a mode/phase flag in multiple object paths;
+- bits 3–5 (`0x38`) for animation/direction selection in specific render/update paths;
+- bits 5–12 (`0x1FE0`) for an animation/progress subfield in foreground/player code 46;
+- bits 10–12 (`0x1C00`) for a staged interaction counter in one input path;
+- bits 13–20 (`0x1FE000`) for a separate progress subfield;
+- bits 22–27 (`0xFC00000`) for an object/action discriminator;
+- top byte / sign bit for additional metadata and flags.
+
+These masks overlap. They are evidence of context-specific views, not a canonical bitfield struct. Preserve all 32 bits and keep per-consumer decoding descriptors separate.
+
+### 27.5 Cross-grid invariants for snapshot/restore
+
+The observed update logic couples grids:
+- player/object occupancy changes are paired with packed `bIntArrArr` movement/type metadata;
+- `bByteArrArr` progress values are initialized/advanced alongside those transitions;
+- `cByteArrArr` schedules subsequent processing around changed cells;
+- foreground packed cells are changed in the same transaction for many object/door animations.
+
+Native mutation APIs should therefore perform multi-grid changes as one game-owner-thread transaction. Snapshot capture must occur at a defined quiescent/tick boundary or under a consistent immutable snapshot mechanism. Restore should validate all dimensions and cross-grid references before committing authoritative grids, then rebuild `cByteArrArr` scheduling and renderer invalidation. Do not claim exact mid-tick replay until a tick-boundary contract is tested.
+
+### 27.6 Remaining work
+
+1. Trace every writer/reader of scheduler values 24/30/48/127 and derive exact update cadence per object family.
+2. Audit bounds of the 3×3 `kVoid` neighborhood and update scan for all valid player positions.
+3. Decode `bByteArrArr` values by object family with golden vectors.
+4. Build descriptor-aware `bIntArrArr` accessor map and identify true overlapping unions.
+5. Test restore reconstruction against a captured gameplay state over multiple ticks; keep physical/runtime validation distinct from static source evidence.
