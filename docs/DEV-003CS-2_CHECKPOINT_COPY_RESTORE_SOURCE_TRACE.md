@@ -1035,3 +1035,88 @@ The full assignment inventory in this pass confirms several mutation families (s
 - q/r trigger detection should consume normalized composite state (or an equivalent explicit pair), not infer from foreground tile ID alone.
 - Add golden tests for raw foreground 0 with background 13/16, ordinary background values, signed byte boundaries, and the three Angkor stage-13 candidate cells.
 - Keep actual trigger activation as runtime validation, not a static-resource assertion.
+
+
+## 24. Foreground mutation write-set audit — direct and row-alias writes — 2026-11-26
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`. This section records direct assignments and confirmed row-alias writes to the global foreground grid. It is a source-level inventory by mutation family; it is not yet a proof that every helper receiving a row reference has been exhaustively enumerated.
+
+### 24.1 Storage lifecycle and raw-to-normalized initialization
+
+- Stage allocation creates `int[width][height]`; raw foreground bytes are initially widened into the grid (3435–3460).
+- Stage normalizer transforms raw codes and metadata in several switch paths (3505–3701). Observed writes include:
+  - composite `background << 8 | lowByte` variants;
+  - special sentinels `-1`, `15`, `27`, `33`;
+  - normalized tile values `2`, `3`, `6`, `17`, `19`, `31`.
+- Stage teardown nulls the grid (3429; global resource cleanup 4888).
+- Checkpoint capture/restore copies the foreground grid row-by-row through `dIntArrArr` (capture 15214; restore 15329).
+
+Do not treat normalizer writes as gameplay mutation. They construct the runtime representation from the raw resource layers.
+
+### 24.2 Confirmed runtime mutation families
+
+| Source area | Mutation | Ownership interpretation |
+|---|---|---|
+| 1244–1245 | Set current foreground cell to 32 when its low byte is negative | Player/current-cell interaction |
+| 1289 onward, 1494 onward | Conditional tile checks and interaction paths | Mostly reads; don't classify reads as writes |
+| 3510–3701 | Bulk per-cell normalization | Stage initialization |
+| 3812–3834 | Write 15, -1, 27 | Stage setup / special-cell normalization |
+| 4024–4054 | Door/foreground operation; clear adjacent cell and rewrite current composite | Door/lock interaction |
+| 4156 | Write composite `(-193 << 8) | 7` | Special stage/player interaction; high byte intentionally signed |
+| 9484–9499 | Clear selected cells to -1 | Gameplay interaction cleanup |
+| 9566–9572 | q/r trigger reads composite value | Read-only trigger check, not a writer |
+| 9592 | Clear fixed cell [11][50] | Gameplay event path |
+| 10533–10547 | Row alias writes 15 or 16, then clears player-layer cell | Player/object interaction |
+| 11049–11067 | Door metadata high-byte changes; row-cell assignment | Door animation/state |
+| 11672 | Rewrite composite high-byte metadata | Moving/animated foreground object |
+| 12062–12063 | Clear contiguous matching cells to -1 | Bulk interaction cleanup |
+| 12137 | Clear cell to -1 | Object/foreground update |
+| 12627–12630 | Row aliases mask low byte then OR 14 | `iVoid(x,y)` helper; preserves upper bits |
+| 12637–12658 | Recursive row update toggles high-byte bit 0x200 for connected 8/9 cells | Connected mechanism state |
+| 12850–12927 | Multiple row-alias assignments for types 34/35/37/36/32 and -1 | Animated object update |
+| 12962–12964 | Row alias writes animation frame in high byte | Animation lifecycle |
+| 13024 | Clear current cell to -1 | Door interaction completion |
+| 13125, 13134, 13141, 13156, 13163 | Rewrite or clear mechanism/door metadata | Door/foreground mechanism state |
+| 13227–13235 | Row alias updates upper 4-bit animation counter | Animation update |
+| 13888 | Write 32 | Gameplay object interaction |
+| 14326, 14372, 14395 | Write 35, 34, 32 | Object movement/interaction |
+| 14812, 14819 | Set/clear high-byte 0x10 marker or reset high byte | Door/lock mechanism |
+| 15120 | Set top-nibble flag bit 0x10000000 while preserving low 28 bits | Foreground animation/event flag |
+| 15128, 15133, 15147 | Rewrite low byte and/or increment high-byte animation state | Foreground animation helper |
+| 15329 | Restore full row from checkpoint backup | Checkpoint restore, not gameplay update |
+| 15456 | Write 32 | Interaction cleanup |
+| 15693 | Reads foreground to derive player-layer flags; not a foreground write | Explicitly excluded |
+
+### 24.3 Row-array alias confirmation
+
+Several apparent non-global writes are actual foreground mutations because the local array is a direct row reference:
+- `array = crtStageForegrondLayer[n]`; then `array[n2] &= 0xFFFFFF00` and `array2[n2] |= 0xE` in `iVoid` (12627–12630).
+- `array2 = crtStageForegrondLayer[n41]`; `array2[n43] = n44` (10533–10547).
+- `array2/array3/array4/array7 = crtStageForegrondLayer[row]`; indexed assignments in the animation update (12850–12964).
+- `array8 = crtStageForegrondLayer[row]`; indexed assignment for the top-nibble animation counter (13223–13235).
+
+These alias writes must be included in any static write-set analysis. A text search only for assignments containing the global field name is insufficient.
+
+### 24.4 Lossless state model implications
+
+The foreground cell is a packed signed 32-bit runtime value with multiple independently consumed regions:
+- low 8 bits: tile/object code;
+- bits 8–27: signed/unsigned contextual metadata, including high-byte fields and mechanism flags;
+- bits 28–31: animation/event nibble (explicit top-nibble mask);
+- some paths use Java signed right shift `>>`, some mask `& 0xFF`, and some cast to byte before switch. These operations are not interchangeable.
+
+Examples:
+- `(-193 << 8) | 7` creates a negative composite value while retaining low-byte tile 7.
+- `(value & 0xFFFFFFF) | 0x10000000` sets bit 28 while preserving lower 28 bits.
+- `(byte)value` dispatches by signed low byte; `value & 0xFF` dispatches unsigned low byte.
+
+Native must preserve each original operation's signedness and mask exactly. Do not prematurely replace the packed int with a narrow enum or separate fields unless a lossless round-trip representation is retained.
+
+### 24.5 Audit limitations and next actions
+
+The writer list above is based on global-field references and inspected row aliases. It is not yet exhaustive for helper methods that receive `int[]` row references, reflection/indirect access, or writes through aliases created outside the inspected contexts. Next:
+1. Build a helper-call graph for methods accepting or capturing foreground row arrays.
+2. Trace every call to mutation helpers and identify whether it changes foreground, player layer, or metadata grids.
+3. Verify the exact semantics of top-nibble flags and high-byte signed metadata.
+4. Derive deterministic golden vectors from the raw stage normalizer and runtime mutation helpers.
+5. Keep CS-2 open until writer/reader ownership and snapshot compatibility are reconciled.
