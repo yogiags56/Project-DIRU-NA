@@ -292,3 +292,25 @@ Static candidate-resource analysis only; no runtime behavior or retail variants 
 5. Keep CS-2 open; do not implement placeholder gameplay provider.
 
 Static source audit only. No Native runtime code or tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-26 (foreground helper call graph)
+
+### Work completed
+- Confirmed `iVoid(x,y)` low-byte replacement (14) preserving upper 24 bits; collected call-site references.
+- Decoded recursive `aVoid(x,y,dx,dy,mode)`: traverses connected foreground low-byte 8/9 cells and toggles upper metadata bit 0x200. Door open/close helpers invoke it in both horizontal directions with different modes.
+- Traced `nVoid(tile)`: low-byte replacement plus conditional animation metadata changes.
+- Traced `jVoid(x,y)`: sets top-nibble animation/event bit 28; update path increments/clears nibble.
+- Distinguished `aiVoid()` restore reconstruction of player-layer code 48 from foreground writes.
+- Distinguished `kVoid(x,y)` renderer/animator update side effect from foreground mutation.
+- Reaffirmed cross-layer separation: foreground packed ints, player occupancy bytes, stage metadata ints, and timing/dirty auxiliary arrays.
+- Added Source Trace §25 and Evidence Matrix §30.
+
+### Next
+1. Decode overloads of obfuscated `aVoid` with exact method descriptors and map helper call graph.
+2. Trace all writer/reader paths for `bIntArrArr`, player layer, and auxiliary dirty/timing arrays.
+3. Establish top-nibble and 0x200 semantics with golden vectors and bounds/cycle tests.
+4. Continue stage/world/profile ownership and snapshot compatibility identity.
+5. Keep CS-2 open; no provider until real Native gameplay owner exists.
+
+Static source audit only. No Native runtime code or tests added. PR #1 remains unmerged absent explicit approval.
