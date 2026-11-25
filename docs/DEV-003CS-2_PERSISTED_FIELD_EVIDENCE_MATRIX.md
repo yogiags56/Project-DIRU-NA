@@ -380,3 +380,19 @@ Source trace §25 refines the helper inventory:
 - `kVoid(x,y)` updates renderer/animator state and is not itself a foreground writer in the inspected body.
 
 The same object update may mutate foreground, player occupancy, stage metadata, and timing/dirty arrays. These are distinct state domains; do not fold renderer handles or dirty counters into the packed foreground schema by proximity. Preserve exact 32-bit signed cell values. Replace recursive traversal with bounded iterative traversal only if source visitation semantics are retained. CS-2 remains open.
+
+
+## 31. Cross-layer snapshot ownership matrix — 2026-11-26
+
+The checkpoint copy/restore code provides a decisive distinction among four stage grids:
+
+| Grid | Snapshot? | Evidence-based role |
+|---|---|---|
+| `bIntArrArr` | Yes | Background-derived packed gameplay/object metadata |
+| `crtStagePlayerLayer` | Yes | Player/object occupancy codes |
+| `bByteArrArr` | Yes | Runtime movement/progress/timing counters that affect gameplay |
+| `cByteArrArr` | No | Derived dirty/update scheduling markers |
+
+All are allocated at stage width × height. The three resource layers are player, background, foreground; the two byte auxiliary grids are runtime-created, not source layers. Capture copies the first three authoritative grids plus foreground; restore copies them back, then invokes renderer/update invalidation. `cByteArrArr` is initialized and mutated with marker values 24/30/48/127 but excluded from capture/restore, supporting a derived-state classification.
+
+`bIntArrArr` is a packed 32-bit state grid with overlapping/context-specific fields; `crtStagePlayerLayer` and the auxiliary bytes require signed-byte fidelity. `bByteArrArr` affects movement and state progression, so it is not merely visual. Do not give either byte grid one global semantic label. CS-2 remains open for bitfield decoding, scheduler cadence, and dimension/compatibility invariants.
