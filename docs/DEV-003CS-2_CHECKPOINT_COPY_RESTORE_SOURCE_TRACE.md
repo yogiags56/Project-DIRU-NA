@@ -1120,3 +1120,46 @@ The writer list above is based on global-field references and inspected row alia
 3. Verify the exact semantics of top-nibble flags and high-byte signed metadata.
 4. Derive deterministic golden vectors from the raw stage normalizer and runtime mutation helpers.
 5. Keep CS-2 open until writer/reader ownership and snapshot compatibility are reconciled.
+
+
+## 25. Foreground helper call graph and ownership boundaries — 2026-11-26
+
+Pinned candidate source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 25.1 Confirmed helper contracts
+
+**`iVoid(x,y)` (12625–12631)** writes the selected foreground cell through a row alias:
+`cell = (cell & 0xFFFFFF00) | 0x0E`, and sets `cLong |= 0x400000`. It preserves bits 8–31 while replacing the low byte with 14. Its call sites include stage/interaction transitions and update paths (2535, 2978, 3770, 3785, 3938, 3954, 3963, 13329, 14206, 14287, 15376). Not every call-site semantic label has been established; the state mutation itself is exact.
+
+**`aVoid(x,y,dx,dy,mode)` (12637–12659)** recursively walks connected neighboring cells whose unsigned low byte is 8 or 9. It toggles bit 0x200 in the signed-shifted upper value according to mode, then continues along the same direction. Door helpers call it in pairs:
+- `hVoid(doorI)` opens/decrements a door and invokes the helper left/right with mode 1 (11035–11055).
+- `doorHeadClose(x,y)` closes/resets the door and invokes the helper left/right with mode 0 (11059–11069).
+This is a connected-mechanism metadata mutation, not a generic tile replacement. The recursion and its boundary condition are part of behavior; Native should use an iterative bounded traversal to avoid stack exhaustion while preserving visitation/order semantics.
+
+**`nVoid(tile)` (15124–15151)** rewrites the current cell's low byte while retaining its shifted upper value. In specific animation/player conditions it sets upper value 0x100 or increments the upper value and marks the cell dirty. This helper combines tile identity and animation progression; keep raw packed value available.
+
+**`jVoid(x,y)` (15119–15122)** sets top-nibble bit 28 via `(cell & 0x0FFFFFFF) | 0x10000000` and then calls `alVoid()`. The corresponding update path later increments/clears the nibble based on animation frame count (13215–13236). This is a flag-driven animation lifecycle.
+
+**`aiVoid()` (14206 onward)** moves/reconstructs player-layer code 48 and updates player/metadata layers; it does not write the foreground grid in the inspected body. It is called from restore when player-layer code 48 has the relevant metadata flag. Keep it in the restore reconstruction set, not foreground mutation inventory.
+
+**`kVoid(x,y)`** is called after many cell updates, but its body (12665 onward) selects/updates a cell renderer/animator object and does not itself mutate foreground values in the inspected portion. Treat it as visual invalidation/update side effect, not a foreground writer.
+
+### 25.2 Alias and layer ownership distinctions
+
+The same update loop mutates multiple distinct grids:
+- `crtStageForegrondLayer`: packed signed int cells.
+- `crtStagePlayerLayer`: byte-valued player/object occupancy.
+- `bIntArrArr`: packed stage-cell metadata and movement flags.
+- `bByteArrArr` / `cByteArrArr`: timing/dirty/update counters and auxiliary state.
+
+A helper invocation may update more than one grid; do not infer that all side effects belong in the foreground payload. For example, the object animation path can move player-layer values and update `bIntArrArr` while also replacing foreground codes 35/37/34/-1. These arrays have distinct ownership and must be snapshotted as their own evidenced fields.
+
+### 25.3 Snapshot and Native design consequences
+
+- Preserve the exact 32-bit packed foreground cell through capture/restore.
+- Preserve signed Java operations; a logical shift or unsigned byte conversion is not a safe global substitution.
+- Treat dirty/render invalidation (`kVoid`) as derived runtime state unless direct evidence proves it is persisted.
+- Reconstruct code-48 moving objects after base grid restore, as the original restore does; do not serialize renderer handles.
+- Replace recursive connected-cell traversal with bounded iterative traversal, guarding dimensions and cycles while matching source's directional walk.
+- Test door open/close connected-cell bit 0x200 behavior, low-byte-preserving upper metadata, top-nibble animation flag lifecycle, and `nVoid` low-byte replacement.
+- Static call graph is partial: methods with obfuscated names and overloaded `aVoid` signatures require descriptor-aware mapping. The listed contracts are grounded in the inspected methods and call sites, not a claim that every project helper has been semantically decoded.
