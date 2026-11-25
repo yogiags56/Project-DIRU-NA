@@ -367,3 +367,16 @@ Source trace §24 catalogs direct foreground writes and confirmed row-alias writ
 Confirmed row aliases mean a direct global-name assignment search is insufficient: local `int[]` references to `crtStageForegrondLayer[row]` are mutated in helpers such as `iVoid`, animation update, and object interaction. The foreground cell is a packed signed 32-bit value: low-byte code, contextual bits 8–27, and top-nibble flags 28–31. Signed right shift, unsigned masking, and byte casts have distinct semantics. Example negative composite `(-193 << 8) | 7` must round-trip exactly.
 
 This is a substantial mutation-family inventory, not a formally exhaustive call graph for every helper accepting row arrays. Continue helper/call-site analysis and preserve lossless raw cell values in Native. CS-2 remains open.
+
+
+## 30. Foreground helper call graph and cross-layer ownership — 2026-11-26
+
+Source trace §25 refines the helper inventory:
+- `iVoid(x,y)` replaces low byte with 14 while preserving upper 24 bits and sets a gameplay flag.
+- Recursive `aVoid(x,y,dx,dy,mode)` traverses connected low-byte 8/9 cells and toggles upper metadata bit 0x200. Door open/close helpers invoke it in both horizontal directions with different modes.
+- `nVoid(tile)` replaces low byte while preserving upper value and may set/increment animation metadata.
+- `jVoid(x,y)` sets top-nibble bit 28; update logic advances/clears the animation nibble.
+- `aiVoid()` reconstructs player-layer code 48 and metadata; it is not a foreground writer.
+- `kVoid(x,y)` updates renderer/animator state and is not itself a foreground writer in the inspected body.
+
+The same object update may mutate foreground, player occupancy, stage metadata, and timing/dirty arrays. These are distinct state domains; do not fold renderer handles or dirty counters into the packed foreground schema by proximity. Preserve exact 32-bit signed cell values. Replace recursive traversal with bounded iterative traversal only if source visitation semantics are retained. CS-2 remains open.
