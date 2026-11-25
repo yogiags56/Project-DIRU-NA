@@ -981,3 +981,57 @@ The restore branch only checks whether slot 2 is non-null, calls `setAnimation(0
 The q/r trigger reads the signed int foreground cell as a composite value: low byte must be zero and the high-byte code is 13 or 16. The stage loader initially sign-extends one raw foreground byte into an int, so these composite values are not established by the raw stage foreground byte alone. Other gameplay paths mutate foreground cells and encode additional values, but this pass has not established the complete writer chain that produces high-byte 13/16. Do not claim these values are literal stage-file tile IDs or label their mechanics yet.
 
 Next trace must enumerate every writer to `crtStageForegrondLayer[x][y]`, classify raw-load versus runtime mutation, and identify the exact producer chain for the composite q/r values. Retain codes 13/16 as opaque trigger metadata pending that proof.
+
+
+## 23. q/r composite foreground trigger producer — 2026-11-26
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 23.1 Exact producer chain
+
+The stage loader order is player layer, background layer, then foreground layer (source lines 3437–3462). The world resource stores each as one byte per cell. During stage initialization, switch case 0 of the foreground byte normalizer writes:
+
+```java
+crtStageForegrondLayer[x][y] = (background << 8 | (foreground & 0xFF));
+```
+
+(source lines 3637–3640). When the raw foreground byte is 0, this produces a composite foreground integer whose low byte is 0 and whose high bits carry the signed background-layer value. Therefore the q/r trigger's low-byte-zero plus high-byte-13/16 condition is produced by foreground tile byte 0 paired with background-layer value 13 or 16, not by a standalone foreground tile ID 13 or 16.
+
+This explains the observed trigger check at lines 9566–9572:
+- background value 13 -> q flag.
+- background value 16 -> r flag.
+Both are conditional on gameplay mode `kByte == 2` and player position.
+
+### 23.2 Candidate resource scan
+
+All three pinned world resources were decoded using the loader's exact layer order and scanned for cells where raw foreground byte = 0 and raw background byte = 13 or 16.
+
+| World | Resource | Candidate cells |
+|---|---|---:|
+| Angkor (0) | `w0.bin` | 3 |
+| Scotland (1) | `w1.bin` | 0 |
+| Tibet (2) | `w2.bin` | 0 |
+
+Angkor world 0, stage 13 (68×11) contains:
+- (x=0, y=0): background 16, player-layer byte 85.
+- (x=37, y=7): background 13, player-layer byte 255.
+- (x=46, y=7): background 16, player-layer byte 255.
+
+No matching raw layer pairs were found in the other 40 stages of this candidate resource set.
+
+These are resource-level trigger candidates. The source scan does not prove the player can reach each coordinate, that the game uses the relevant mode on every route, or that the q/r flags are activated in an actual runtime session. Player-layer byte 85 at (0,0) is not interpreted here.
+
+### 23.3 Other foreground writes and separation
+
+The stage normalizer also transforms several raw foreground codes into composite values: examples include codes 31/19, 17, 2, 8/9, 7, 1/26, 0, 4, 3, and 6 (source lines 3510–3670). Runtime handlers later mutate high-byte metadata for doors, moving objects, and animation state. Do not collapse these into one universal tile schema: low-byte foreground identity, high-byte per-cell metadata, and upper flag bits have different consumers.
+
+The full assignment inventory in this pass confirms several mutation families (stage normalization, door/lock handling, object update, interaction cleanup, animation flag updates, and checkpoint restore), but it is not yet a formal exhaustive write-set proof because some aliases write through local row arrays. Future audit should include those alias writes and any helper methods receiving row references.
+
+### 23.4 Native implications
+
+- Decode the three raw layers separately before applying normalization.
+- Preserve signed-byte semantics exactly when the original Java byte is widened to int; explicitly test byte values >= 128.
+- Represent foreground low-byte identity and high-byte metadata separately in Native typed code, while retaining a lossless raw representation for compatibility.
+- q/r trigger detection should consume normalized composite state (or an equivalent explicit pair), not infer from foreground tile ID alone.
+- Add golden tests for raw foreground 0 with background 13/16, ordinary background values, signed byte boundaries, and the three Angkor stage-13 candidate cells.
+- Keep actual trigger activation as runtime validation, not a static-resource assertion.
