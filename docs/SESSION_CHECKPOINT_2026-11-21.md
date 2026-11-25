@@ -334,3 +334,24 @@ Static source audit only. No Native runtime code or tests added. PR #1 remains u
 5. Continue world/profile ownership and opaque scalar audit; keep CS-2 open.
 
 Static source analysis only. No Native gameplay/provider code or tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-26 (scheduler semantics corrected)
+
+### Work completed
+- Refined `cByteArrArr`: it is not merely a dirty renderer grid; it is a transient object-update scheduler. `ahVoid()` scans a player-centered, clipped region, processes positive scheduler values, decrements by 6, and dispatches foreground/object update logic.
+- Confirmed `kVoid(x,y)` writes 48 into a 3×3 neighborhood. Restore excludes `cByteArrArr`, then scans restored player/foreground state and calls `kVoid` to rebuild scheduler work.
+- Established that restore intentionally rebuilds transient work but exact mid-tick phase equivalence is not proven.
+- Refined `bByteArrArr`: raw signed-byte progress/timing values are object-family dependent; value 18 is often decremented by 6, while other paths increment, reset, threshold-check, or use it for animation displacement/frame selection.
+- Cataloged overlapping contextual masks in `bIntArrArr`; no canonical packed struct should be imposed.
+- Added Source Trace §27 and Evidence Matrix §32.
+
+### Next
+1. Trace lifecycle/cadence for scheduler values 24/30/48/127 by object family.
+2. Verify `kVoid` 3×3 bounds and update scan clipping.
+3. Build object-family `bByteArrArr` golden vectors.
+4. Build descriptor-aware `bIntArrArr` accessor map.
+5. Define a game-owner tick-boundary capture contract and test restore/rebuild across multiple ticks.
+6. Keep CS-2 open; no provider implementation until the real Native gameplay owner exists.
+
+Static source audit only. No Native runtime code/tests added. PR #1 remains unmerged absent explicit approval.
