@@ -504,3 +504,21 @@ Static-source analysis only. No Native gameplay runtime code/tests added. PR #1 
 6. Keep CS-2 open; no final schema or runtime provider implementation yet.
 
 Static source audit only. No gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-27 (corrected transitive helper semantics)
+
+### Important correction
+A deeper body inspection corrected three provisional descriptions from the preceding audit:
+- `cVoid(int,int,int)` is an 8-slot render-animation ring buffer using `aByteArr`, `cByteArr`, `bByteArr`, and modulo-8 read/write indices `adInt/aeInt`. It is transient presentation state, not a coordinate operation dispatcher.
+- `bVoid(int,int,byte)` recursively clears matching foreground cells: left/right/up recursion followed by a downward loop. The method has no explicit bounds checks; prove border preconditions and add safe Native bounds validation.
+- `jVoid(int,int)` sets foreground packed metadata bit `0x10000000` then invokes `alVoid()`; the latter decrements `mByteArr[cmInt]` and scans/updates matching door cells when a lock-group counter reaches zero. This is authoritative foreground/door progression, not scheduler invalidation.
+
+The prior provisional labels in Source Trace §34 and Evidence Matrix §39 are explicitly superseded by Source Trace §35 and Evidence Matrix §40. No gameplay implementation was added.
+
+### Next
+1. Trace every `alVoid()` caller and all lock-group counter writers/initializers.
+2. Trace full `bVoid(int,int,byte)` caller preconditions and stage border guarantees.
+3. Reconcile foreground high-bit/door-group state with direct checkpoint copy and restore.
+4. Confirm animation ring-buffer reset/rebuild policy and keep it outside authoritative snapshot payload unless presentation resume is required.
+5. Keep CS-2 open; no final snapshot schema/provider until all state ownership and invariants are validated.
