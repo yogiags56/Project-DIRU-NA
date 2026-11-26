@@ -752,3 +752,10 @@ Type 7 retains its separate packed-nibble test and existing flow.
 2. Run CI on exact latest HEAD and inspect test results.
 3. Continue with source-derived foreground branch coverage; do not connect incomplete evaluator to production movement.
 4. Keep PR #1 open and unmerged.
+
+
+### Follow-up parity guard
+- Added `LegacyForegroundModelParityTest` to compare the narrow evaluator and precedence model across signed type-3 high-byte boundaries (-128 through 127 around threshold 3) and type-7 packed-nibble boundaries.
+- Tightened the signed fixtures to use representable high-byte values rather than values that overflow when shifted into the packed cell.
+- Latest source/test HEAD for this continuation: `8bed5f4146d1116243f3e3a3e9da95ad81351fb8`.
+- CI status for this exact HEAD remains unverified.
