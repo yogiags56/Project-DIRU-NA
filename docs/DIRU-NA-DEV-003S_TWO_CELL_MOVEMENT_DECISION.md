@@ -54,3 +54,8 @@ The snapshot also computes the early-return gate from `kByte == 4`, targetX matc
 The snapshot is still populated by a caller. It does not perform bounds checks, access arrays, or call the legacy `eBoolean` helper. The horizontal push destination coordinates are exposed as decision context only; no grid writes occur.
 
 Added fixture-style unit tests for coordinate formulas, early-return predicates, snapshot decoding, and snapshot-driven push acceptance/rejection. These are synthetic tests; recorded gameplay fixtures and CI remain outstanding.
+
+
+### Direction-state parity correction
+
+The snapshot now reconstructs the source's `kInt2` before the early-return animation expression: preserve upper movement-state bits with `& 0xFFFFFFF8`, then replace the low three bits using direction priority (+X=2, -X=4, -Y=1, otherwise=3). The snapshot-driven evaluator consumes this resolved value rather than raw movement-state bits. Regression tests cover all four direction codes and the right/left animation mapping.
