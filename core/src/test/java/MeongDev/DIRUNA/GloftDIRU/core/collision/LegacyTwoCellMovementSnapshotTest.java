@@ -39,4 +39,27 @@ public final class LegacyTwoCellMovementSnapshotTest {
         assertFalse(sample(10,20,1,0,4,13,20).isEarlyReturnConditionMet());
         assertFalse(sample(10,20,1,0,4,12,21).isEarlyReturnConditionMet());
     }
+    @Test public void snapshotOverloadFeedsTheExactDecodedSamplesToDecision() {
+        LegacyTwoCellMovementSnapshot accepted = new LegacyTwoCellMovementSnapshot(
+                10,20,1,0,8,0x1007,19,0x23,0,0,0,0,0,
+                false,true,false);
+        LegacyTwoCellMovementEvaluator.Decision push =
+                LegacyTwoCellMovementEvaluator.evaluate(accepted);
+        assertTrue(push.isPushAccepted());
+        assertTrue(push.isWorldPushRequested());
+
+        LegacyTwoCellMovementSnapshot blocked = new LegacyTwoCellMovementSnapshot(
+                10,20,1,0,8,0x0007,19,0x0000,0,0,0,0,0,
+                false,true,false);
+        assertFalse(LegacyTwoCellMovementEvaluator.evaluate(blocked).isPushAccepted());
+    }
+
+    @Test public void snapshotExposesSourceHorizontalPushWriteCoordinates() {
+        LegacyTwoCellMovementSnapshot right=sample(10,20,1,0,0,12,18);
+        assertEquals(12,right.getPushDestinationX());
+        assertEquals(20,right.getPushDestinationY());
+        assertEquals(11,right.getPlayerCurrentCellX());
+        assertEquals(20,right.getPlayerCurrentCellY());
+    }
+
 }
