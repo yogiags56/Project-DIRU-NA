@@ -666,3 +666,23 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Add deterministic synthetic-stage movement integration tests
 
 **Status:** First core primitives committed; no gameplay owner or playable stage yet.
+
+
+
+
+## DEV-002F — Single-writer GameSession foundation (implementation increment)
+
+- [x] Add immutable PlayerMotionState projection
+- [x] Add immutable GameplayRenderSnapshot
+- [x] Add platform-independent GameSession owner-thread boundary
+- [x] Connect LegacyInputDispatcher to deterministic session ticks
+- [x] Reject out-of-bounds targets before collision policy invocation
+- [x] Fail closed when collision policy is missing or unsupported
+- [x] Commit logical tile coordinates only after explicit ACCEPTED policy result
+- [x] Add unit tests for blocked/unsupported no-mutation, accepted movement, interpolation, bounds, and thread ownership
+- [ ] Implement a source-derived collision policy; do not use the test double as production behavior
+- [ ] Integrate supported player-layer/foreground branch evaluation and typed outcomes
+- [ ] Add deterministic synthetic-stage end-to-end tests with actual collision fixtures
+- [ ] Connect render snapshot to Android gameplay shell
+
+**Status:** GameSession foundation committed; production collision evaluator and playable stage remain incomplete.
