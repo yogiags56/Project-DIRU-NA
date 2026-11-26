@@ -4,10 +4,10 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 public final class LegacyForegroundType156EvaluatorTest {
-    @Test public void typeOneAlwaysSkipsPlayerLayerButEffectsAreProbeGated() {
+    @Test public void typeOneContinuesToPlayerLayerButEffectsAreProbeGated() {
         LegacyForegroundType156Evaluator.Decision normal =
                 LegacyForegroundType156Evaluator.evaluate(1,false);
-        assertEquals(LegacyForegroundType156Evaluator.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundType156Evaluator.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 normal.getPlayerLayerFlow());
         assertTrue(normal.shouldResetTimer120());
         assertTrue(normal.shouldIncrementCounter());
@@ -33,10 +33,10 @@ public final class LegacyForegroundType156EvaluatorTest {
         assertFalse(probe.shouldSetLocalXBoolean());
         assertFalse(probe.shouldSetAtBoolean());
     }
-    @Test public void typeSixSkipsPlayerLayerWithoutChangingCollisionOrState() {
+    @Test public void typeSixContinuesToPlayerLayerWithoutChangingCollisionOrState() {
         LegacyForegroundType156Evaluator.Decision d =
                 LegacyForegroundType156Evaluator.evaluate(6,false);
-        assertEquals(LegacyForegroundType156Evaluator.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundType156Evaluator.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 d.getPlayerLayerFlow());
         assertEquals(LegacyForegroundType156Evaluator.CollisionEffect.UNCHANGED,
                 d.getCollisionEffect());
