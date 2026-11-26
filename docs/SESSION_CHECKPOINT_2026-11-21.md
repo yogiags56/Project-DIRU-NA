@@ -483,3 +483,24 @@ Static-source analysis only. No Native runtime code/tests added. PR #1 remains u
 5. Keep CS-2 open until transitive state ownership and independent/runtime validation are resolved.
 
 Static-source analysis only. No Native gameplay runtime code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-27 (transitive helper effects and state classification)
+
+### Work completed
+- Identified code-47 caller continuation: `aqVoid()` is followed by `ajVoid()`; transaction boundary includes both.
+- Identified `jVoid(int,int)` as neighborhood scheduler/invalidation helper, provisionally derived/transient.
+- Identified `bVoid(int,int,int)` as recursive neighborhood operation with operation-byte selector; distinct from other bVoid overloads.
+- Identified `cVoid(int,int,int)` as coordinate operation dispatcher with observed selectors 1, 3, 5, -1; distinct from packed-bit static helper and other cVoid overloads.
+- Added provisional field classes: authoritative candidates, derived/transient, optional-mode conditional, unresolved opaque.
+- Added Source Trace §34 and Evidence Matrix §39.
+
+### Next
+1. Inspect complete bodies and branches of `ajVoid()`, `bVoid(int,int,int)`, and `cVoid(int,int,int)`.
+2. Enumerate all callers and nested side effects of each exact overload.
+3. Reconcile scheduler-grid capture with restore-time dirty/scheduler reconstruction.
+4. Prove neighbor bounds and recursion ordering for all recursive neighborhood operations.
+5. Build caller-complete transition vectors for stage completion, movement, and optional-mode queue.
+6. Keep CS-2 open; no final schema or runtime provider implementation yet.
+
+Static source audit only. No gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
