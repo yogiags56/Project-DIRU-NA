@@ -416,3 +416,23 @@ Static source analysis only. No Native gameplay code/tests added. PR #1 remains 
 6. Keep CS-2 open; no provider implementation until a real Native gameplay owner exists.
 
 Static source analysis only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-27 (shared helper signature audit and CI review)
+
+### Work completed
+- Corrected helper name ambiguity by inventorying overloads and separating exact signatures: eVoid(), eVoid(int), eVoid(byte); dVoid(int), dVoid(int,int), dVoid(byte), dVoid(boolean); lVoid(), lVoid(int), lVoid(int,int); mVoid(), mVoid(int), mVoid(int,int).
+- Traced observed behavior for eVoid(byte), dVoid(byte), lVoid(int), mVoid(int), akVoid(), and partial bodies of amVoid(), anVoid(), aqVoid().
+- Confirmed eVoid(byte) and several other handlers perform coupled multi-grid movement/phase transitions; they must be atomic within the game-owner tick.
+- Inspected failed CI run #348 logs: two AndroidCheckpointStorageTest cases failed through MavenArtifactFetcher.java:129 with ExecutionException caused by IOException from HttpURLConnection; 22 tests completed, 2 failed. Logs do not expose the underlying network cause, so classify as dependency/network fetch failure candidate, not proven product-code regression.
+- Inspected run #349: job “Core JVM tests and Android debug build” completed successfully for commit 475bc81dea3bdb1d412b5f0ad050085846321cf3. This run's PR metadata points to head adf0c50f..., so the run verifies the PR head snapshot at execution time; current branch HEAD still needs its own latest CI.
+- Added Source Trace §31 and Evidence Matrix §36.
+
+### Next
+1. Finish complete bodies of amVoid(), anVoid(), aqVoid(), and all helper overloads with two coordinates.
+2. Trace all call sites and side effects for each exact signature.
+3. Convert confirmed transitions into descriptive Native action contracts and golden vectors.
+4. Complete scheduler/foreground/player-layer dispatch and boundary preconditions.
+5. Keep CS-2 open; no provider implementation until real Native gameplay owner exists.
+
+Static source analysis only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
