@@ -542,3 +542,24 @@ The prior provisional labels in Source Trace §34 and Evidence Matrix §39 are e
 5. Continue flood-clear border/caller precondition audit; keep CS-2 open and schema provisional.
 
 Static source audit only. No Native gameplay runtime code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-27 (door-group data lineage refinement)
+
+### Work completed
+- Corrected the previous wording: `hashtable2`/`hashtable3` are local temporary tables constructed during stage initialization, not standalone binary/persistent tables.
+- Established `mByteArr` initial counts by scanning foreground code 17 cells and inspecting player-layer code directly above (qualifying codes 19/36/43/45/46/49); group key is the background-layer value at that coordinate.
+- Qualifying code-17 cells are cleared; other code-17 cells retain group ID in foreground high bits.
+- Established `lByteArr` selectors: code 36 selects 58 if not already set; other qualifying codes select 56, overridden by 51/52/53 for kByte modes 4/5/3; missing group defaults to 57.
+- Confirmed no post-stage-load writes to `lByteArr` in pinned class; it is read only for door-dialog text and nulled on stage teardown. Treat as reconstructible stage/mode metadata, not mutable checkpoint payload, provided restore uses identical stage/mode identity.
+- Confirmed `cmInt` initialized to -1, selected by foreground code 26 from high byte, bounds-checked against mByteArr length; `alVoid()` decrements without an explicit clamp.
+- Added Source Trace §37 and Evidence Matrix §42. Exact binary record populating background-layer group IDs remains unlocated; current evidence begins at decoded stage grids.
+
+### Next
+1. Trace stage decoder and binary record that populate background layer; identify group-ID encoding and valid domain.
+2. Prove the group mask cannot exceed signed 32-bit assumptions (or document source behavior/limitation).
+3. Build golden vectors for qualifying/nonqualifying code-17 cells, mode-dependent text selectors, multiple groups, and counter decrement-to-zero/underflow.
+4. Continue flood-clear border precondition proof.
+5. Keep CS-2 open; no final schema/provider until source ownership and runtime validation are complete.
+
+Static source audit only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
