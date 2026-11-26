@@ -39,3 +39,18 @@ When push is rejected, the incoming return flag is preserved; local direction cl
 ## Next
 
 DEV-003T: define an immutable sampling snapshot with named source coordinates for the two-cell target, adjacent player tile, adjacent foreground tile, destination passability, and movement state. Add fixture-driven parity tests before connecting any intents to GameSession.
+
+## DEV-003T sampling snapshot follow-up
+
+Added `LegacyTwoCellMovementSnapshot` as an immutable carrier for source-cell samples and movement state. Its coordinate formulas are kept separate:
+
+- Target foreground / passability sample: `(playerX + 2*deltaX, playerY + 2*deltaY)`.
+- Adjacent player-layer and foreground exception sample: `(playerX + deltaX, playerY + 1)`.
+- Horizontal push destination: `(playerX + 2*deltaX, playerY + deltaY)`.
+- Player cell cleared by the horizontal push: `(playerX + deltaX, playerY + deltaY)`.
+
+The snapshot also computes the early-return gate from `kByte == 4`, targetX matching `dInt` or `dInt+1`, and targetY >= `eInt`. The evaluator now has an overload accepting this snapshot, reducing the chance that callers mix target and adjacent samples.
+
+The snapshot is still populated by a caller. It does not perform bounds checks, access arrays, or call the legacy `eBoolean` helper. The horizontal push destination coordinates are exposed as decision context only; no grid writes occur.
+
+Added fixture-style unit tests for coordinate formulas, early-return predicates, snapshot decoding, and snapshot-driven push acceptance/rejection. These are synthetic tests; recorded gameplay fixtures and CI remain outstanding.
