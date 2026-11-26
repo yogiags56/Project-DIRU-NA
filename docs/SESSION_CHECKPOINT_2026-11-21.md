@@ -355,3 +355,24 @@ Static source analysis only. No Native gameplay/provider code or tests added. PR
 6. Keep CS-2 open; no provider implementation until the real Native gameplay owner exists.
 
 Static source audit only. No Native runtime code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-26 (scheduler writer inventory)
+
+### Work completed
+- Performed a source-wide direct-assignment scan for `cByteArrArr`; documented initialization, normalizer, player/object initialization, movement, door/lock, mechanism, optional packed-cell, and explicit cancellation writers.
+- Confirmed value 127 is written by normalizer case 3 only in the inspected direct-assignment inventory; do not label it a 127-tick timer.
+- Confirmed values 24, 30 and 48 are distinct scheduling requests. The scan subtracts 6 before dispatch, but handlers may overwrite, clear, or reschedule the value; no universal duration formula is valid.
+- Confirmed player movement can couple scheduler=30, progress byte=18, occupancy code=32, and packed metadata direction bits.
+- Confirmed `kVoid` writes 48 to a 3×3 neighborhood without local bounds checks; caller coordinate constraints remain to be exhaustively proven.
+- Added Source Trace §28 and Evidence Matrix §33.
+
+### Next
+1. Trace scheduler values 24/30/48/127 through every foreground-code handler in `ahVoid()`, including overwrite and reschedule behavior.
+2. Prove safe coordinate preconditions for every `kVoid` caller and 3×3 neighborhood.
+3. Decode object-family `bByteArrArr` lifecycle together with scheduler transitions.
+4. Build descriptor-aware `bIntArrArr` consumer map.
+5. Define game-owner tick-boundary capture and multi-tick restore/rebuild tests.
+6. Keep CS-2 open; no Native provider implementation until the real gameplay owner exists.
+
+Static source audit only. No Native runtime code/tests added. PR #1 remains unmerged absent explicit approval.
