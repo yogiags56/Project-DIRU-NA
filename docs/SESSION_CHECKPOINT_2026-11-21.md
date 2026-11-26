@@ -608,3 +608,29 @@ Workflow run #367 (commit `916ffa07f1556acb77ce267b98e41a92ac215b42`) failed at 
 5. Keep PR #1 unmerged absent explicit authorization.
 
 No gameplay runtime implementation was added in this update.
+
+
+## Resume update — 2026-11-27 (first DEV-002E core primitives)
+
+### Implemented
+- `core/stage/StageGrid.java`: immutable three-layer row-major grid, positive dimensions, overflow-safe cell count, exact array lengths, defensive copies, checked coordinate reads. Int values retained to preserve signed-byte widening semantics from a future decoder.
+- `core/movement/OrdinaryMovementInterpolation.java`: isolated ordinary movement clock based on audited 18→12→6→0 progression; starts only after caller acceptance, prevents overlapping ordinary moves, and does not commit coordinates or perform collision.
+- Added tests: StageGridTest and OrdinaryMovementInterpolationTest.
+
+### Not yet implemented
+- GameSession single-writer owner
+- Player logical position and pending/active direction integration
+- Collision acceptance/typed unsupported branch gate
+- Immutable render snapshot
+- Input-to-tick integration and synthetic end-to-end gameplay fixture
+- Android shell hookup and manual playable verification
+
+### Immediate next
+1. Inspect and run core JVM tests for new classes.
+2. Add PlayerMotionState and immutable GameplayRenderSnapshot.
+3. Add GameSession tick owner that uses dispatcher and movement clock but fails closed until a collision evaluator subset is proven.
+4. Add tests for no-mutation on blocked/unsupported/out-of-bounds attempts.
+5. Run CI on exact HEAD and update checkpoint with workflow evidence.
+6. Keep PR #1 unmerged absent explicit authorization.
+
+This is an implementation increment only; it is not a first playable build.
