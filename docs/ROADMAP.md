@@ -686,3 +686,20 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Connect render snapshot to Android gameplay shell
 
 **Status:** GameSession foundation committed; production collision evaluator and playable stage remain incomplete.
+
+
+
+
+## DEV-002G — Collision Grid Capture Bridge
+
+- [x] Add read-only LegacyCollisionGridView adapter for StageGrid
+- [x] Require explicit packed-metadata layer; never infer it from background values
+- [x] Preserve optional auxiliary-layer absence distinctly from zero-valued data
+- [x] Defensively copy metadata/auxiliary data and guard all reads by stage bounds
+- [x] Add six adapter tests for layer mapping, missing metadata, optional data, copies and bounds
+- [ ] Add a branch-capture facade that validates context and required samples as one request
+- [ ] Add source-derived typed collision outcome composer without reducing b2/b3/probe/writeback to one boolean
+- [ ] Add transactional application of only fully supported collision decisions
+- [ ] Connect production collision policy to GameSession after golden fixtures pass
+
+**Status:** Collision data bridge committed; collision outcome evaluation remains incomplete.
