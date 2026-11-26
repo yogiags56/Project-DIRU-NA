@@ -1627,3 +1627,33 @@ The helper performs coordinate lookup through `bByte(x,y)`; if found, allocates/
 For `amVoid()`, `anVoid()`, and `aqVoid()`, the inspected source has only the scheduler dispatch call sites listed above plus method declarations. Their invocation therefore occurs within the per-cell scheduler visit. The two-coordinate helpers have separate stage-transition, cleanup, and optional-mode callers and must not be merged into the scheduler helper contracts.
 
 All caller contexts show that helper side effects can be followed by additional writes in the caller (e.g. occupancy clear, scheduler set, counter increment, or a second helper). A transaction boundary must include the entire caller branch, not merely the callee return. Snapshot safety is therefore at the outer game-owner tick/dispatch boundary after caller continuation has completed.
+
+
+## 34. Transitive helper effects and side-effect classification — 2026-11-27
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 34.1 `ajVoid()`
+The scheduler code-47 branch invokes `aqVoid()` then `ajVoid()`. The inspected helper at 14321 onward performs a follow-up foreground/occupancy transition and scheduling update. It is caller continuation, not part of `aqVoid` itself. Snapshot boundary must include both calls and the remaining scheduler branch.
+
+### 34.2 `jVoid(int,int)` — neighborhood scheduler invalidation
+The two-coordinate overload at 15119 is a neighborhood scheduling helper. It writes scheduler/dirty timing values for a bounded neighborhood around a cell; callers include movement, transfer, interaction, and object-state helpers. It is derived transient scheduling state, not proof of authoritative world progression. Capture/restore policy must be reconciled with the original checkpoint's explicit grid copies and restore-time rebuild behavior.
+
+### 34.3 `bVoid(int,int,int)` — neighborhood state mutation
+The three-argument overload at 12061 recursively visits left/right/up neighbors around the supplied coordinate, using the byte argument as the operation selector. It is not equivalent to `bVoid(int,int)` nor the other overloads. It mutates neighboring stage/object state and is used during grid reconstruction and interaction paths. Keep the operation selector and recursive order in any Native port; validate bounds before each neighbor access.
+
+### 34.4 `cVoid(int,int,int)` — coordinate/operation dispatcher
+The three-integer overload at 11009 is a separate coordinate operation dispatcher. It is called with operation values including 1, 3, 5, and -1 from gameplay and restore/reconstruction paths. Do not conflate it with `cVoid(int,int)` or the static `cVoid(int,int,byte)` packed-bit helper. Its semantic labels remain provisional until each operation branch and transitive callee is traced.
+
+### 34.5 Overload collision warning
+`bVoid` has distinct int, boolean, byte, two-int, and three-argument forms plus unrelated graphics/static forms. `cVoid` has int, boolean, byte, two-int, three-int, and static packed-bit forms. `jVoid()` and `jVoid(int,int)` are distinct. Any Native contract must identify descriptor/argument types and caller context, not name only.
+
+### 34.6 Snapshot classification
+- Authoritative candidates: stage grids, player occupancy, foreground/object metadata, objective counters, packed optional-mode records, progression values whose capture/restore is directly evidenced.
+- Derived/transient candidates: scheduler timing grid, dirty/rebuild markers, input/interaction flags, animation phases explicitly reset or reconstructed, camera values recomputed from player coordinates.
+- Conditional state: optional-mode packed tables/grid/scalars guarded by `lBoolean`.
+- Unresolved: semantics and ownership of several opaque scalar fields and operation selectors passed to `bVoid(...,...,byte)` and `cVoid(...,...,...)`.
+Do not finalize schema or persist transient grids until every direct capture/restore and restore-rebuild path has been reconciled.
+
+### 34.7 Remaining audit
+Trace every branch of `ajVoid()`, `bVoid(int,int,int)`, and `cVoid(int,int,int)`; map their nested calls to authoritative vs derived writes; prove neighbor bounds and recursion order; then build caller-complete transaction vectors. Static inspection does not establish runtime equivalence.
