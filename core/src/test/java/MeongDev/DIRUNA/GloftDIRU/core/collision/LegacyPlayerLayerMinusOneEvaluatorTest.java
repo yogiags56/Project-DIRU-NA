@@ -15,8 +15,8 @@ public final class LegacyPlayerLayerMinusOneEvaluatorTest {
 
     @Test public void everyStageEdgeBlocksAndClearsMovementBlockBit() {
         LegacyPlayerLayerMinusOneSnapshot[] edges={
-            sample(0,5,1,0,0,0,0,0,0,0,0,0,false),
-            sample(5,0,0,1,0,0,0,0,0,0,0,0,false),
+            sample(0,5,0,0,0,0,0,0,0,0,0,0,false),
+            sample(5,0,0,0,0,0,0,0,0,0,0,0,false),
             sample(18,5,1,0,0,0,0,0,0,0,0,0,false),
             sample(5,18,0,1,0,0,0,0,0,0,0,0,0,false)
         };
