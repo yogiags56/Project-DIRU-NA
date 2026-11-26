@@ -457,3 +457,10 @@ These methods must be modeled as atomic multi-grid transitions, not isolated cou
 Exact caller inventory confirms `amVoid()` is dispatched for player-layer code 11, `anVoid()` for code 32, and `aqVoid()` for codes 47/1/0/9/8. The coordinate overloads have separate responsibilities: `dVoid(int,int)` is a player-layer cleanup/paired-cell helper called by stage transition and cleanup scans; `lVoid(int,int)` selects an optional-mode adjacent packed cell and sets xByte=5; `mVoid(int,int)` performs coordinate lookup in the secondary packed-record table and is called by initial foreground-19 activation and optional-mode queue processing.
 
 The outer caller often continues writing occupancy, scheduler, counters, or invokes another helper after a callee returns. Therefore snapshot atomicity must cover the full dispatch/caller branch and nested calls, not just individual helper bodies. See Source Trace §33 for direct caller sites and exact contexts.
+
+
+## 39. Transitive helper side-effect classification — 2026-11-27
+
+The code-47 scheduler branch is a composite `aqVoid()` then `ajVoid()` transaction. The two-coordinate `jVoid(int,int)` helper schedules/invalidate neighborhoods and should be treated as derived transient state pending reconciliation with restore rebuild behavior. `bVoid(int,int,int)` recursively visits neighboring cells using an operation byte; `cVoid(int,int,int)` is a separate coordinate operation dispatcher with observed operation selectors 1, 3, 5, and -1. Both have same-name overloads with unrelated contracts; Native mappings must use exact descriptors.
+
+Provisional snapshot classes are now separated into directly captured authoritative candidates, derived/transient state, lBoolean-guarded conditional state, and unresolved opaque fields. No final schema approval until every capture/restore/rebuild path and the three-argument helper branches are fully reconciled. See Source Trace §34.
