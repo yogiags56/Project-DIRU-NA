@@ -436,3 +436,11 @@ Static source analysis only. No Native gameplay code/tests added. PR #1 remains 
 5. Keep CS-2 open; no provider implementation until real Native gameplay owner exists.
 
 Static source analysis only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## CI follow-up — 2026-11-27
+
+- Run #351 (commit `971b044e878555ece8bbf7face0f36aa9fa9e329`) failed before test execution because Maven Central returned HTTP 429 while Gradle attempted to download `org.robolectric:nativeruntime-dist-compat:1.0.16`. This is a confirmed external dependency rate-limit failure, not a test assertion or source compilation failure.
+- Run #350 completed successfully for commit `adf0c50f383b5d28ad3227a012419b0a4f8ad8d4`; Run #349 also succeeded for the preceding documented snapshot. The new helper documentation commit and checkpoint update still require a clean CI run.
+- Earlier Run #348 did reach `:app:testDebugUnitTest`: 22 tests completed, 2 AndroidCheckpointStorageTest cases failed with an IOException surfaced via MavenArtifactFetcher.java:129. Run #351 provides a separate, explicit Maven Central 429 cause for its own dependency-resolution failure; do not conflate the two runs.
+- Current branch HEAD at this checkpoint update is `7382aabcfca1f5c68408553c44cb9125c907ce70`. No code changes or merge actions were performed.
