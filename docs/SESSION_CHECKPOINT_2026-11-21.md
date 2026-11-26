@@ -584,3 +584,27 @@ Static source audit only. No Native gameplay code/tests added. PR #1 remains unm
 5. Keep CS-2 open; no final schema/provider until resource and runtime validation pass.
 
 Static source analysis only; no production gameplay implementation added. PR #1 remains unmerged without explicit approval.
+
+
+## Resume update — 2026-11-27 (progress estimate, binary inventory reconciliation, CI diagnosis)
+
+### Correction / reconciliation
+The full world binary inventory is already complete under `DIRU-NA-AUDIT-029_WORLD_STAGE_STREAM_BINARY_INVENTORY.md`: all three resources, 41 stage records, dimensions, exact byte consumption, and no trailing bytes are documented. Do not repeat full binary decoding as an open task. The remaining narrow task is a histogram of background-layer values at foreground code-17 cells to validate group IDs against the 32-bit mask. The current GitHub fetch connector only accepts UTF-8 text and rejected raw .bin data; no group histogram was computed in this session.
+
+### Progress estimate (approximate engineering judgment)
+- DEV-003CS-2: 60–65% complete as static evidence/documentation. Major copy/restore paths, layer ownership, optional records, caller boundaries, and door-group capture are mapped; full transitive ownership, opaque fields, invariant closure, and runtime vectors remain.
+- Static source/resource reverse-engineering: 65–70% documented; runtime parity not established.
+- Native gameplay reconstruction toward first playable: 5–10%; DEV-002 first reproducible gameplay milestone remains unimplemented.
+- Overall path to first playable Native Android release: 25–30%. This is a planning estimate, not a measured completion metric. Foundation and persistence boundary are substantially advanced, but actual gameplay, renderer/input integration, parser tests, and runtime validation remain major work.
+
+### CI failure diagnosis
+Workflow run #367 (commit `916ffa07f1556acb77ce267b98e41a92ac215b42`) failed at `app:testDebugUnitTest` because Maven Central returned HTTP 429 while downloading `org.robolectric:nativeruntime-dist-compat:1.0.16`. This is an external dependency rate-limit failure, not evidence of a source/test assertion failure. Re-run or fresh CI after rate-limit recovery; do not label the commit green. New documentation commits are later than this failed run and still need their own workflow result.
+
+### Next
+1. Obtain binary-capable access to the already inventoried world files and compute the targeted code-17/background group-ID histogram; preserve signed-byte widening semantics.
+2. Continue opaque scalar and transitive helper ownership audit, and prove flood-clear edge preconditions using actual stage dimensions.
+3. Build deterministic golden vectors and malformed parser tests.
+4. Move the critical path toward DEV-002 first gameplay owner; do not spend indefinitely on CS-2 before defining a bounded exit gate.
+5. Keep PR #1 unmerged absent explicit authorization.
+
+No gameplay runtime implementation was added in this update.
