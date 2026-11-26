@@ -563,3 +563,24 @@ Static source audit only. No Native gameplay runtime code/tests added. PR #1 rem
 5. Keep CS-2 open; no final schema/provider until source ownership and runtime validation are complete.
 
 Static source audit only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-27 (stage binary layer format traced)
+
+### Work completed
+- Identified resources `/w0.bin`, `/w1.bin`, `/w2.bin`.
+- Per-stage record: 4-byte header; width and height are unsigned little-endian 16-bit.
+- Payload: player, background, foreground layers; each width×height row-major bytes; mapping index is `x + y*width`.
+- Background bytes widen as signed Java bytes into int `bIntArrArr`; this is checkpoint-copied and is the source of door-group IDs.
+- Found source parser robustness gaps: unchecked read(byte[]) byte counts and unchecked skip(width*height*3). Native parser must use readFully, checked seek, positive/bounded dimensions, and overflow-safe size arithmetic.
+- Critical unresolved: group mask uses `1 << background`; Java int shift aliasing for group IDs >=32. Need enumerate actual bundled resources before fixing allowed domain.
+- Added Source Trace §38 and Evidence Matrix §43.
+
+### Next
+1. Retrieve and enumerate actual world resource binaries, record boundaries, dimensions, all layer values and group IDs.
+2. Establish group-ID range and max stage dimensions.
+3. Build strict parser/golden fixtures and malformed-input tests.
+4. Prove recursive flood-clear borders using actual stage geometry.
+5. Keep CS-2 open; no final schema/provider until resource and runtime validation pass.
+
+Static source analysis only; no production gameplay implementation added. PR #1 remains unmerged without explicit approval.
