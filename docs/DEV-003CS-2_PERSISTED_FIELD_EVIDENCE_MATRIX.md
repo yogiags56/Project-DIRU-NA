@@ -443,3 +443,10 @@ This confirms multi-grid update coupling and requires Native to preserve foregro
 Overloaded obfuscated method names were separated by exact signatures. The byte overload `eVoid(byte)` is a moving player-layer object transition that mutates occupancy, packed metadata, progress, and scheduler. `dVoid(byte)` performs a directional transfer/continuation and scheduler updates. `lVoid(int)` is a player-contact action dispatcher; `lVoid(int,int)` is a separate optional-mode coordinate helper. `mVoid(int)` handles player-contact progression/action or world-stage transition; `mVoid(int,int)` looks up/allocates a secondary packed record. `akVoid()` is a phase-driven foreground mechanism, while `amVoid()` is a distinct direction/phase-driven player-layer movement handler. `anVoid()` and `aqVoid()` have multi-grid propagation/interactions and remain partially traced.
 
 Do not merge overload semantics by name. See Source Trace §31 for observed contracts, source ranges, and remaining gaps. All descriptions are static-source findings; no Native runtime behavior has been implemented or validated.
+
+
+## 37. Completed helper-body findings — 2026-11-27
+
+Full bodies of `amVoid()`, `anVoid()`, and `aqVoid()` were inspected through their closing braces. `amVoid` is a direction/substate transfer controller; `anVoid` is a directional neighbor controller that distinguishes current scheduler 24 from target scheduler 30; `aqVoid` is a composite object interaction/transfer controller that can increment pickup/progression state, decrement remaining-object count, transfer occupancy/metadata/progress, mutate foreground, and reconcile derived high metadata flags.
+
+These methods must be modeled as atomic multi-grid transitions, not isolated counter or animation callbacks. See Source Trace §32 for detailed control-flow observations and snapshot implications. The two-coordinate overload families and complete caller inventories remain open; no final snapshot schema is approved.
