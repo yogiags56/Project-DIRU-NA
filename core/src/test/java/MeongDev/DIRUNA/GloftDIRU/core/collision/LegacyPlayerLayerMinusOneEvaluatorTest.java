@@ -18,7 +18,7 @@ public final class LegacyPlayerLayerMinusOneEvaluatorTest {
             sample(0,5,0,0,0,0,0,0,0,0,0,0,false),
             sample(5,0,0,0,0,0,0,0,0,0,0,0,false),
             sample(18,5,1,0,0,0,0,0,0,0,0,0,false),
-            sample(5,18,0,1,0,0,0,0,0,0,0,0,0,false)
+            sample(5,18,0,1,0,0,0,0,0,0,0,0,false)
         };
         for(LegacyPlayerLayerMinusOneSnapshot s:edges){
             LegacyPlayerLayerMinusOneEvaluator.Decision d=
