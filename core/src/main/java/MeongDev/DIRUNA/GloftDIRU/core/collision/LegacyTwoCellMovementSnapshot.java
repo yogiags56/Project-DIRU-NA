@@ -52,6 +52,14 @@ public final class LegacyTwoCellMovementSnapshot {
     public int getAdjacentPlayerY(){return adjacentPlayerY;}
     public int getPlayerLayer(){return playerLayer;}
     public int getTargetForeground(){return targetForeground;}
+    public int getTargetForegroundLowByte(){return targetForeground & 0xFF;}
+    public int getTargetForegroundSignedHighByte(){return targetForeground >> 8;}
+    /** Destination player-layer cell for the source's horizontal push write. */
+    public int getPushDestinationX(){return playerX+(deltaX<<1);}
+    public int getPushDestinationY(){return playerY+deltaY;}
+    /** Source clears the player's current horizontal cell when the push commits. */
+    public int getPlayerCurrentCellX(){return playerX+deltaX;}
+    public int getPlayerCurrentCellY(){return playerY+deltaY;}
     public int getAdjacentPlayerLayer(){return adjacentPlayerLayer;}
     public int getAdjacentForeground(){return adjacentForeground;}
     public int getMovementCounter(){return movementCounter;}
