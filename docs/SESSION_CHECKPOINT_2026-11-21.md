@@ -522,3 +522,23 @@ The prior provisional labels in Source Trace §34 and Evidence Matrix §39 are e
 3. Reconcile foreground high-bit/door-group state with direct checkpoint copy and restore.
 4. Confirm animation ring-buffer reset/rebuild policy and keep it outside authoritative snapshot payload unless presentation resume is required.
 5. Keep CS-2 open; no final snapshot schema/provider until all state ownership and invariants are validated.
+
+
+## Resume update — 2026-11-27 (door-group state capture and restore traced)
+
+### Work completed
+- Traced stage loader allocation of `mByteArr/lByteArr`: length derived from highest set bit of stage group mask; foreground code 17 cells initialize mByteArr from hashtable2 (default 0) and lByteArr from hashtable3 (default 57).
+- Traced foreground code 26 interaction: `cmInt` selected from foreground high byte, validated against mByteArr length, then matching code-17 cells scanned.
+- Traced `alVoid()`: selected group counter decremented; on zero, matching code-17 foreground cells and selected neighboring cells are transformed/scheduled. Callers include player-layer codes 7 and 36, and `jVoid(x,y)`.
+- Confirmed direct temporary checkpoint capture: `cnInt=cmInt`; `mByteArr` copied to `oByteArr`. Restore copies `cnInt` back to `cmInt` and `oByteArr` back to `mByteArr`. Foreground grid is also directly copied.
+- Identified `lByteArr` as stage-loaded text selector data not copied by the temporary checkpoint; immutability/reconstruction still needs proof.
+- Added Source Trace §36 and Evidence Matrix §41.
+
+### Next
+1. Trace stage binary fields and hashtable2/3 writers to identify how group counts and text selectors are encoded.
+2. Determine whether lByteArr is immutable stage metadata or mutable progression state.
+3. Build golden vectors for group counter initialization, decrement-to-zero, multiple groups, and snapshot round-trip.
+4. Prove behavior for invalid group IDs and counter underflow.
+5. Continue flood-clear border/caller precondition audit; keep CS-2 open and schema provisional.
+
+Static source audit only. No Native gameplay runtime code/tests added. PR #1 remains unmerged absent explicit approval.
