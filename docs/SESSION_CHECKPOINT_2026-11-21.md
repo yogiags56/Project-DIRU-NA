@@ -861,3 +861,10 @@ DEV-003T: add an immutable, named-coordinate sampling snapshot; verify exact coo
 
 ### Next
 DEV-003U: model player-layer 48's separate two-cell push using an immutable snapshot and explicit sampled cells. Preserve probe suppression, exact source coordinate formulas, duplicate foreground-cache assignment only if confirmed as meaningful, and all world writes as intents. Then cover player-layer -1 boundary/door conditions separately.
+
+
+### DEV-003T parity refinement
+- Added resolved movement-state derivation matching the source's `kInt2 = (kInt & 0xFFFFFFF8) | directionCode`.
+- Direction codes follow source priority: +X=2, -X=4, -Y=1, otherwise=3.
+- Snapshot-based evaluation now uses the resolved direction bits for the early-return animation selector, not raw state bits.
+- Added tests for all four direction codes and the corresponding right/left animation selection. Corrected the rightward expectation to code 2.
