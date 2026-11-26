@@ -38,9 +38,11 @@ public final class LegacyForegroundBranchEvaluator {
         }
         if(type==3) {
             int signedHighByte=foregroundRaw >> 8;
+            boolean setsTrue = signedHighByte < 3;
             return new Decision(BranchStatus.EVALUATED,
-                    PlayerLayerFlow.SKIP_PLAYER_LAYER,
-                    signedHighByte < 3 ? CollisionFlagEffect.SET_TRUE
+                    setsTrue ? PlayerLayerFlow.EVALUATE_PLAYER_LAYER
+                            : PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                    setsTrue ? CollisionFlagEffect.SET_TRUE
                             : CollisionFlagEffect.SET_FALSE);
         }
         return new Decision(BranchStatus.NOT_HANDLED,
