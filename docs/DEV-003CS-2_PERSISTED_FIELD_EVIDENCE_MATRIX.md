@@ -474,3 +474,10 @@ Correction to §39:
 - `jVoid(int,int)` sets foreground metadata bit `0x10000000` and calls `alVoid()`; it is authoritative packed foreground mutation, not scheduler invalidation. `alVoid()` decrements the selected lock-group counter and may open matching doors when it reaches zero.
 
 The earlier descriptions in §39 are superseded by Source Trace §35. Reconcile snapshot classification accordingly: cVoid render queue excluded from authoritative gameplay payload; bVoid and jVoid mutate foreground state and must be represented through the foreground grid and related lock-group state.
+
+
+## 41. Door-group state is directly captured — 2026-11-27
+
+Source trace §36 establishes `mByteArr` as a stage-loaded group-counter array associated with foreground code 17 and high-byte group IDs. Stage load initializes each group counter from hashtable2 (default 0) and a parallel text selector `lByteArr` from hashtable3 (default 57). Foreground code 26 selects `cmInt` from its high byte, validates it against `mByteArr.length`, and scans matching code-17 cells. `alVoid()` decrements the selected group counter and applies matching door/neighbor transformations on zero.
+
+Crucially, temporary checkpoint capture explicitly copies `cmInt` to `cnInt` and `mByteArr` to `oByteArr`; restore reverses both copies. Foreground grid is also copied. Therefore `cmInt`, `mByteArr`, and foreground group/metadata form a directly evidenced checkpoint dependency. `lByteArr` is stage-loaded but not copied in this capture path; its immutable/reconstructible status remains unresolved. See Source Trace §36.
