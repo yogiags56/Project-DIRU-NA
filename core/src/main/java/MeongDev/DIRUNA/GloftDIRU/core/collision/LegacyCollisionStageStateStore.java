@@ -25,12 +25,31 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
     private final Thread ownerThread;
     private volatile Root root;
 
+    /** Convenience empty-state constructor for isolated tests and prototypes. */
     public LegacyCollisionStageStateStore(StageGrid stage) {
-        if(stage==null) throw new IllegalArgumentException("stage is required");
+        this(new LegacyCollisionStageStateSeed(stage,
+                new int[Math.multiplyExact(stage.width(),stage.height())],
+                new int[Math.multiplyExact(stage.width(),stage.height())],
+                new int[Math.multiplyExact(stage.width(),stage.height())],
+                0,0,0,0,0,0,0,0));
+    }
+
+    /** Production constructor: imports all decoded world and local-session state. */
+    public LegacyCollisionStageStateStore(LegacyCollisionStageStateSeed seed) {
+        if(seed==null) throw new IllegalArgumentException("seed is required");
+        StageGrid stage=seed.stage();
         width=stage.width(); height=stage.height(); ownerThread=Thread.currentThread();
-        int count=Math.multiplyExact(width,height);
+        Map<String,Integer> state=new HashMap<String,Integer>();
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.PLAYER,LegacyCollisionStateIntent.Field.TILE_X,false,0,0),seed.tileX());
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.PLAYER,LegacyCollisionStateIntent.Field.TILE_Y,false,0,0),seed.tileY());
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.PLAYER,LegacyCollisionStateIntent.Field.PENDING_DIRECTION,false,0,0),seed.pendingDirection());
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.PLAYER,LegacyCollisionStateIntent.Field.ACTIVE_DIRECTION,false,0,0),seed.activeDirection());
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.PLAYER,LegacyCollisionStateIntent.Field.INTERPOLATION_PROGRESS,false,0,0),seed.interpolationProgress());
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.ANIMATION,LegacyCollisionStateIntent.Field.ANIMATION_ID,false,0,0),seed.animationId());
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.ANIMATION,LegacyCollisionStateIntent.Field.ANIMATION_FRAME,false,0,0),seed.animationFrame());
+        state.put(stateKey(LegacyCollisionStateIntent.Channel.MOVEMENT_FLAGS,LegacyCollisionStateIntent.Field.BLOCKED_FLAG,false,0,0),seed.blockedFlag());
         root=new Root(stage.copyPlayerLayer(),stage.copyBackgroundLayer(),stage.copyForegroundLayer(),
-                new int[count],new int[count],new int[count],new HashMap<String,Integer>(),0L);
+                seed.copyMetadata(),seed.copyAuxiliary(),seed.copyForegroundCache(),state,0L);
     }
 
     @Override public int width(){return width;}
