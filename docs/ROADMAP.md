@@ -632,3 +632,21 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] CS-5 — Provider and restore tests.
 - [ ] CS-6 — Lifecycle request integration.
 - [ ] CS-7 — CI and documentation acceptance.
+
+
+
+## DIRU-NA-DEV-002D — First Playable Vertical Slice Contract
+
+**Working document:** [First Playable Vertical Slice Contract](DIRU-NA-DEV-002D_FIRST_PLAYABLE_VERTICAL_SLICE_CONTRACT.md)
+
+- [x] Define single-writer gameplay owner boundary and immutable render projection
+- [x] Define minimum player/stage state and deterministic tick responsibilities
+- [x] Record audited direction priority, tile deltas, and ordinary interpolation contract
+- [x] Define unsupported-branch fail-closed behavior and atomic no-mutation rule
+- [x] Define synthetic-stage vertical-slice acceptance tests and exit evidence
+- [ ] Implement platform-independent gameplay owner and validated stage model
+- [ ] Implement the first explicitly supported collision subset and typed outcomes
+- [ ] Add deterministic end-to-end simulation tests and synthetic fixture
+- [ ] Integrate the gameplay shell and record manual device/emulator verification
+
+**Status:** Contract committed; implementation not started. This does not mark DEV-002 complete and does not change the README playable milestone status.
