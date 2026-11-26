@@ -84,4 +84,40 @@ public final class LegacyCollisionStageStateStoreTest {
         assertTrue(failure[0] instanceof IllegalStateException);
         assertEquals(0L,store.version());
     }
+    @Test public void importsDecodedMetadataAuxiliaryCacheAndSessionState() {
+        StageGrid stage=stage();
+        int[] metadata={13,14,15,16}, auxiliary={21,22,23,24}, cache={31,32,33,34};
+        LegacyCollisionStageStateSeed seed=new LegacyCollisionStageStateSeed(
+                stage,metadata,auxiliary,cache,1,1,2,4,6,18,3,8);
+        metadata[0]=999; auxiliary[0]=999; cache[0]=999;
+        LegacyCollisionStageStateStore store=new LegacyCollisionStageStateStore(seed);
+        assertEquals(13,store.readGrid(LegacyCollisionMutationIntent.Layer.PACKED_METADATA,0,0));
+        assertEquals(21,store.readGrid(LegacyCollisionMutationIntent.Layer.AUXILIARY,0,0));
+        assertEquals(31,store.foregroundCacheAt(0,0));
+        assertEquals(1,store.readStateValue(LegacyCollisionStateIntent.Channel.PLAYER,
+                LegacyCollisionStateIntent.Field.TILE_X));
+        assertEquals(1,store.readStateValue(LegacyCollisionStateIntent.Channel.PLAYER,
+                LegacyCollisionStateIntent.Field.TILE_Y));
+        assertEquals(2,store.readStateValue(LegacyCollisionStateIntent.Channel.PLAYER,
+                LegacyCollisionStateIntent.Field.PENDING_DIRECTION));
+        assertEquals(4,store.readStateValue(LegacyCollisionStateIntent.Channel.PLAYER,
+                LegacyCollisionStateIntent.Field.ACTIVE_DIRECTION));
+        assertEquals(6,store.readStateValue(LegacyCollisionStateIntent.Channel.PLAYER,
+                LegacyCollisionStateIntent.Field.INTERPOLATION_PROGRESS));
+        assertEquals(18,store.readStateValue(LegacyCollisionStateIntent.Channel.ANIMATION,
+                LegacyCollisionStateIntent.Field.ANIMATION_ID));
+        assertEquals(3,store.readStateValue(LegacyCollisionStateIntent.Channel.ANIMATION,
+                LegacyCollisionStateIntent.Field.ANIMATION_FRAME));
+        assertEquals(8,store.readStateValue(LegacyCollisionStateIntent.Channel.MOVEMENT_FLAGS,
+                LegacyCollisionStateIntent.Field.BLOCKED_FLAG));
+    }
+
+    @Test public void seedRejectsWrongLayerLengths() {
+        try {
+            new LegacyCollisionStageStateSeed(stage(),new int[1],new int[4],new int[4],
+                    0,0,0,0,0,0,0,0);
+            fail("metadata length mismatch must be rejected");
+        } catch(IllegalArgumentException expected) { }
+    }
+
 }
