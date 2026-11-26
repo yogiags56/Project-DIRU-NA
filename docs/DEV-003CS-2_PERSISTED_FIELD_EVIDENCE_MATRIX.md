@@ -427,3 +427,12 @@ The inspected `ahVoid()` switch confirms distinct handlers for foreground low-by
 The two-coordinate `kVoid(x,y)` helper writes scheduler value 48 to all nine cells in a 3×3 neighborhood without bounds checks. Restore's caller is proven safe because it iterates only interior cells. Other call sites include stage normalization, movement/input, object transitions, and optional packed-cell edits; their preconditions are not all proven. Native must centralize bounds validation and test edges/corners rather than assuming every call is safe.
 
 CS-2 remains open: complete switch coverage, all call-site coordinate proofs, object-family counter lifecycle, and tick-boundary restore equivalence remain outstanding.
+
+
+## 35. Player-layer scheduler dispatch inventory — 2026-11-26
+
+`ahVoid()` does not stop after foreground dispatch. For each eligible cell, it decrements scheduler by 6, runs the foreground low-byte switch, then usually runs a second switch on `crtStagePlayerLayer[x][y]` at the same coordinate. Labelled early exits can skip this second dispatch. This ordering is part of the runtime contract.
+
+Player-layer codes with significant observed behavior include 54 (3×3 spread/activation), 46 (falling/moving object), 45 (animation/hazard and relocation), 14 (directional mover), 21 (directional paired chain), 16 (paired neighbor state), 37/30 (counter propagation), 48 (moving object reconstruction or `dVoid`), and 10 (conversion to foreground 32). Other codes dispatch to shared helpers `eVoid`, `lVoid`, `mVoid`, `aqVoid`, `akVoid`, `anVoid`, and `amVoid`. See Source Trace §30 for the observed code inventory and per-code details.
+
+This confirms multi-grid update coupling and requires Native to preserve foreground-then-player-layer dispatch order, labelled early exits, and atomic mutations. Shared helper semantics and full boundary proofs remain open. CS-2 remains in progress.
