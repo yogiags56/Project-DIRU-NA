@@ -463,3 +463,23 @@ Static source analysis only. No Native gameplay code/tests added. PR #1 remains 
 5. Keep CS-2 open; no production snapshot provider until a real Native gameplay owner and validated schema exist.
 
 Static-source analysis only. No Native runtime code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-27 (caller and overload cross-check)
+
+### Work completed
+- Mapped scheduler caller codes: `anVoid()` for player-layer 32; `amVoid()` for 11; `aqVoid()` for 47/1/0/9/8; `lVoid(int)` for 42/2/53/51/52/5/4/6/7/41; `mVoid(int)` for 24/27/26; `eVoid(byte)` for 43/19.
+- Traced `dVoid(int,int)` callers: stage transition for foreground 15/16, plus two cleanup scans; documented its player-layer switch and intentional fall-through.
+- Traced `lVoid(int,int)` callers: foreground/player transition code 10, player-layer code 37, and stage transition code 34/35; it selects optional-mode adjacent cell in x-1, x+1, y-1 priority order and sets xByte=5.
+- Traced `mVoid(int,int)` callers: foreground code 19 activation and optional-mode queue pulse in UVoid; the latter decodes coordinates from secondary packed-record offsets 13/20.
+- Confirmed caller continuation after helper return may add more writes, so transaction boundary covers full caller branch and nested calls.
+- Added Source Trace §33 and Evidence Matrix §38.
+
+### Next
+1. Trace transitive callees from the caller branches (e.g. `ajVoid`, `aByte`, `jVoid`, `bVoid/cVoid`) where they affect authoritative snapshot state.
+2. Build explicit transaction diagrams for objective completion, stage-wide transitions, optional-mode activation/queue, and moving-object transfer.
+3. Prove coordinate/bounds preconditions for fixed-row cleanup scans and direction-derived targets.
+4. Produce a first schema candidate crosswalk: every included field to capture source, restore behavior, owner, and validation invariant; keep it provisional.
+5. Keep CS-2 open until transitive state ownership and independent/runtime validation are resolved.
+
+Static-source analysis only. No Native gameplay runtime code/tests added. PR #1 remains unmerged absent explicit approval.
