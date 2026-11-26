@@ -9,7 +9,7 @@ public final class LegacyTwoCellMovementEvaluatorTest {
             boolean positive, boolean passable, int fgLow, int fgHigh,
             int adjacentPlayer, int adjacentForeground, boolean incoming) {
         return LegacyTwoCellMovementEvaluator.evaluate(early,counter,probe,direction,
-                positive,passable,fgLow,fgHigh,adjacentPlayer,adjacentForeground,incoming);
+                positive,passable,fgLow,fgHigh,adjacentPlayer,adjacentForeground,0,incoming);
     }
 
     @Test public void earlyReturnHappensBeforeCounterDecrementAndSuppressesEffects() {
@@ -18,9 +18,13 @@ public final class LegacyTwoCellMovementEvaluatorTest {
         assertTrue(d.isEarlyReturn());
         assertFalse(d.getReturnFlag());
         assertEquals(4,d.getCounterAfter());
+        assertEquals(9,d.getEarlyReturnAnimation());
         assertFalse(d.isWorldPushRequested());
         assertFalse(d.shouldSetMovementBlock());
         assertFalse(d.shouldClearLocalDirection());
+        LegacyTwoCellMovementEvaluator.Decision alternate = LegacyTwoCellMovementEvaluator.evaluate(
+                true,4,false,true,true,true,0,0,0,0,2,true);
+        assertEquals(8,alternate.getEarlyReturnAnimation());
     }
 
     @Test public void acceptedPushReturnsTrueAndRequestsMutationOnlyOutsideProbe() {
