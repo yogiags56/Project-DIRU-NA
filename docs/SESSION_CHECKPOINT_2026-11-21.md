@@ -634,3 +634,23 @@ No gameplay runtime implementation was added in this update.
 6. Keep PR #1 unmerged absent explicit authorization.
 
 This is an implementation increment only; it is not a first playable build.
+
+
+## Resume update — 2026-11-27 (GameSession foundation)
+
+### New core implementation
+- `PlayerMotionState.java`: immutable player logical coordinate, pending/active direction, and interpolation projection with validation.
+- `GameplayRenderSnapshot.java`: immutable stage/player/tick render projection.
+- `GameSession.java`: platform-independent single-writer owner; captures construction thread as owner; consumes immutable key-mask input per tick through LegacyInputDispatcher; blocks out-of-bounds before policy call; missing/null/unsupported collision policy fails closed; logical tile coordinate commit happens only after explicit ACCEPTED decision; ordinary interpolation starts at the same accepted transition; active interpolation advances before dispatching new input.
+- `GameSessionTest.java`: no-policy fail-closed; blocked no-mutation; accepted logical commit/interpolation; input ignored while interpolation active; bounds rejection before policy; cross-thread mutation rejection.
+
+### Critical limitation
+The MoveAcceptancePolicy is only a seam. It is not the original collision evaluator. The ACCEPTED test uses a test double and proves owner semantics, not game passability. No production collision policy is wired. Special movement, scripted displacement, object push, contextual interactions, animation, camera, stage mutation, renderer, and Android shell integration remain out of scope. No first playable milestone is claimed.
+
+### Next
+1. Run CI on exact branch HEAD and inspect failures/logs.
+2. Review GameSession against DEV-003A–003E for pending vs active direction, helper commit timing, and ordinary tick semantics.
+3. Implement only a bounded source-derived collision subset with explicit typed outcomes and no-mutation tests.
+4. Add synthetic fixture integration tests; do not treat the injected test policy as gameplay behavior.
+5. Connect immutable render projection to Android shell after core acceptance.
+6. Keep PR #1 unmerged absent explicit authorization.
