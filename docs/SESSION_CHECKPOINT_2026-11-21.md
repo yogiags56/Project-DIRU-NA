@@ -983,3 +983,27 @@ DEV-003W3: implement a production owner-backed mutable stage/state store with co
 
 ### Next
 DEV-003W4: define complete immutable initial-stage/session import including metadata, auxiliary arrays, player fields, animation and movement flags; expose detached full-root snapshots; add import/round-trip tests. Only then implement evaluator-to-plan mapping and integrate with GameSession.
+
+
+## Resume update — 2026-11-27 (DEV-003W3/W4 copy-on-write store and complete seed)
+
+### DEV-003W3 implementation
+- Added `LegacyCollisionStageStateStore`, a single-owner copy-on-write implementation of `LegacyCollisionMutationTarget`.
+- All grid arrays, metadata, auxiliary, foreground cache and scalar state are held behind one volatile root. Successful commits prepare cloned arrays/map and publish one root reference.
+- Commit revalidates expected values and bounds; failed validation leaves the previous root/version unchanged.
+- Fixed foreground-cache reads to use the published cache array (rather than the scalar state map).
+- Added store tests for atomic multi-channel commit, old snapshot stability, stale state rejection, bounds, probe no-op and wrong-thread rejection.
+
+### DEV-003W4 complete import
+- Added immutable `LegacyCollisionStageStateSeed` for decoded StageGrid, packed metadata, auxiliary cells, foreground cache, player tile/directions/interpolation, animation ID/frame and movement-block flag.
+- Added `LegacyCollisionStageStateStore(LegacyCollisionStageStateSeed)` production import constructor. The StageGrid-only constructor remains a zero-seeded test/prototype convenience.
+- Added tests for complete seed import, defensive copies, and invalid array lengths.
+- Added `DIRU-NA-DEV-003W3_COPY_ON_WRITE_STORE.md` and `DIRU-NA-DEV-003W4_COMPLETE_STATE_IMPORT.md`.
+
+### Integration guard
+- Seed API exists, but the real legacy decoder has not yet been audited/wired to populate metadata and auxiliary arrays. Do not infer packed formats or activate collision writes from zero-filled layers.
+- GameSession still owns its original StageGrid/player fields separately. A single-owner integration refactor is required; avoid competing mutable owners.
+- No evaluator-to-plan mapper, real-asset replay, or gameplay collision activation is claimed.
+
+### Next
+DEV-003W5: audit actual decoded-stage formats and the loader path, build a source-derived seed factory, and add real stage asset round-trip fixtures. Only after that map verified evaluator decisions to plans and refactor GameSession to use the store as its single state owner.
