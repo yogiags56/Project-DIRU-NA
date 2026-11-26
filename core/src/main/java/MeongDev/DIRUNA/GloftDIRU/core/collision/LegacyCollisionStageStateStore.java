@@ -47,7 +47,13 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
             LegacyCollisionStateIntent.Field field,boolean coordinateScoped,int x,int y) {
         if(channel==null || field==null) throw new IllegalArgumentException("state key is required");
         if(coordinateScoped) checkCell(x,y);
-        return value(root.state,stateKey(channel,field,coordinateScoped,x,y));
+        Root r=root;
+        if(channel==LegacyCollisionStateIntent.Channel.FOREGROUND_CACHE) {
+            if(!coordinateScoped || field!=LegacyCollisionStateIntent.Field.CACHE_VALUE)
+                throw new IllegalArgumentException("foreground cache requires a coordinate-scoped cache field");
+            return r.foregroundCache[index(x,y)];
+        }
+        return value(r.state,stateKey(channel,field,coordinateScoped,x,y));
     }
 
     /** Copy-on-write all-or-nothing commit. The root reference changes only after all writes are prepared. */
