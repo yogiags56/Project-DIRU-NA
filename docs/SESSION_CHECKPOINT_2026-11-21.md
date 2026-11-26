@@ -682,3 +682,22 @@ This only connects stage data to the existing bounds-checked sample capture API.
 4. Implement transactional application only for proven ordinary movement subset.
 5. Connect production policy to GameSession only after all above are validated.
 6. Run CI against exact latest HEAD; keep PR #1 unmerged absent explicit authorization.
+
+
+## Resume update — 2026-11-27 (branch capture facade)
+
+### Implemented on the existing DEV-003CR branch
+- Added `LegacyCollisionBranchCaptureFacade` as the single branch-scoped entry point.
+- The facade performs bounds-checked raw neighborhood capture, then branch-specific context/sample validation.
+- It exposes a neighborhood snapshot only when both phases pass; capture or context failures remain explicit.
+- Added `LegacyCollisionBranchCaptureFacadeTest` for valid capture, out-of-bounds rejection, missing type-2 inventory context, and grid-dimension mismatch.
+
+### Validation status
+- Previous exact HEAD `722cdb6fd7592a1fe52b63676fd70fc8d64e6c30` passed GitHub Actions run #383, including core JVM tests, Android storage unit tests, and debug APK assembly.
+- The facade implementation and tests are newer commits. They must not be called CI-passing until a workflow run for the latest exact HEAD completes successfully.
+
+### Boundary preserved
+- The facade is capture/validation infrastructure only; it does not evaluate collision, interpret raw tile values, mutate map/player state, or authorize movement.
+- Next: inspect the branch capture tests under CI, then implement a typed outcome composer that retains raw b2/b3, probe mode, early-return behavior, local effects, and persisted writeback as independent channels.
+- Keep production collision policy disconnected from GameSession until source-derived branch fixtures and transactional no-mutation tests pass.
+- Keep PR #1 open and unmerged.
