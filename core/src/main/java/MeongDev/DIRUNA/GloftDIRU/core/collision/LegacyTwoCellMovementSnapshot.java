@@ -64,6 +64,15 @@ public final class LegacyTwoCellMovementSnapshot {
     public int getAdjacentForeground(){return adjacentForeground;}
     public int getMovementCounter(){return movementCounter;}
     public int getMovementStateBits(){return movementStateBits;}
+    /** Reconstructs kInt2: preserve upper state bits and replace direction bits. */
+    public int getResolvedMovementStateBits() {
+        final int direction;
+        if(deltaX>0) direction=2;
+        else if(deltaX<0) direction=4;
+        else if(deltaY<0) direction=1;
+        else direction=3;
+        return (movementStateBits & 0xFFFFFFF8) | direction;
+    }
     public boolean isProbeMode(){return probeMode;}
     public boolean isDestinationPassable(){return destinationPassable;}
     public boolean getIncomingReturnFlag(){return incomingReturnFlag;}
