@@ -436,3 +436,10 @@ CS-2 remains open: complete switch coverage, all call-site coordinate proofs, ob
 Player-layer codes with significant observed behavior include 54 (3×3 spread/activation), 46 (falling/moving object), 45 (animation/hazard and relocation), 14 (directional mover), 21 (directional paired chain), 16 (paired neighbor state), 37/30 (counter propagation), 48 (moving object reconstruction or `dVoid`), and 10 (conversion to foreground 32). Other codes dispatch to shared helpers `eVoid`, `lVoid`, `mVoid`, `aqVoid`, `akVoid`, `anVoid`, and `amVoid`. See Source Trace §30 for the observed code inventory and per-code details.
 
 This confirms multi-grid update coupling and requires Native to preserve foreground-then-player-layer dispatch order, labelled early exits, and atomic mutations. Shared helper semantics and full boundary proofs remain open. CS-2 remains in progress.
+
+
+## 36. Shared helper signature separation — 2026-11-27
+
+Overloaded obfuscated method names were separated by exact signatures. The byte overload `eVoid(byte)` is a moving player-layer object transition that mutates occupancy, packed metadata, progress, and scheduler. `dVoid(byte)` performs a directional transfer/continuation and scheduler updates. `lVoid(int)` is a player-contact action dispatcher; `lVoid(int,int)` is a separate optional-mode coordinate helper. `mVoid(int)` handles player-contact progression/action or world-stage transition; `mVoid(int,int)` looks up/allocates a secondary packed record. `akVoid()` is a phase-driven foreground mechanism, while `amVoid()` is a distinct direction/phase-driven player-layer movement handler. `anVoid()` and `aqVoid()` have multi-grid propagation/interactions and remain partially traced.
+
+Do not merge overload semantics by name. See Source Trace §31 for observed contracts, source ranges, and remaining gaps. All descriptions are static-source findings; no Native runtime behavior has been implemented or validated.
