@@ -786,3 +786,9 @@ Foreground type 5 initially sets b2=true, but player-layer evaluation still foll
 2. Add one cross-evaluator control-flow parity test covering types 1,2,3,4,5,6,7,28 with probe and non-probe cases.
 3. Run CI on latest HEAD and inspect test failures.
 4. Continue with player-layer evaluator only after foreground flow contract is consistent.
+
+
+### Cross-evaluator contract test
+- Added `LegacyForegroundFlowContractTest` to guard the labeled-exit fallthrough contract across types 1, 2, 3, 4, 5, 6, 7 and 28.
+- Explicit `n10=1` paths (type 7 nibble >= 2; type 3 signed high byte >= 3) are asserted to skip player-layer evaluation.
+- Latest source/test HEAD before this checkpoint update: `fe8be78736f931f0cbf6e72d4fc795f1d6acabf0`.
