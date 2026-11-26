@@ -33,24 +33,24 @@ public final class LegacyForegroundType2Evaluator {
             return new Decision(Status.NOT_HANDLED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     false,false,currentADInt,false,currentAEInt);
         if (probeMode)
-            return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+            return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     false,false,currentADInt,false,currentAEInt);
         int high = foregroundRaw >> 8;
         if (high == 0) {
             if (inventorySlot9 >= 1)
-                return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                         true,true,7,true,0);
-            return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+            return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     true,true,13,true,1);
         }
         if (high == 1) {
             if (inventorySlot9 >= 2)
-                return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                         true,true,7,true,1);
-            return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+            return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     true,true,13,true,1);
         }
-        return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 true,false,currentADInt,false,currentAEInt);
     }
 }
