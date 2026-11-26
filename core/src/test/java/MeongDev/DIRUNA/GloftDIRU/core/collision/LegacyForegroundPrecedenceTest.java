@@ -13,10 +13,10 @@ public final class LegacyForegroundPrecedenceTest {
                 LegacyForegroundPrecedence.decide(0x1007,true).getPlayerLayerFlow());
     }
 
-    @Test public void foregroundThreeAlwaysSkipsPlayerLayerWithDifferentCollisionFlag() {
+    @Test public void foregroundThreeLowMetadataSetsB2AndContinuesButHighSkips() {
         LegacyForegroundPrecedence.Decision low =
                 LegacyForegroundPrecedence.decide(0x0003,false);
-        assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundPrecedence.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 low.getPlayerLayerFlow());
         assertTrue(low.foregroundSetsCollisionTrue());
         assertFalse(low.foregroundSetsCollisionFalse());
