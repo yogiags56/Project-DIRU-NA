@@ -1350,3 +1350,68 @@ These examples reinforce that scheduler updates are transient side effects of au
 4. Implement bounds-safe neighborhood scheduling, but first prove or reproduce the source's valid call-site coordinate constraints; do not silently clip in a way that changes intended semantics.
 5. Golden tests should include: 24 and 30 overwritten before/after decrement; 48 neighborhood scheduling; 127 signed-byte countdown; explicit zero cancellation; skipped current cell; edge coordinates; and handlers that reschedule themselves.
 6. Mid-tick snapshot/replay equivalence remains unproven; capture must be on a defined game-owner tick boundary or use an immutable consistent view.
+
+
+## 29. Scheduler dispatch by foreground code and neighborhood caller audit — 2026-11-26
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 29.1 Confirmed `ahVoid()` dispatch cases in inspected source range
+
+The scheduler scan is row-major over y descending from clipped `playerY+8` to `playerY-8`, then x ascending from clipped `playerX-8` to `playerX+8`. It skips the selected coordinate when `biInt != 0` and the cell equals `(bgInt,bhInt)`. For each eligible positive scheduler byte, it subtracts 6 before dispatching on the foreground low byte.
+
+The inspected handler cases include:
+
+| Foreground low byte | Observed scheduler/update behavior |
+|---:|---|
+| 36 | Advances high-byte animation frame; reschedules 24 until frame reaches 16, then clears cell to -1 |
+| 35/37 | Reschedules current cell 24; performs horizontal connected-object movement, may initialize/decrement `bByteArrArr`, move player occupancy and packed metadata |
+| 32 | Advances animation frame; clears at sprite frame-count boundary; otherwise reschedules 24 |
+| 26 | Door/lock interaction; resolves group and target cell, closes/clears the activated cell |
+| 6 | Door state chooses open or close path based on occupancy and progress byte |
+| 33/14 | Dispatches `nVoid` for tile/animation mutation |
+| 2 | Checks adjacent player occupancy code 30 and may invoke `bVoid` transition |
+| 3 | Advances high-byte phase conditionally; reschedules 24 until phase reaches 6, then explicitly sets scheduler to 0 |
+| 30/0 | Conditional player interaction; may consume/remove the foreground cell |
+| 7 | Advances packed substate every third global tick; connected metadata mutation and reschedule 24 |
+| 8/9 | Runs paired mechanism/pickup interaction logic when player/counters/animation conditions match |
+
+This is not the complete switch inventory: source range beyond the excerpt contains further dispatch and player-layer handling. Do not treat the table as an exhaustive enum or infer unlisted cases are inert.
+
+### 29.2 Scheduler handler may alter multiple authoritative grids
+
+Examples:
+- Foreground 35/37 can move a neighboring player-layer object, set its `bByteArrArr` progress to 18, update `bIntArrArr` low bits, clear the source occupancy and call transition helpers.
+- Foreground 32 advances animation in the foreground packed high byte and reschedules itself.
+- Foreground 3 reschedules while advancing phase, then cancels its scheduler explicitly at phase >= 6.
+- Foreground 7 modifies high-byte substate, connected foreground metadata, and may schedule again.
+- Player-layer code 54 increments a packed `bIntArrArr` counter, changes nearby occupancy, schedules affected cells, and invokes `kVoid`.
+
+Consequently, scheduler decrement is only the entry action. The handler can overwrite the decremented value, schedule adjacent cells, or cancel work.
+
+### 29.3 `kVoid(x,y)` call-site audit
+
+The static scan found 41 textual occurrences including the method declaration and the distinct no-argument instance method. Relevant two-coordinate calls span stage normalization, player/input transitions, object updates, restore reconstruction, and optional packed-cell updates.
+
+The helper writes the full 3×3 neighborhood `[x-1..x+1] × [y-1..y+1]` with scheduler value 48 and performs no local bounds checks.
+
+- Restore caller (15336) iterates interior cells x=1..width-2 and y=1..height-2, so the 3×3 write is safe for a valid rectangular grid.
+- Scheduler scan itself clips to interior cells, but this alone does not prove every other caller supplies interior coordinates.
+- Several callers operate on neighboring or offset coordinates (e.g. 10552, 11791, 12370, 15516); each needs call-path proof before Native can rely on the same precondition.
+- Stage normalizer caller (3737) is safe only if the decoded stage coordinate itself is interior; this must be proven from stage format/normalization rules.
+
+Do not claim all call sites are safe yet. Native should centralize a bounds-checked scheduler-neighborhood operation and surface invalid call-site coordinates in tests/logs while the source preconditions are being established. Once proven, valid-game behavior must match the exact nine-cell write.
+
+### 29.4 Native golden tests derived from confirmed handlers
+
+- Foreground 36: frame progression, 16 boundary, clear-to-`-1`.
+- Foreground 32: sprite frame-count boundary and reschedule behavior.
+- Foreground 3: phase progression gated by global tick parity and scheduler cancellation at phase 6.
+- Foreground 7: every-third-tick progression and connected-cell metadata update.
+- Foreground 35/37: left/right object transfer with player occupancy, metadata, and progress counter updated atomically.
+- Foreground 6: open/close decision using player occupancy and progress threshold 12.
+- Foreground 26: door group lookup, invalid group handling, and target-cell resolution.
+- All handlers: scheduler byte decremented by 6 before dispatch, then overwritten/rescheduled/cancelled according to handler.
+- `kVoid`: interior coordinates, all four edges, corners, and invalid coordinates; verify no partial grid mutation on failure.
+
+Static source analysis only. No Native gameplay code or executable tests added.
