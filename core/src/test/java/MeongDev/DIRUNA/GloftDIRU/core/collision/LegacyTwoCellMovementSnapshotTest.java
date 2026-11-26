@@ -62,4 +62,21 @@ public final class LegacyTwoCellMovementSnapshotTest {
         assertEquals(20,right.getPlayerCurrentCellY());
     }
 
+    @Test public void snapshotRebuildsDirectionBitsBeforeAnimationSelection() {
+        LegacyTwoCellMovementSnapshot right=new LegacyTwoCellMovementSnapshot(
+                10,20,1,0,8,0,0,0,0,0,4,12,20,false,true,false);
+        LegacyTwoCellMovementSnapshot left=new LegacyTwoCellMovementSnapshot(
+                10,20,-1,0,8,0,0,0,0,0,4,8,20,false,true,false);
+        LegacyTwoCellMovementSnapshot up=new LegacyTwoCellMovementSnapshot(
+                10,20,0,-1,8,0,0,0,0,0,4,10,18,false,true,false);
+        LegacyTwoCellMovementSnapshot down=new LegacyTwoCellMovementSnapshot(
+                10,20,0,1,8,0,0,0,0,0,4,10,22,false,true,false);
+        assertEquals(6,right.getResolvedMovementStateBits());
+        assertEquals(4,left.getResolvedMovementStateBits());
+        assertEquals(1,up.getResolvedMovementStateBits());
+        assertEquals(3,down.getResolvedMovementStateBits());
+        assertEquals(8,LegacyTwoCellMovementEvaluator.evaluate(right).getEarlyReturnAnimation());
+        assertEquals(9,LegacyTwoCellMovementEvaluator.evaluate(left).getEarlyReturnAnimation());
+    }
+
 }
