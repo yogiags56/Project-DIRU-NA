@@ -57,17 +57,17 @@ public final class LegacyForegroundType428Evaluator {
             if(!probeMode) {
                 int checkpointValue=(foregroundRaw & 0xFFFFFF00) >> 8;
                 if(checkpointValue >= checkpointProgress) {
-                    return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                    return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                             LocalXBooleanEffect.UNCHANGED,true,true,checkpointValue+1,
                             true,globalStageClock+13);
                 }
             }
-            return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+            return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     LocalXBooleanEffect.UNCHANGED,false,false,checkpointProgress,
                     false,0);
         }
         if(type==28) {
-            return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+            return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     probeMode ? LocalXBooleanEffect.UNCHANGED
                             : LocalXBooleanEffect.SET_TRUE,
                     false,false,checkpointProgress,false,0);
