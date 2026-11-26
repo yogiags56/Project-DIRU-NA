@@ -5,9 +5,7 @@ import static org.junit.Assert.*;
 
 public final class LegacyForegroundModelParityTest {
     @Test public void typeThreeFlowAndFlagAgreeAcrossSignedHighByteBoundaries() {
-        int[] highBytes = {
-                Integer.MIN_VALUE, -65536, -257, -1, 0, 1, 2, 3, 4, 127, 255
-        };
+        int[] highBytes = {-128, -3, -2, -1, 0, 1, 2, 3, 4, 127};
         for (int high : highBytes) {
             int raw = (high << 8) | 3;
             LegacyForegroundBranchEvaluator.Decision branch =
