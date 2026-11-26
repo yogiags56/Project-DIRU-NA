@@ -7,7 +7,7 @@ package MeongDev.DIRUNA.GloftDIRU.core.collision;
  */
 public final class LegacyPlayerLayerEvaluator {
     public enum Status { EVALUATED, NOT_HANDLED }
-    public enum Effect { NONE, CLEAR_ACTIVE_DIRECTION, REQUEST_PLAYER_METADATA_ONE }
+    public enum Effect { NONE, CLEAR_DIRECTION_AND_MOVEMENT_BLOCK, REQUEST_PLAYER_METADATA_ONE }
     public static final class Decision {
         private final Status status;
         private final LegacyPlayerLayerClassifier.Kind kind;
@@ -45,7 +45,7 @@ public final class LegacyPlayerLayerEvaluator {
                 }
                 return result(kind, incomingReturnFlag, Effect.NONE);
             case TYPE_28_SPECIAL:
-                return result(kind, incomingReturnFlag, Effect.CLEAR_ACTIVE_DIRECTION);
+                return result(kind, incomingReturnFlag, Effect.CLEAR_DIRECTION_AND_MOVEMENT_BLOCK);
             default:
                 return new Decision(Status.NOT_HANDLED, kind, incomingReturnFlag, Effect.NONE);
         }
