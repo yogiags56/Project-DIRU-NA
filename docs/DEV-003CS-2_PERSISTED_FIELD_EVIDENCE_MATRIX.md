@@ -418,3 +418,12 @@ Important corrections:
 - 24, 30 and 48 are distinct scheduling requests used by different object paths. The scan decrements a positive byte by 6 before dispatch, but handlers can overwrite, clear, or reschedule it. Value divided by six is not a universal duration formula.
 - `kVoid` writes 48 to a 3×3 neighborhood without its own bounds checks; valid call-site coordinate constraints still need exhaustive proof.
 - Scheduler state is transient and excluded from checkpoint; restore reconstructs it from authoritative grids. Exact mid-tick equivalence remains unproven.
+
+
+## 34. Scheduler dispatch and `kVoid` bounds evidence — 2026-11-26
+
+The inspected `ahVoid()` switch confirms distinct handlers for foreground low-byte codes 36, 35/37, 32, 26, 6, 33/14, 2, 3, 30/0, 7, and 8/9. These handlers can reschedule, cancel, mutate multiple authoritative grids, or dispatch other helpers after the initial scheduler decrement by 6. See Source Trace §29 for per-case behavior and test vectors. This list is explicitly partial, not the complete switch.
+
+The two-coordinate `kVoid(x,y)` helper writes scheduler value 48 to all nine cells in a 3×3 neighborhood without bounds checks. Restore's caller is proven safe because it iterates only interior cells. Other call sites include stage normalization, movement/input, object transitions, and optional packed-cell edits; their preconditions are not all proven. Native must centralize bounds validation and test edges/corners rather than assuming every call is safe.
+
+CS-2 remains open: complete switch coverage, all call-site coordinate proofs, object-family counter lifecycle, and tick-boundary restore equivalence remain outstanding.
