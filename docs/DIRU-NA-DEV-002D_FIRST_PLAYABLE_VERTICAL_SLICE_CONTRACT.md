@@ -116,3 +116,13 @@ Required artifacts:
 - short manual verification record identifying device/emulator, build SHA, fixture, input sequence, and observed result.
 
 Until all evidence exists, README must continue to say “First reproducible gameplay milestone” incomplete.
+
+
+## Implementation progress update — 2026-11-27
+
+First isolated core primitives have now been added:
+- `core/stage/StageGrid.java`: immutable row-major three-layer stage grid, defensive copies, positive/bounded dimensions, exact layer lengths, checked coordinate access. Values remain ints so a future decoder can preserve signed-byte widening.
+- `core/movement/OrdinaryMovementInterpolation.java`: ordinary-only 18→12→6→0 source-derived update clock. It does not perform collision, mutate stage data, or commit coordinates. Special/scripted movement remains separate.
+- Unit tests cover defensive copying, row-major reads, bounds, overflow/invalid layer sizes, interpolation sequence, active-move guard, invalid direction, and reset.
+
+Not implemented yet: GameSession owner, player logical state, collision gate, input-to-tick integration, immutable render projection, Android shell hookup, and end-to-end synthetic fixture. This is a foundation increment, not a playable milestone.
