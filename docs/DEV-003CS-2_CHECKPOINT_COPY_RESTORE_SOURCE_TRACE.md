@@ -1484,3 +1484,63 @@ The scheduler scan itself uses interior coordinates. Several player-layer handle
 - Test coupled updates atomically across foreground, player occupancy, metadata, progress, and scheduler.
 - Test neighbor boundaries and directional target calculations for all four edges and corners.
 - Define capture only at end-of-tick/handler boundary; a mid-handler snapshot is invalid.
+
+
+## 31. Shared gameplay helper signatures and observed contracts — 2026-11-27
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`. The method names are obfuscated and overloaded; this section identifies exact signatures and records only behavior visible in the inspected body.
+
+### 31.1 `eVoid(byte)` — moving player-layer object transition
+
+This is distinct from `eVoid()` (no args; lifecycle/input helper) and `eVoid(int)` (RMS/save-record and map loading logic). The byte overload at 14632–14787 reads current occupancy, packed metadata, and signed progress. It chooses/updates direction and movement phase, may consult stored target coordinates in packed metadata, and calls `kVoid` when initializing movement. On a movement transition it clears source occupancy and writes target occupancy, scheduler=48, progress byte, and packed metadata together. It can also invoke hero damage when movement/collision conditions are met. Preserve raw packed bits and the helper's direction-selection branch order; no single semantic label for all caller codes is established.
+
+### 31.2 `dVoid(byte)` — directional transfer/continuation at current cell
+
+The inspected overload at 14253–14301 operates on current `bEInt/bFInt`. It handles a special foreground-6 case via `hVoid`, then either:
+- when progress is exhausted, updates a low-three-bit direction/phase flag, transfers occupancy to the cell below/rightward in the inspected coordinate convention (target `y+1`), initializes target progress to 18 and metadata, clears an earlier occupancy cell, and schedules a 3-cell vertical neighborhood plus `kVoid`; or
+- if transfer is blocked, optionally damages the player and clears low direction bits; or
+- while progress remains positive, subtracts 6.
+It finally schedules current and previous-y cells at 24. The byte parameter is not read in this inspected method body; do not infer it changes the transition.
+
+### 31.3 `lVoid(int)` — player-contact action dispatcher
+
+The overload at 14462–14564 requires the player to occupy the current cell and rejects while `jInt>0). It also rejects selected foreground codes 14/33 with high byte 255. Its integer argument selects an action branch (codes 40, 42, 41, 4, 5, 2, 53, 51, 52, 6, 7), which sets action/animation selectors, updates player-layer state and sometimes recurses into `lVoid(7)` or `lVoid(41)`. This is not the same as `lVoid(int,int)), which selects a neighboring optional-mode cell for packed-record processing.
+
+### 31.4 `mVoid(int)` — player-contact progression/exit action
+
+The overload at 14830–14873 requires the player at the current cell and one of two player animation IDs (40 or 48). It clears the player-layer cell, then maps argument 24/27/26 to distinct durable byte-9 values and action selector fields. The default branch calls world/stage load `aVoid(world,stage,x,y)`. It is distinct from `mVoid(int,int)), which looks up a secondary packed record by coordinates and may allocate/transition a new record.
+
+### 31.5 `akVoid()` — phase-driven foreground mechanism
+
+At 14341–14460 it first schedules current cell at 24, then dispatches from packed metadata bits 3–5. Branches include:
+- mode 0: checks player/scroll/world timing, scans upward/downward player-layer occupancy, and may switch metadata phase and set progress to 10;
+- mode 1: decrements progress by 1 and, at exhaustion, changes foreground to 34, updates packed metadata, and clears progress;
+- mode 3: decrements progress by 5 while positive; when exhausted, examines the cell below, may damage player or transform/clear certain player-layer codes, and may reschedule.
+This helper is not interchangeable with the no-argument `amVoid()`.
+
+### 31.6 `amVoid()` — direction/phase-driven player-layer movement
+
+At 14875 onward it reads metadata bits 8–11 as a substate, handles terminal/clearing states, and otherwise derives movement direction from low-three-bit direction and bit-4 polarity. It tests three candidate cells using `fBoolean`; if a target is available and progress permits, it transfers occupancy and metadata, sets target progress=18, clears source, and may call scheduling helpers. The method continues beyond the inspected excerpt; treat this as a partial behavior description pending full body audit.
+
+### 31.7 `anVoid()` — adjacent-cell propagation/transfer controller
+
+At 15016 onward it schedules the current cell at 24 and, when progress is zero, examines a neighboring cell selected by the low metadata bit. A positive packed counter can be decremented while target progress=18 and scheduler=30 are written; several occupancy codes trigger sound/action-state changes and update packed direction/phase. This method continues beyond the inspected excerpt; exact completion and all caller effects remain open.
+
+### 31.8 `aqVoid()` — coupled interaction/movement/objective handler
+
+At 15406 onward it reads progress, packed metadata, player-layer code, optional packed-stage-cell state, player position, and collision state. It may increment objective/pickup counters, decrement the stage remaining-object count, clear occupancy, invoke `bVoid`, move an object into an adjacent cell, update packed direction/progress fields, and schedule source/target cells. It is a multi-grid transaction and its remaining body must be audited before assigning a final semantic label.
+
+### 31.9 Signature collision guard
+
+Keep these distinct:
+- `eVoid()`, `eVoid(int)`, `eVoid(byte)`
+- `dVoid(int)`, `dVoid(int,int)`, `dVoid(byte)`, `dVoid(boolean)`
+- `lVoid()`, `lVoid(int)`, `lVoid(int,int)`
+- `mVoid()`, `mVoid(int)`, `mVoid(int,int)`
+- `amVoid()` and `akVoid()` are separate methods with different data/dispatch paths.
+
+Native ports should use descriptive names based on proven role and typed parameters, never copy obfuscated overload names as if they were a single function.
+
+### 31.10 Remaining helper audit
+
+Complete full method bodies and caller inventories for `amVoid()`, `anVoid()`, and `aqVoid()`; inspect all callers of each signature; trace remaining `dVoid(int,int)`, `lVoid(int,int)`, and `mVoid(int,int)` separately; build transaction-level golden vectors. No runtime implementation is justified by this source audit alone.
