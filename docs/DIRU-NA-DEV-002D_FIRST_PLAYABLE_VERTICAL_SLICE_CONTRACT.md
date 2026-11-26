@@ -139,3 +139,20 @@ Added:
 Important limitation: the injected `MoveAcceptancePolicy` is an integration seam, not the original game's collision evaluator. The accepted-policy test uses a deterministic test double. Production collision semantics are still not implemented. Special movement, scripted displacement, object pushing, contextual interaction, animation, camera, and Android rendering are outside this increment.
 
 This is a single-writer gameplay foundation, not a first playable milestone. The stage model is immutable and the session currently owns only player logical motion state; it does not mutate any of the stage's source layers.
+
+
+## Collision integration increment — explicit stage-layer adapter (2026-11-27)
+
+Added `LegacyCollisionGridView` as a read-only adapter from `StageGrid` to the existing bounds-checked `LegacyCollisionNeighborhoodCapture.Grid` contract.
+
+The adapter:
+- maps the player/object and foreground layers explicitly;
+- requires a separate packed-metadata layer with exact stage cell count;
+- accepts an optional auxiliary grid only when its exact dimensions match;
+- preserves absence of the auxiliary layer as an explicit condition (reading absent data throws; no synthetic zero values);
+- defensively copies metadata and auxiliary arrays;
+- validates coordinates before indexing.
+
+Added six tests covering layer separation, explicit metadata, auxiliary presence/absence, defensive copies, mismatched dimensions, and out-of-bounds reads.
+
+This is a data/capture integration boundary only. It does not decide passability, run foreground/player-layer evaluators, apply scripted interactions, or connect a production collision policy to GameSession. The source helper's raw boolean channels and probe side effects remain too complex to collapse into a generic ACCEPTED/BLOCKED rule yet.
