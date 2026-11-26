@@ -481,3 +481,12 @@ The earlier descriptions in §39 are superseded by Source Trace §35. Reconcile 
 Source trace §36 establishes `mByteArr` as a stage-loaded group-counter array associated with foreground code 17 and high-byte group IDs. Stage load initializes each group counter from hashtable2 (default 0) and a parallel text selector `lByteArr` from hashtable3 (default 57). Foreground code 26 selects `cmInt` from its high byte, validates it against `mByteArr.length`, and scans matching code-17 cells. `alVoid()` decrements the selected group counter and applies matching door/neighbor transformations on zero.
 
 Crucially, temporary checkpoint capture explicitly copies `cmInt` to `cnInt` and `mByteArr` to `oByteArr`; restore reverses both copies. Foreground grid is also copied. Therefore `cmInt`, `mByteArr`, and foreground group/metadata form a directly evidenced checkpoint dependency. `lByteArr` is stage-loaded but not copied in this capture path; its immutable/reconstructible status remains unresolved. See Source Trace §36.
+
+
+## 42. Door-group data lineage refined — 2026-11-27
+
+Correction/refinement to §41: `hashtable2` and `hashtable3` are local tables created during stage initialization, not externally loaded persistent tables. The loader derives `mByteArr[group]` by counting foreground code-17 cells whose cell above has player-layer code 19/36/43/45/46/49; those qualifying foreground cells are cleared. Group key is the background-layer value at the same coordinate. Nonqualifying code-17 cells remain encoded with that group ID. The resulting 32-bit mask determines array length. `hashtable3` selects door-dialog text indices 58, 56, 51, 52, or 53 according to the qualifying player code and `kByte`; missing groups default to 57.
+
+No writes to `lByteArr` occur after stage-load population in the pinned class. It is read by `texts[lByteArr[cmInt]]` for a door dialog and nulled at stage teardown. Therefore it is stage/mode-derived lookup metadata, reconstructible on stage load and not part of mutable checkpoint payload, conditional on same stage/mode identity. `mByteArr` remains mutable and directly checkpointed alongside `cmInt`.
+
+Exact binary record/field that initially populates the background-layer group ID has not yet been identified; current proof starts from decoded stage grids. See Source Trace §37.
