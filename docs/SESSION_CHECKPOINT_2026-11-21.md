@@ -654,3 +654,31 @@ The MoveAcceptancePolicy is only a seam. It is not the original collision evalua
 4. Add synthetic fixture integration tests; do not treat the injected test policy as gameplay behavior.
 5. Connect immutable render projection to Android shell after core acceptance.
 6. Keep PR #1 unmerged absent explicit authorization.
+
+
+## Resume update — 2026-11-27 (collision grid capture bridge)
+
+### CI confirmation for previous GameSession foundation
+- Run #379, SHA `0b106a8b53404f255749e5a65af84a0b742bc776`: completed successfully.
+- Run #378, SHA `65741e07475a0d066ad86a449facc0303d9780a9`: completed successfully.
+- Run #377, SHA `7019298f99334af27b471d2b8e4cc0393228555d`: completed successfully.
+- Run #376, SHA `2d9b6afdb37d49f9aa6eec84c79571e5bbe8d62b`: failed; this was the intermediate render-snapshot-only commit, and must not be counted as passing.
+These runs validate their exact commits, not the newer collision adapter commit.
+
+### New implementation
+- `LegacyCollisionGridView.java`: read-only adapter from immutable StageGrid to LegacyCollisionNeighborhoodCapture.Grid.
+- Packed metadata is mandatory and separately supplied; no assumption that background values equal collision metadata.
+- Auxiliary layer is optional, but absence remains explicit; no fake zero-filled layer.
+- Defensive copies and checked reads.
+- `LegacyCollisionGridViewTest.java`: six tests for explicit layer mapping, auxiliary presence/absence, defensive copies, mismatch rejection and bounds.
+
+### Current limitation
+This only connects stage data to the existing bounds-checked sample capture API. It is not a collision evaluator and does not prove passability. The legacy helper's raw b2/b3 flags, probe behavior, branch side effects, and final coordinate writeback remain separate. Do not wire this adapter as a permissive GameSession policy.
+
+### Next
+1. Add a branch capture facade that combines grid capture and branch-context validation.
+2. Build a typed outcome composer that preserves raw helper flags, local effects, probe mode, early return, and persisted writeback separately.
+3. Add golden synthetic fixtures for known foreground/player-layer branches.
+4. Implement transactional application only for proven ordinary movement subset.
+5. Connect production policy to GameSession only after all above are validated.
+6. Run CI against exact latest HEAD; keep PR #1 unmerged absent explicit authorization.
