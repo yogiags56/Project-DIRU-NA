@@ -497,3 +497,16 @@ Exact binary record/field that initially populates the background-layer group ID
 Source trace §38 identifies each world resource (`/w0.bin`, `/w1.bin`, `/w2.bin`) as a sequence with a leading byte, one-byte stage count, then per-stage 4-byte little-endian unsigned width/height header and three row-major byte layers (player, background, foreground), each width×height. The selected stage maps flat index `x + y*width` into `grid[x][y]`. Background bytes are widened as signed Java bytes into `bIntArrArr`; original checkpoint copies that int grid.
 
 Critical unresolved: door-group builder uses `1 << background` with a 32-bit signed int mask and only checks background >= 0. Java masks shift distances modulo 32, so values >=32 alias. Actual resource enumeration is required to prove valid group IDs and maximum dimensions. Source loader also ignores short-read counts and skip counts; Native parser must use checked read-fully/seek semantics and bounded dimensions.
+
+
+## 44. Progress and binary-inventory reconciliation — 2026-11-27
+
+The full stage-stream binary inventory is already completed in DIRU-NA-AUDIT-029: 41 records across the three world resources, all dimensions catalogued, exact file consumption and no trailing bytes verified. The open task is not to decode the files again; it is to compute the specific background-layer/group-ID histogram for foreground code-17 cells and verify the Java 32-bit shift-domain assumption. Raw binary fetch was not available through the current UTF-8-only GitHub fetch interface, so this targeted histogram remains unverified.
+
+### Progress estimate (engineering judgment, not a test result)
+- DEV-003CS-2 evidence matrix and source tracing: approximately 60–65% complete. Core copy/restore assignments, major layer ownership, optional packed-record tables, scheduler/caller boundaries, and door-group capture are mapped; opaque fields, transitive branches, full invariant closure, and independent/runtime vectors remain open.
+- Source/resource reverse-engineering workstream: approximately 65–70% documented at static/binary level. This does not mean gameplay behavior is runtime-validated.
+- Native gameplay reconstruction toward first playable build: approximately 5–10%; first reproducible gameplay milestone is still not implemented.
+- Overall DIRU-NA path toward first playable Native Android release: approximately 25–30%. This combines completed project foundation/persistence boundary and substantial audits against the still-unimplemented gameplay engine, renderer/input integration, resource parser tests, and runtime validation. Treat this as a planning estimate, not an official completion metric.
+
+The most important remaining critical path is DEV-002 first gameplay owner and deterministic movement/collision, followed by provider integration only after that owner exists.
