@@ -6,42 +6,65 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Immutable collision write-set. This is a validated plan, not an applier:
- * it never mutates StageGrid or gameplay state.
- */
+/** Immutable proposal for one collision state transaction; never applies writes. */
 public final class LegacyCollisionMutationPlan {
     private final boolean probeMode;
-    private final List<LegacyCollisionMutationIntent> intents;
-    private LegacyCollisionMutationPlan(boolean probeMode,List<LegacyCollisionMutationIntent> intents) {
+    private final List<LegacyCollisionMutationIntent> gridIntents;
+    private final List<LegacyCollisionStateIntent> stateIntents;
+
+    private LegacyCollisionMutationPlan(boolean probeMode,
+            List<LegacyCollisionMutationIntent> grid,
+            List<LegacyCollisionStateIntent> state) {
         this.probeMode=probeMode;
-        this.intents=Collections.unmodifiableList(new ArrayList<LegacyCollisionMutationIntent>(intents));
+        this.gridIntents=Collections.unmodifiableList(new ArrayList<LegacyCollisionMutationIntent>(grid));
+        this.stateIntents=Collections.unmodifiableList(new ArrayList<LegacyCollisionStateIntent>(state));
     }
     public boolean isProbeMode(){return probeMode;}
-    public List<LegacyCollisionMutationIntent> getIntents(){return intents;}
-    public boolean isEmpty(){return intents.isEmpty();}
-
+    public List<LegacyCollisionMutationIntent> getIntents(){return gridIntents;}
+    public List<LegacyCollisionStateIntent> getStateIntents(){return stateIntents;}
+    public boolean isEmpty(){return gridIntents.isEmpty() && stateIntents.isEmpty();}
     public static Builder builder(boolean probeMode){return new Builder(probeMode);}
+
     public static final class Builder {
         private final boolean probeMode;
-        private final List<LegacyCollisionMutationIntent> intents=new ArrayList<LegacyCollisionMutationIntent>();
+        private final List<LegacyCollisionMutationIntent> grid=new ArrayList<LegacyCollisionMutationIntent>();
+        private final List<LegacyCollisionStateIntent> state=new ArrayList<LegacyCollisionStateIntent>();
         private final Set<String> destinations=new HashSet<String>();
         private boolean built;
         private Builder(boolean probeMode){this.probeMode=probeMode;}
+
         public Builder add(LegacyCollisionMutationIntent intent) {
-            if(built) throw new IllegalStateException("plan builder already consumed");
+            ensureOpen();
             if(intent==null) throw new IllegalArgumentException("intent is required");
             if(probeMode) throw new IllegalStateException("probe mode cannot contain world mutations");
-            String key=intent.getLayer().name()+":"+intent.getX()+":"+intent.getY();
-            if(!destinations.add(key))
-                throw new IllegalArgumentException("duplicate write destination: "+key);
-            intents.add(intent);
+            String key="GRID:"+intent.getLayer().name()+":"+intent.getX()+":"+intent.getY();
+            reserve(key);
+            grid.add(intent);
             return this;
         }
-        public LegacyCollisionMutationPlan build() {
+
+        public Builder addState(LegacyCollisionStateIntent intent) {
+            ensureOpen();
+            if(intent==null) throw new IllegalArgumentException("state intent is required");
+            if(probeMode) throw new IllegalStateException("probe mode cannot contain state mutations");
+            String key=intent.isCoordinateScoped()
+                    ? "STATE:"+intent.getChannel()+":"+intent.getField()+":"+intent.getX()+":"+intent.getY()
+                    : "STATE:"+intent.getChannel()+":"+intent.getField();
+            reserve(key);
+            state.add(intent);
+            return this;
+        }
+
+        private void reserve(String key) {
+            if(!destinations.add(key)) throw new IllegalArgumentException("duplicate write destination: "+key);
+        }
+        private void ensureOpen() {
             if(built) throw new IllegalStateException("plan builder already consumed");
+        }
+        public LegacyCollisionMutationPlan build() {
+            ensureOpen();
             built=true;
-            return new LegacyCollisionMutationPlan(probeMode,intents);
+            return new LegacyCollisionMutationPlan(probeMode,grid,state);
         }
     }
 }
