@@ -41,8 +41,10 @@ public final class LegacyForegroundPrecedence {
                 return evaluate(false,false);
             case 3:
                 if (metadata < 3) {
-                    return new Decision(PlayerLayerFlow.SKIP_PLAYER_LAYER,true,false);
+                    // b2=true does not set n10; player-layer evaluation still runs.
+                    return new Decision(PlayerLayerFlow.EVALUATE_PLAYER_LAYER,true,false);
                 }
+                // b2=false and n10=1 suppress player-layer evaluation.
                 return new Decision(PlayerLayerFlow.SKIP_PLAYER_LAYER,false,true);
             default:
                 // All other explicit foreground branches in this switch
