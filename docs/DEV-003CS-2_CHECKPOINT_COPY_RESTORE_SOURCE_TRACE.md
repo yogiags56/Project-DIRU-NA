@@ -1774,3 +1774,59 @@ The selector is read by the door-dialog path as `texts[lByteArr[cmInt]]`. Search
 ### 37.4 Revised source-of-truth model
 
 The group identity originates in the background-layer cell value used when foreground code 17 is processed. The source proves derivation from the already-decoded stage grids, but this audit has not yet located the exact binary serialization field/record that originally populated that background layer. Do not claim a direct binary counter field. The next audit must trace the stage decoder that populates background layer and prove group-ID domain/bounds, including the 32-bit mask limitation.
+
+
+## 38. Stage binary layer decoder and background group-ID provenance — 2026-11-27
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 38.1 Resource and stage record layout
+
+Stage resources are selected from `/w0.bin`, `/w1.bin`, and `/w2.bin` by world index. The loader reads one leading byte, then repeatedly reads a one-byte stage count. Each stage record begins with a 4-byte header:
+- width = unsigned little-endian 16-bit at header offset 0
+- height = unsigned little-endian 16-bit at header offset 2
+
+The stage payload then contains exactly three row-major byte layers, each `width * height` bytes:
+1. player layer
+2. background layer
+3. foreground layer
+
+For the selected stage, each layer is read into a flat byte buffer and mapped to `grid[x][y] = buffer[x + y * width]`. For nonselected stages, the loader calls `skip(width * height * 3)`. The selected stage allocates:
+- player layer: byte[width][height]
+- `cByteArrArr`: byte[width][height]
+- foreground layer: int[width][height]
+- background `bByteArrArr`: byte[width][height]
+- background `bIntArrArr`: int[width][height]
+
+The background byte payload is assigned to int cells by Java signed-byte widening, not unsigned conversion. This is significant: values >= 0x80 become negative int values. The group-count builder only sets a mask bit for background values >= 0, so negative signed values are excluded from group indexing.
+
+### 38.2 Width/height decoding and resource parser caveats
+
+`unpackUint16` is the little-endian unsigned operation `(array[ptr] & 0xFF) | ((array[ptr+1] & 0xFF) << 8)`. Header dimensions are therefore unsigned 16-bit little-endian.
+
+The loader uses InputStream.read(byte[]) without checking the returned byte count and uses skip(long) without checking the actual skipped count. This is a source robustness defect for truncated/short reads or streams whose skip advances fewer bytes than requested. Native parser must use read-fully semantics, validate positive bounded dimensions and multiplication overflow before allocation, and implement exact checked seeking. Do not reproduce silent partial-layer decoding or assume skip always consumes all requested bytes.
+
+The stage count and leading resource byte are read as signed Java bytes but consumed in integer comparisons/loop bounds. Their accepted range and resource-level header semantics still require validation against actual bundled resources.
+
+### 38.3 Background group-ID domain
+
+The background layer originates directly from the second byte layer in the stage record. Values are sign-extended to int. For code-17 group processing:
+- only `background >= 0` contributes to `n10 |= 1 << background`;
+- the Hashtable key is the signed-widened background value;
+- array length is derived by scanning the highest set bit in the 32-bit mask;
+- Java int shift distance is masked to five bits, so `1 << background` aliases for values >=32. No proof yet that valid nonnegative group IDs are restricted to 0..31.
+
+This creates a critical unresolved format invariant. Before treating mask-derived length as safe, inspect actual world resources or all stage-authoring evidence to prove background group IDs are within 0..31 (and whether 31 is valid under signed bit handling). Native should not silently inherit Java shift aliasing: validate group IDs against an explicit supported domain, preserving source behavior only when proven.
+
+### 38.4 Checkpoint and schema implications
+
+The original checkpoint copies `bIntArrArr` (int background grid) but not `bByteArrArr` (byte auxiliary grid). The group ID used by door logic is derived from `bIntArrArr`; however the original stage resource stores a byte and Java sign extension changes values 0x80..0xFF. Snapshot schema must preserve the decoded int semantics, not reinterpret as unsigned byte.
+
+### 38.5 Next evidence required
+
+1. Inspect bundled `w0.bin/w1.bin/w2.bin` bytes and enumerate every width, height, layer byte value, group ID and stage record boundary.
+2. Prove maximum dimensions and safe `width*height` bound.
+3. Prove group ID domain and resolve 32-bit shift aliasing.
+4. Verify resource header and stage-count byte semantics.
+5. Build parser tests for truncated header, short layer reads, short skip, overflow, negative/signed group values, and every real stage.
+6. Keep CS-2 open; static source format is now identified, but resource-level validation is not complete.
