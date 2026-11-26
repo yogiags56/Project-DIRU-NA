@@ -48,4 +48,52 @@ public final class LegacyCollisionMutationPlanTest {
         b.build();
         b.add(intent(LegacyCollisionMutationIntent.Layer.PLAYER,1,1,0,1));
     }
+    @Test public void planCarriesPlayerAnimationFlagAndCacheStateIntents() {
+        LegacyCollisionMutationPlan plan=LegacyCollisionMutationPlan.builder(false)
+                .addState(LegacyCollisionStateIntent.scalar(
+                        LegacyCollisionStateIntent.Channel.PLAYER,
+                        LegacyCollisionStateIntent.Field.PENDING_DIRECTION,2,0))
+                .addState(LegacyCollisionStateIntent.scalar(
+                        LegacyCollisionStateIntent.Channel.ANIMATION,
+                        LegacyCollisionStateIntent.Field.ANIMATION_ID,8,18))
+                .addState(LegacyCollisionStateIntent.scalar(
+                        LegacyCollisionStateIntent.Channel.MOVEMENT_FLAGS,
+                        LegacyCollisionStateIntent.Field.BLOCKED_FLAG,0,1))
+                .addState(LegacyCollisionStateIntent.cell(
+                        LegacyCollisionStateIntent.Channel.FOREGROUND_CACHE,
+                        LegacyCollisionStateIntent.Field.CACHE_VALUE,7,9,0,35))
+                .build();
+        assertEquals(4,plan.getStateIntents().size());
+        assertEquals(LegacyCollisionStateIntent.Channel.ANIMATION,
+                plan.getStateIntents().get(1).getChannel());
+        assertTrue(plan.getStateIntents().get(3).isCoordinateScoped());
+        assertEquals(7,plan.getStateIntents().get(3).getX());
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void probeModeCannotAcceptStateWrites() {
+        LegacyCollisionMutationPlan.builder(true).addState(
+                LegacyCollisionStateIntent.scalar(
+                        LegacyCollisionStateIntent.Channel.PLAYER,
+                        LegacyCollisionStateIntent.Field.TILE_X,4,5));
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void invalidChannelFieldCombinationIsRejected() {
+        LegacyCollisionStateIntent.scalar(
+                LegacyCollisionStateIntent.Channel.ANIMATION,
+                LegacyCollisionStateIntent.Field.TILE_X,0,1);
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void repeatedStateDestinationIsRejected() {
+        LegacyCollisionMutationPlan.builder(false)
+                .addState(LegacyCollisionStateIntent.scalar(
+                        LegacyCollisionStateIntent.Channel.PLAYER,
+                        LegacyCollisionStateIntent.Field.TILE_X,4,5))
+                .addState(LegacyCollisionStateIntent.scalar(
+                        LegacyCollisionStateIntent.Channel.PLAYER,
+                        LegacyCollisionStateIntent.Field.TILE_X,5,6));
+    }
+
 }
