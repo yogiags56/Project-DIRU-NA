@@ -11,6 +11,7 @@ public final class LegacyTwoCellMovementEvaluator {
         private final boolean earlyReturn;
         private final boolean returnFlag;
         private final int counterAfter;
+        private final int earlyReturnAnimation;
         private final boolean pushAccepted;
         private final boolean requestWorldPush;
         private final boolean setMovementBlock;
@@ -19,6 +20,7 @@ public final class LegacyTwoCellMovementEvaluator {
         private final boolean pushTowardPositiveDirection;
 
         private Decision(boolean earlyReturn, boolean returnFlag, int counterAfter,
+                         int earlyReturnAnimation,
                          boolean pushAccepted, boolean requestWorldPush,
                          boolean setMovementBlock, boolean clearLocalDirection,
                          boolean clearPlayerMetadataLowBits,
@@ -26,6 +28,7 @@ public final class LegacyTwoCellMovementEvaluator {
             this.earlyReturn=earlyReturn;
             this.returnFlag=returnFlag;
             this.counterAfter=counterAfter;
+            this.earlyReturnAnimation=earlyReturnAnimation;
             this.pushAccepted=pushAccepted;
             this.requestWorldPush=requestWorldPush;
             this.setMovementBlock=setMovementBlock;
@@ -36,6 +39,8 @@ public final class LegacyTwoCellMovementEvaluator {
         public boolean isEarlyReturn(){return earlyReturn;}
         public boolean getReturnFlag(){return returnFlag;}
         public int getCounterAfter(){return counterAfter;}
+        /** 8 or 9 for the legacy blocked-movement animation; zero otherwise. */
+        public int getEarlyReturnAnimation(){return earlyReturnAnimation;}
         public boolean isPushAccepted(){return pushAccepted;}
         public boolean isWorldPushRequested(){return requestWorldPush;}
         public boolean shouldSetMovementBlock(){return setMovementBlock;}
@@ -56,10 +61,11 @@ public final class LegacyTwoCellMovementEvaluator {
                                     int targetForegroundSignedHighByte,
                                     int adjacentPlayerLayer,
                                     int adjacentForegroundLowByte,
-                                    boolean incomingReturnFlag) {
+                                    int movementStateBits, boolean incomingReturnFlag) {
         if(earlyReturnConditionMet) {
             // Legacy returns false before decrementing the movement counter.
-            return new Decision(true,false,incomingCounter,false,false,
+            int animation=(((movementStateBits | 0x8) & 0x7)==0x2) ? 8 : 9;
+            return new Decision(true,false,incomingCounter,animation,false,false,
                     false,false,false,positiveDirection);
         }
 
@@ -77,11 +83,11 @@ public final class LegacyTwoCellMovementEvaluator {
                 && adjacentPlayerAllowsPush;
 
         if(accepted) {
-            return new Decision(false,true,counterAfter,true,!probeMode,
+            return new Decision(false,true,counterAfter,0,true,!probeMode,
                     true,false,false,positiveDirection);
         }
 
-        return new Decision(false,incomingReturnFlag,counterAfter,false,false,
+        return new Decision(false,incomingReturnFlag,counterAfter,0,false,false,
                 directionNonZero,true,true,positiveDirection);
     }
 }
