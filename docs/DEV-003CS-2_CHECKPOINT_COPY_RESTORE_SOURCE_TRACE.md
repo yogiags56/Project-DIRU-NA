@@ -1736,3 +1736,41 @@ The foreground grid is also copied directly, preserving code-17 group IDs and pa
 ### 36.5 Remaining
 
 Trace all writers of hashtable2/3 and the stage binary fields feeding them; inspect complete code-17/code-26/code-36/code-7 caller contexts; determine whether `lByteArr` is immutable stage metadata or mutable state; and build golden vectors for multiple groups, zero transition, selected-group restore, and malformed IDs.
+
+
+## 37. Door-group initialization correction: counters are derived from stage occupancy — 2026-11-27
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`. This section refines §36: the two Hashtables are constructed locally during stage initialization; they are not external persistent tables.
+
+### 37.1 `hashtable2` count derivation
+
+During the initial stage-grid scan, for each foreground code 17 cell:
+- Read its background-layer value as `background`.
+- Inspect player-layer cell immediately above it (`y-1`).
+- If that player cell is one of 19, 36, 43, 45, 46, or 49, increment `hashtable2[background]` and clear the foreground code-17 cell to -1.
+- Otherwise retain/rewrite the foreground cell as `(background << 8) | 17`.
+- For nonnegative background values, set the corresponding bit in a 32-bit group mask.
+
+Later, array length is derived from the highest set bit of that mask plus one. `mByteArr[group]` is initialized from `hashtable2[group]`, defaulting to zero. Thus the initial group counter is computed from a stage-layout condition, not read as a precomputed count from a standalone binary counter field.
+
+### 37.2 `hashtable3` text selector derivation
+
+For the same qualifying foreground code-17 cells, selector is assigned based on the player-layer code above and game mode:
+- Player code 36: set selector 58 only if no selector has yet been recorded for that group; later code-36 matches do not overwrite it.
+- Other qualifying player codes: set selector 56, then override with 51 for `kByte==4`, 52 for `kByte==5`, or 53 for `kByte==3`.
+- During array population, `lByteArr[group]` is copied from `hashtable3[group]`, default 57.
+
+The selector is read by the door-dialog path as `texts[lByteArr[cmInt]]`. Search of the pinned class finds no post-initialization writes to `lByteArr`; its only assignment is stage-load population and it is nulled at stage teardown. It is therefore stage-derived lookup metadata, not a mutable counter. Since it is rebuilt from the same stage and mode, exclusion from the temporary gameplay checkpoint is supported, provided restore never crosses stage/mode identity.
+
+### 37.3 `cmInt` lifecycle and counter mutation
+
+- Stage initialization sets `cmInt=-1`.
+- Foreground code 26 interaction selects `cmInt = foreground >> 8`, then validates it against `mByteArr.length`; invalid values reset to -1.
+- `alVoid()` returns early in modes 3/4/5 while `aqInt>0`; otherwise, for nonnegative `cmInt`, it decrements the selected byte counter directly.
+- No clamp is present at the decrement site. Valid caller/state invariants must prevent underflow; malformed/duplicate calls could produce a negative byte and must be covered by a golden vector or rejected safely in Native.
+- When the counter equals zero after decrement, matching foreground code-17 cells are scanned and the door-top/neighbor transition is applied.
+- Checkpoint capture/restore explicitly copies `cmInt` and `mByteArr`; `lByteArr` is not copied.
+
+### 37.4 Revised source-of-truth model
+
+The group identity originates in the background-layer cell value used when foreground code 17 is processed. The source proves derivation from the already-decoded stage grids, but this audit has not yet located the exact binary serialization field/record that originally populated that background layer. Do not claim a direct binary counter field. The next audit must trace the stage decoder that populates background layer and prove group-ID domain/bounds, including the 32-bit mask limitation.
