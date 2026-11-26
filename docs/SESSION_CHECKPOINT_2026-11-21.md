@@ -396,3 +396,23 @@ Static source audit only. No Native runtime code/tests added. PR #1 remains unme
 6. Keep CS-2 open; no provider implementation until the real gameplay owner exists.
 
 Static source analysis only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-26 (player-layer scheduler dispatch)
+
+### Work completed
+- Traced the second dispatch stage inside `ahVoid()`: after foreground low-byte dispatch, the same eligible cell is usually dispatched by `crtStagePlayerLayer[x][y]`; labelled early exits can skip this stage.
+- Inventoried player-layer codes and helper routes, including 54, 50, 49/43/19, 48, 46, 45, 44, 40, 36, 28, 16, 14, 10, 21, 32/11, 37/30, 24/27/26, 42/2/53/51/52/5/4/6/7/41, 47, 1/0/9/8, and 23/22.
+- Identified high-coupling handlers: code 54 3×3 spread, code 46 falling/moving object, code 45 animation/hazard relocation, code 14 directional mover, code 21 paired chain, code 16 paired state, and codes 37/30 counter propagation.
+- Confirmed these handlers mutate several authoritative grids and scheduler values in one visit; snapshot capture must not occur mid-handler.
+- Added Source Trace §30 and Evidence Matrix §35.
+
+### Next
+1. Trace shared helper families `eVoid`, `dVoid`, `lVoid`, `mVoid`, `aqVoid`, `akVoid`, `anVoid`, `amVoid` by exact method descriptors.
+2. Finish complete foreground switch inventory and map labelled early-exit semantics.
+3. Prove neighbor/target coordinate bounds using stage border and normalization invariants.
+4. Build per-object-family `bByteArrArr` golden vectors and packed metadata accessors.
+5. Define end-of-tick snapshot capture contract and transactional multi-grid update model.
+6. Keep CS-2 open; no provider implementation until a real Native gameplay owner exists.
+
+Static source analysis only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
