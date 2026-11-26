@@ -839,3 +839,25 @@ DEV-003S: pure geometry evaluator for 0/8/9/47 with explicit sampled cells and e
 
 ### Next
 DEV-003T: add an immutable, named-coordinate sampling snapshot; verify exact coordinate transforms for target/adjacent samples; build fixture-driven parity tests before connecting any world mutation.
+
+## Resume update — 2026-11-27 (DEV-003T named-coordinate snapshot)
+
+### Implemented
+- Added immutable `LegacyTwoCellMovementSnapshot` carrying player origin, movement delta, sampled player/foreground values, movement counter/state, probe flag, destination passability, and the early-return inputs.
+- Encoded distinct source coordinate formulas:
+  - target foreground: `(playerX + 2*deltaX, playerY + 2*deltaY)`;
+  - adjacent blocker sample: `(playerX + deltaX, playerY + 1)`;
+  - horizontal push destination: `(playerX + 2*deltaX, playerY + deltaY)`;
+  - current player cell for push clear: `(playerX + deltaX, playerY + deltaY)`.
+- Added raw foreground low-byte and signed-high-byte decoding accessors.
+- Added `LegacyTwoCellMovementEvaluator.evaluate(snapshot)` so the decision is derived from one named immutable input.
+- Added `LegacyTwoCellMovementSnapshotTest` for coordinate formulas, early-return gate, raw sample decoding through the evaluator, and push coordinate outputs.
+
+### Limits / safety boundary
+- Snapshot population remains caller-owned. It does not read stage arrays, check bounds, or execute `eBoolean`.
+- No stage/player-layer writes, push animations, or GameSession integration have been added.
+- The push coordinate getters describe the source horizontal write target; they do not imply a committed push.
+- CI and replay against recorded game states remain outstanding.
+
+### Next
+DEV-003U: model player-layer 48's separate two-cell push using an immutable snapshot and explicit sampled cells. Preserve probe suppression, exact source coordinate formulas, duplicate foreground-cache assignment only if confirmed as meaningful, and all world writes as intents. Then cover player-layer -1 boundary/door conditions separately.
