@@ -43,7 +43,7 @@ public final class LegacyForegroundFlowContractTest {
     }
 
     @Test public void explicitN10OneBranchesSkipPlayerLayer() {
-        assertSkipsPlayerLayer(LegacyForegroundBranchEvaluator.evaluate(0x2007).getPlayerLayerFlow());
+        assertSkipsPlayerLayer(LegacyForegroundBranchEvaluator.evaluate(0x1007).getPlayerLayerFlow());
         assertSkipsPlayerLayer(LegacyForegroundBranchEvaluator.evaluate(0x0303).getPlayerLayerFlow());
     }
 }
