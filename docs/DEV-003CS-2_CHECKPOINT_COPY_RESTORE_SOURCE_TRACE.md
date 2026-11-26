@@ -1582,3 +1582,48 @@ Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
 ### 32.4 Snapshot consequences
 
 These three helpers write occupancy, metadata, progress, foreground, scheduler, objective counters, and global player/action state. They are multi-grid transactions. A checkpoint must be captured only after the full handler and its nested helper calls return at a stable game-owner tick boundary. Restore must rebuild transient scheduler/derived flags using the original reconstruction order and validate objective counter consistency; do not serialize derived transient flags as independent truth without evidence.
+
+
+## 33. Exact caller inventory for selected helper families — 2026-11-27
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 33.1 Scheduler-dispatched helpers
+
+Within the player-layer switch in `ahVoid()`:
+- `anVoid()` is dispatched for player-layer code 32.
+- `amVoid()` is dispatched for player-layer code 11.
+- `aqVoid()` is dispatched for codes 47, 1, 0, 9, and 8. Code 47 additionally calls `ajVoid()` after `aqVoid()`; code 9 conditionally updates `auInt/avInt` before calling it.
+- `lVoid(int)` is dispatched for codes 42, 2, 53, 51, 52, 5, 4, 6, 7, and 41; recursive calls for 7 and 41 also occur inside that overload.
+- `mVoid(int)` is dispatched for codes 24, 27, and 26.
+- `eVoid(byte)` is dispatched for codes 43 and 19.
+These are dispatch entry points, not the complete transitive call graph.
+
+### 33.2 `dVoid(int,int)` callers
+
+Observed direct call sites:
+- Stage/global transition loop when `ceInt == 5`: foreground code 15/16 invokes `dVoid(x,y)`, then converts player-layer occupancy to 34/35.
+- `bBoolean(int,int)`: scans two fixed rows and clears eligible player-layer code 0 cells; after helper call it schedules the cell, clears occupancy, and calls `bVoid`.
+- `eBoolean()`: similar cleanup over a dynamic row interval.
+The helper itself has a switch on player-layer code; cases 0,19,43,45,46 clear foreground and invoke `jVoid`; code 48 also clears a paired cell and a related `eByteArr` slot. Fall-through behavior is intentional in the source and must be represented exactly.
+
+### 33.3 `lVoid(int,int)` callers
+
+Observed direct call sites:
+- Foreground/player-layer transition code 10: after converting foreground to 32 and clearing player occupancy, invokes `lVoid(x,y)`.
+- Player-layer code 37 after its counter reaches at least 8: invokes `lVoid(x,y)`, clears occupancy, schedules the cell, increments counter, and reschedules.
+- Stage/global transition loop when `ceInt == 5`: for player-layer code 34/35, writes foreground 15/16, clears occupancy, then invokes `lVoid(x,y)`.
+The overload only acts when optional mode `lBoolean` is true. It examines adjacent `eIntArrArr` cells in priority order (x-1, x+1, y-1), sets `xByte=5`, sound 13, and stores `dvInt/dwInt` when a neighbor is selected.
+
+### 33.4 `mVoid(int,int)` callers
+
+Observed direct call sites:
+- Foreground code 19 activation: after optional mode initialization, first packed record creation, and `eIntArrArr` allocation, invokes `mVoid(x,y)`.
+- Optional-mode queue in `UVoid()`: when `alBoolean` pulses and `dtInt < duInt`, decodes x/y from secondary table record offsets 13 and 20 and calls `mVoid(x,y)`, then increments `dtInt`.
+The helper performs coordinate lookup through `bByte(x,y)`; if found, allocates/updates a secondary packed record and may clear occupancy, set `xByte=1`, and call `aByte` for the next linked/neighbor record. The caller context distinguishes initial activation from queued continuation.
+
+### 33.5 Caller completeness and snapshot implications
+
+For `amVoid()`, `anVoid()`, and `aqVoid()`, the inspected source has only the scheduler dispatch call sites listed above plus method declarations. Their invocation therefore occurs within the per-cell scheduler visit. The two-coordinate helpers have separate stage-transition, cleanup, and optional-mode callers and must not be merged into the scheduler helper contracts.
+
+All caller contexts show that helper side effects can be followed by additional writes in the caller (e.g. occupancy clear, scheduler set, counter increment, or a second helper). A transaction boundary must include the entire caller branch, not merely the callee return. Snapshot safety is therefore at the outer game-owner tick/dispatch boundary after caller continuation has completed.
