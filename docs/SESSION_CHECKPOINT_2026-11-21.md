@@ -817,3 +817,25 @@ Foreground type 5 initially sets b2=true, but player-layer evaluation still foll
 
 ### Next
 DEV-003S: pure geometry evaluator for 0/8/9/47 with explicit sampled cells and exact kByte==4 early-return behavior; then dedicated 48 push geometry and -1 boundary/door evaluator. CI must be checked against the latest exact branch HEAD.
+
+## Resume update — 2026-11-27 (DEV-003S two-cell movement decision)
+
+### Implemented
+- Added `LegacyTwoCellMovementEvaluator`, a pure decision model for player-layer 0/8/9/47 based on explicit sampled facts.
+- Preserved early return before counter decrement and exposed legacy animation intent 8/9.
+- Modeled counter/probe gate, non-zero direction, destination passability, foreground type-7 high-nibble exception, and adjacent player-layer blocker exception for foreground low byte 0x23.
+- Accepted push emits a world-push intent only outside probe; rejected push preserves incoming return flag and emits local direction / player metadata clear intents.
+- Added `LegacyTwoCellMovementEvaluatorTest` for early return, animation choice, accepted probe/non-probe push, foreground type-7 exception, adjacent blocker exception, rejected push, and counter gate.
+- Added `DIRU-NA-DEV-003S_TWO_CELL_MOVEMENT_DECISION.md` with source-derived contract and explicit caller responsibilities.
+
+### Correction to earlier narrow evaluator
+- Type 28 effect is now named `CLEAR_DIRECTION_AND_MOVEMENT_BLOCK`, matching source assignments `lByte=0` and `kInt2 &= 0xFFFFFFF7`; return flag remains unchanged.
+- Type 28 test now checks the complete local effect name.
+
+### Limits
+- No grid sampling, coordinate derivation, push mutation, byte-array writes, or GameSession integration is implemented.
+- The early-return coordinate condition and `eBoolean` passability must be supplied from a caller with exact source-coordinate mapping.
+- CI is not yet verified for the latest exact branch HEAD.
+
+### Next
+DEV-003T: add an immutable, named-coordinate sampling snapshot; verify exact coordinate transforms for target/adjacent samples; build fixture-driven parity tests before connecting any world mutation.
