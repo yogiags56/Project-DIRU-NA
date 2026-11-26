@@ -37,11 +37,11 @@ public final class LegacyPlayerLayerEvaluatorTest {
         assertFalse(inactive.getReturnFlag());
         assertEquals(LegacyPlayerLayerEvaluator.Effect.NONE,inactive.getEffect());
     }
-    @Test public void typeTwentyEightRequestsDirectionClearWithoutInventingReturnValue() {
+    @Test public void typeTwentyEightClearsLocalDirectionAndMovementBlockButPreservesReturn() {
         LegacyPlayerLayerEvaluator.Decision result = LegacyPlayerLayerEvaluator.evaluate(
                 28,false,0,0,true);
         assertTrue(result.getReturnFlag());
-        assertEquals(LegacyPlayerLayerEvaluator.Effect.CLEAR_ACTIVE_DIRECTION,
+        assertEquals(LegacyPlayerLayerEvaluator.Effect.CLEAR_DIRECTION_AND_MOVEMENT_BLOCK,
                 result.getEffect());
     }
     @Test public void complexAndUnknownBranchesRemainNotHandled() {
