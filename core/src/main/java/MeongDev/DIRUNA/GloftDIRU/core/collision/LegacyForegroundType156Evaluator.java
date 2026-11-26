@@ -33,13 +33,13 @@ public final class LegacyForegroundType156Evaluator {
     public static Decision evaluate(int foregroundRaw,boolean probeMode) {
         switch(foregroundRaw & 0xFF) {
             case 1:
-                return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                         CollisionEffect.UNCHANGED,!probeMode,!probeMode,!probeMode,false,false);
             case 5:
-                return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                         CollisionEffect.SET_TRUE,false,false,false,!probeMode,!probeMode);
             case 6:
-                return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                         CollisionEffect.UNCHANGED,false,false,false,false,false);
             default:
                 return new Decision(Status.NOT_HANDLED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
