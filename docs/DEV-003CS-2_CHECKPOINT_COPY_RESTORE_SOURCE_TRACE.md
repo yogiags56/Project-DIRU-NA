@@ -1657,3 +1657,36 @@ Do not finalize schema or persist transient grids until every direct capture/res
 
 ### 34.7 Remaining audit
 Trace every branch of `ajVoid()`, `bVoid(int,int,int)`, and `cVoid(int,int,int)`; map their nested calls to authoritative vs derived writes; prove neighbor bounds and recursion order; then build caller-complete transaction vectors. Static inspection does not establish runtime equivalence.
+
+
+## 35. Correction: exact behavior of `cVoid(int,int,int)`, `bVoid(int,int,byte)`, and `jVoid(int,int)) — 2026-11-27
+
+This section supersedes the provisional descriptions of these overloads in §34. Their exact bodies were inspected at the pinned source revision.
+
+### 35.1 `cVoid(int,int,int)) is an 8-slot render-animation queue, not a coordinate operation dispatcher
+
+At 11009–11016 it:
+- Writes x/y as bytes into `aByteArr[aeInt*2]` and `aByteArr[aeInt*2+1]`.
+- Writes animation/type selector into `cByteArr[aeInt]`.
+- Resets per-slot frame counter `bByteArr[aeInt]` to zero.
+- Advances write index `aeInt = (aeInt + 1) & 7`.
+
+Render/update paths consume entries from `adInt` toward `aeInt`, increment each slot's frame counter, and advance the read index modulo 8 when the selected animation reaches its frame count. Stage-load case 4 resets both indices. This is transient presentation state, not authoritative gameplay coordinate state. Queue capacity is eight; producer/consumer behavior and possible overwrite when full require exact ring-buffer semantics if Native rendering needs parity. Do not serialize this queue as gameplay snapshot payload unless a separate presentation-resume requirement is explicitly defined.
+
+### 35.2 `bVoid(int,int,byte)) is a recursive vertical/side flood-clear helper
+
+At 12061–12071 it clears foreground cells whose low byte equals the supplied selector. For each match it:
+1. Writes foreground = -1.
+2. Recursively checks left and right at the same y.
+3. Recursively checks the cell above (y-1).
+4. Advances y downward in a loop and repeats at the same x.
+
+It does not include explicit bounds checks in this body. Callers and stage border invariants must guarantee safe coordinates; Native must validate before recursion and preserve the exact traversal order. This overload mutates the foreground stage grid and is authoritative, unlike the render queue above. It is not equivalent to other `bVoid` overloads.
+
+### 35.3 `jVoid(int,int)) sets a foreground metadata high bit
+
+At 15119–15122 it preserves the foreground cell's other bits while OR-ing `0x10000000`, then invokes `alVoid()`. It is not a scheduler invalidation helper. The high bit is part of the foreground packed state and therefore may be authoritative if the cell is included in checkpoint copy. `alVoid()` performs door/lock-group progression: it decrements `mByteArr[cmInt]`; when it reaches zero it scans interior stage cells for matching foreground code 17 and group metadata, updates door-top/neighbor cells and schedules the changed door cell. It may play sound 8. The helper's full ownership and the relation of the high bit to door/lock state need separate caller analysis.
+
+### 35.4 Correction to §34 and snapshot classification
+
+The earlier provisional labels “jVoid neighborhood scheduler invalidation” and “cVoid coordinate operation dispatcher” were incorrect. Replace them with the contracts above. `cVoid(int,int,int)` is derived transient animation queue; `jVoid(int,int)` changes packed foreground metadata and invokes lock/door progression; `bVoid(int,int,byte)` clears matching foreground cells recursively. These distinctions materially change snapshot inclusion decisions.
