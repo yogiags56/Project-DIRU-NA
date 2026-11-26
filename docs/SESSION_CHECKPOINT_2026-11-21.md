@@ -759,3 +759,30 @@ Type 7 retains its separate packed-nibble test and existing flow.
 - Tightened the signed fixtures to use representable high-byte values rather than values that overflow when shifted into the packed cell.
 - Latest source/test HEAD for this continuation: `8bed5f4146d1116243f3e3a3e9da95ad81351fb8`.
 - CI status for this exact HEAD remains unverified.
+
+
+## Resume update — 2026-11-27 (DEV-003J labeled-exit control-flow audit)
+
+### Source finding
+Pinned source `kubikaugustyn/DiamondRushSource@215c71d04057d66a1b08419b1a4b1043ae3e0881`, method `i.aBoolean(int,int,boolean)`, shows that `break Label_0738` exits the complete foreground block, bypassing `n3=n10`. As `n3` remains initialized to zero, the player-layer switch still executes for foreground types 1, 2, 4, 5, 6 and 28, and for type 3 when signed high byte < 3. Type 7 nibble < 2 and type 3 high byte >= 3 reach `n3=n10` with n10=1 and skip player-layer evaluation.
+
+### Corrected implementation and tests
+- Updated `LegacyForegroundType156Evaluator` flow for types 1/5/6 to continue to player-layer evaluation.
+- Updated `LegacyForegroundType2Evaluator` flow, including probe, to continue to player-layer evaluation.
+- Updated `LegacyForegroundType428Evaluator` flow for types 4/28 to continue to player-layer evaluation.
+- Updated the three corresponding test classes to assert the source-derived flow.
+- Clarified the type-428 evaluator documentation and movement/collision integration matrix.
+
+### Important semantic consequence
+Foreground type 5 initially sets b2=true, but player-layer evaluation still follows and may change b2. Therefore the foreground decision is not a final collision return. Likewise, type 2's b3 and counter effects are independent of the player-layer outcome.
+
+### Validation
+- Changes are committed directly to the existing DEV-003CR branch.
+- Latest CI status must be checked against the exact branch HEAD; no previous run is carried forward.
+- Production movement remains disconnected from these partial pure evaluators.
+
+### Next
+1. Audit all existing foreground evaluator flow outputs against labeled block exits and the trailing n3 assignment.
+2. Add one cross-evaluator control-flow parity test covering types 1,2,3,4,5,6,7,28 with probe and non-probe cases.
+3. Run CI on latest HEAD and inspect test failures.
+4. Continue with player-layer evaluator only after foreground flow contract is consistent.
