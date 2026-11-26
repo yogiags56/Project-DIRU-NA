@@ -961,3 +961,25 @@ DEV-003W2: add typed local-player and presentation/cache intents; then implement
 
 ### Next
 DEV-003W3: implement a production owner-backed mutable stage/state store with copy-on-write transaction commit (validate all intents, clone affected layers/state, apply to clones, swap one immutable state root), then test rollback/no partial visibility and owner-thread enforcement. Only after that map evaluator decisions into plans and integrate with GameSession.
+
+
+## Resume update — 2026-11-27 (DEV-003W3 copy-on-write store)
+
+### Implemented
+- Added `LegacyCollisionStageStateStore`, a single-owner implementation of `LegacyCollisionMutationTarget`.
+- Store holds player/background/foreground, packed-metadata, auxiliary, foreground-cache arrays and scalar state behind one volatile immutable root.
+- Successful commits clone private arrays/map, apply all intents to clones, then publish one new root reference.
+- Expected values and bounds are revalidated inside the commit boundary, closing the applier-preflight/commit gap.
+- Foreground cache reads and writes now use the same coordinate-indexed root array.
+- Added detached immutable `stageSnapshot()` and root version counter.
+- Added `LegacyCollisionStageStateStoreTest` for atomic multi-channel publication, old-snapshot stability, stale-state no-partial-write, out-of-bounds cache, probe no-op, and owner-thread enforcement.
+- Added `DIRU-NA-DEV-003W3_COPY_ON_WRITE_STORE.md`.
+
+### Limits / integration guard
+- Store is not wired into GameSession.
+- Existing StageGrid seeds only player/background/foreground; packed metadata and auxiliary arrays currently initialize to zero. A real decoded-stage import path is mandatory before collision integration.
+- Scalar state map also initializes to zero; GameSession player/animation/movement state must be imported explicitly.
+- No evaluator-to-plan mapper or recorded gameplay replay is connected.
+
+### Next
+DEV-003W4: define complete immutable initial-stage/session import including metadata, auxiliary arrays, player fields, animation and movement flags; expose detached full-root snapshots; add import/round-trip tests. Only then implement evaluator-to-plan mapping and integrate with GameSession.
