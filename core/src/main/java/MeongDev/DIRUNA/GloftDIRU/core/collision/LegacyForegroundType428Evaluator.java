@@ -2,7 +2,9 @@ package MeongDev.DIRUNA.GloftDIRU.core.collision;
 
 /**
  * Pure outcome model for legacy foreground types 4 (checkpoint) and 28.
- * It describes requested effects; it never commits them to game state.
+ * Both branches exit the foreground switch block, then fall through to the
+ * player-layer switch (n3 remains zero). It describes requested effects;
+ * it never commits them to game state.
  */
 public final class LegacyForegroundType428Evaluator {
     public enum Status { EVALUATED, NOT_HANDLED }
