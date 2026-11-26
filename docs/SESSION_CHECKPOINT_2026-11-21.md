@@ -701,3 +701,27 @@ This only connects stage data to the existing bounds-checked sample capture API.
 - Next: inspect the branch capture tests under CI, then implement a typed outcome composer that retains raw b2/b3, probe mode, early-return behavior, local effects, and persisted writeback as independent channels.
 - Keep production collision policy disconnected from GameSession until source-derived branch fixtures and transactional no-mutation tests pass.
 - Keep PR #1 open and unmerged.
+
+
+## Resume update — 2026-11-27 (DEV-003H typed outcome composer)
+
+### Implemented
+- Added `LegacyCollisionOutcomeComposer`.
+- Converts an observed `LegacyCollisionTrace` into the existing `LegacyCollisionEvaluationResult` vocabulary.
+- Preserves raw b2 return and b3 auxiliary flag as independent channels.
+- Requires caller to supply local-collision classification and player-layer visitation explicitly; neither is guessed from the trace.
+- Derives completion from the trace's normal/early-return observation and commit suppression from whether player snapshot writeback occurred.
+- Added `LegacyCollisionOutcomeComposerTest` covering independent b2/b3 channels, probe writeback suppression, early return, and null input rejection.
+
+### Boundary / known limitation
+- This composes observed facts; it does not evaluate grid samples or infer the source branch's local collision flag.
+- It does not apply state changes, mutate StageGrid, or authorize movement.
+- The distinction between player snapshot writeback and every possible side effect remains important: a helper can have non-player side effects while not writing the player snapshot. The result field retains the existing name `stateCommitSuppressed`; consumers must not interpret it as proof that absolutely no side effect occurred.
+- Latest exact commit requires CI verification; do not carry forward prior CI status.
+
+### Next
+1. Run and inspect CI on latest exact branch HEAD.
+2. Audit result semantics for probe and early-return branches against pinned source.
+3. Build the pure evaluator for the narrow, source-proven foreground type-3/type-7 subset with raw packed-value fixtures.
+4. Add caller-direction tests separately; keep production movement policy disconnected until source-derived fixtures pass.
+5. Keep PR #1 open and unmerged.
