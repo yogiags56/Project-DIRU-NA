@@ -376,3 +376,23 @@ Static source audit only. No Native runtime code/tests added. PR #1 remains unme
 6. Keep CS-2 open; no Native provider implementation until the real gameplay owner exists.
 
 Static source audit only. No Native runtime code/tests added. PR #1 remains unmerged absent explicit approval.
+
+
+## Resume update — 2026-11-26 (scheduler handler and bounds audit)
+
+### Work completed
+- Inspected `ahVoid()` dispatch for foreground codes 36, 35/37, 32, 26, 6, 33/14, 2, 3, 30/0, 7, and 8/9.
+- Recorded handler-specific reschedule/cancel behavior and multi-grid side effects. Confirmed scheduler decrement-by-6 is only the pre-dispatch action; handlers can overwrite, clear, or reschedule current/neighbor cells.
+- Confirmed foreground code 3 explicitly cancels scheduler at phase >= 6; code 7 advances substate on every third global tick; code 36 clears after its frame progression reaches 16; code 32 uses sprite frame count.
+- Audited two-coordinate `kVoid` call sites. Restore's interior scan proves its own 3×3 writes safe; all other call-site coordinate preconditions remain partially unproven.
+- Added Source Trace §29 and Evidence Matrix §34.
+
+### Next
+1. Continue complete `ahVoid()` switch coverage, including remaining foreground codes and player-layer dispatch.
+2. Prove bounds preconditions for every `kVoid(x,y)` call site, especially offset/neighbor callers and stage normalizer.
+3. Decode object-family `bByteArrArr` lifecycle alongside scheduler transitions.
+4. Build descriptor-aware `bIntArrArr` accessor map and cross-grid golden vectors.
+5. Define game-owner tick-boundary capture and multi-tick restore/rebuild validation.
+6. Keep CS-2 open; no provider implementation until the real gameplay owner exists.
+
+Static source analysis only. No Native gameplay code/tests added. PR #1 remains unmerged absent explicit approval.
