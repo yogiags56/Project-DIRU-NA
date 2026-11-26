@@ -464,3 +464,13 @@ The outer caller often continues writing occupancy, scheduler, counters, or invo
 The code-47 scheduler branch is a composite `aqVoid()` then `ajVoid()` transaction. The two-coordinate `jVoid(int,int)` helper schedules/invalidate neighborhoods and should be treated as derived transient state pending reconciliation with restore rebuild behavior. `bVoid(int,int,int)` recursively visits neighboring cells using an operation byte; `cVoid(int,int,int)` is a separate coordinate operation dispatcher with observed operation selectors 1, 3, 5, and -1. Both have same-name overloads with unrelated contracts; Native mappings must use exact descriptors.
 
 Provisional snapshot classes are now separated into directly captured authoritative candidates, derived/transient state, lBoolean-guarded conditional state, and unresolved opaque fields. No final schema approval until every capture/restore/rebuild path and the three-argument helper branches are fully reconciled. See Source Trace §34.
+
+
+## 40. Correction to transitive helper classification — 2026-11-27
+
+Correction to §39:
+- `cVoid(int,int,int)` is an 8-entry render-animation ring buffer (coordinate bytes, animation selector, frame counter; read/write indices modulo 8), not a gameplay coordinate dispatcher. Treat it as transient presentation state.
+- `bVoid(int,int,byte)` is a recursive foreground flood-clear helper: matching cells become -1; traversal checks left, right, above recursively, then continues downward in a loop. It has no explicit bounds guard in the inspected body; caller border invariants must be proven and Native must guard accesses.
+- `jVoid(int,int)` sets foreground metadata bit `0x10000000` and calls `alVoid()`; it is authoritative packed foreground mutation, not scheduler invalidation. `alVoid()` decrements the selected lock-group counter and may open matching doors when it reaches zero.
+
+The earlier descriptions in §39 are superseded by Source Trace §35. Reconcile snapshot classification accordingly: cVoid render queue excluded from authoritative gameplay payload; bVoid and jVoid mutate foreground state and must be represented through the foreground grid and related lock-group state.
