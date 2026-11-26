@@ -917,3 +917,7 @@ DEV-003W: reconcile all evaluator outputs with the original method's final state
 - PR workflow run #432 reached `:core:test` and reported 398 tests with one failure: `LegacyForegroundFlowContractTest.explicitN10OneBranchesSkipPlayerLayer`.
 - The failing fixture used foreground raw `0x2007` but expected the type-7 skip path. Source condition is `((raw >> 8 & 0xF0) >> 4) < 2`; packed nibble 2 at `0x2007` correctly falls through to player-layer evaluation. The test fixture was corrected to `0x1007`, whose packed nibble 1 takes the skip path.
 - The workflow run was on earlier PR merge commit `94892cb` and failed before Android storage tests or APK assembly. The corrected branch HEAD is `a9ede7ef62934ba88d2f0236b58d93709ea628a4`; a fresh successful run has not yet been confirmed.
+
+
+### DEV-003V test-fixture correction
+- Corrected left/top edge fixtures to make the target cell (playerX+deltaX, playerY+deltaY) land on coordinate 0. This matches the source boundary check; the earlier fixtures started at 0 but stepped inward and therefore did not represent an edge target.
