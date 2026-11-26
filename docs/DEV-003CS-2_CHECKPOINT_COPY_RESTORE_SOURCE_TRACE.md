@@ -1690,3 +1690,49 @@ At 15119–15122 it preserves the foreground cell's other bits while OR-ing `0x1
 ### 35.4 Correction to §34 and snapshot classification
 
 The earlier provisional labels “jVoid neighborhood scheduler invalidation” and “cVoid coordinate operation dispatcher” were incorrect. Replace them with the contracts above. `cVoid(int,int,int)` is derived transient animation queue; `jVoid(int,int)` changes packed foreground metadata and invokes lock/door progression; `bVoid(int,int,byte)` clears matching foreground cells recursively. These distinctions materially change snapshot inclusion decisions.
+
+
+## 36. Door-group counter ownership and checkpoint evidence — 2026-11-27
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 36.1 Stage-load initialization
+
+At stage initialization, the loader computes the required `mByteArr`/`lByteArr` length from the highest set bit in a stage-derived mask (`n10`), then allocates arrays of that length when nonzero. During the foreground-grid scan, each foreground code 17 cell with group ID `n43 != -1` initializes:
+- `mByteArr[n43]` from `hashtable2[groupId]`, default 0.
+- `lByteArr[n43]` from `hashtable3[groupId]`, default 57.
+
+The source establishes that `mByteArr` is per-stage group counter state associated with foreground code 17 and its high-byte group ID. Do not rename it to “door count” without qualification: it is a group counter consumed by the door/lock progression paths.
+
+### 36.2 Selection and decrement
+
+Foreground code 26 interaction selects `cmInt` from the foreground high byte. It validates `0 <= cmInt < mByteArr.length`; otherwise it resets `cmInt=-1`. On valid selection it scans interior foreground code 17 cells with matching high-byte group ID and records an eligible door/head coordinate. This provides direct evidence that code-26 interaction selects a group ID shared with code-17 cells.
+
+`alVoid()` returns early for selected global modes when `aqInt>0). Otherwise, if `cmInt>=0`, it decrements `mByteArr[cmInt]`. When the counter becomes zero, it scans interior foreground cells for code 17 with matching group ID and applies the observed door-top/neighbor transformations; some neighboring foreground codes 14/33 are cleared, and a code-7 cell can be marked with metadata and scheduled at 24. Sound 8 is played on the zero transition.
+
+Other `alVoid()` callers are:
+- Player-layer code 7 animation/state branch after `apInt>80`, setting `aoInt=8`.
+- Player-layer code 36 when a neighboring player-layer code 11 is present and the corresponding `bIntArrArr` cell changes from 0 to 1.
+- `jVoid(x,y)` after setting foreground metadata bit `0x10000000`.
+
+These callers show the group decrement is a shared progression effect; its relationship to each caller's visible mechanism must remain caller-contextual.
+
+### 36.3 Snapshot copy/restore is explicit
+
+The temporary checkpoint capture stores `cnInt=cmInt` and copies `mByteArr` into `oByteArr` when the array exists. Restore sets `cmInt=cnInt` and copies `oByteArr` back into `mByteArr`. Thus both the selected group index and group-counter array are direct checkpoint payload, not inferred additions.
+
+The foreground grid is also copied directly, preserving code-17 group IDs and packed metadata including bit `0x10000000`. The capture path allocates `oByteArr` when the live array exists. Stage initialization resets `cmInt=-1` and nulls `mByteArr/lByteArr` before loading new stage data.
+
+### 36.4 Safe Native invariants
+
+- If `mByteArr` is absent, `cmInt` must not be dereferenced.
+- If `cmInt >= 0`, require `cmInt < mByteArr.length`.
+- Every code-17 foreground group ID used as an array index must be validated against the allocated group-array length.
+- Counter decrement must not silently underflow; exact source behavior for malformed zero/negative counter inputs needs a golden vector.
+- When a group counter reaches zero, all matching code-17 cells and their dependent neighboring cells must be updated as one outer game-owner transaction.
+- Capture/restore must keep `cmInt`, `mByteArr`, foreground grid, and any dependent progression state coherent.
+- `lByteArr` is stage-loaded from hashtable3 and used for text lookup; it is not copied by the temporary checkpoint in the inspected capture method. Its omission and reconstruction/lifetime must be reconciled before claiming complete stage-state persistence.
+
+### 36.5 Remaining
+
+Trace all writers of hashtable2/3 and the stage binary fields feeding them; inspect complete code-17/code-26/code-36/code-7 caller contexts; determine whether `lByteArr` is immutable stage metadata or mutable state; and build golden vectors for multiple groups, zero transition, selected-group restore, and malformed IDs.
