@@ -90,4 +90,24 @@ public final class LegacyTwoCellMovementEvaluator {
         return new Decision(false,incomingReturnFlag,counterAfter,0,false,false,
                 directionNonZero,true,true,positiveDirection);
     }
+    /**
+     * Evaluates the two-cell branch directly from an immutable, named snapshot.
+     * The snapshot must already contain samples from the exact source cells.
+     */
+    public static Decision evaluate(LegacyTwoCellMovementSnapshot snapshot) {
+        if(snapshot == null) throw new IllegalArgumentException("snapshot");
+        return evaluate(snapshot.isEarlyReturnConditionMet(),
+                snapshot.getMovementCounter(),
+                snapshot.isProbeMode(),
+                snapshot.getDeltaX() != 0,
+                snapshot.getDeltaX() > 0,
+                snapshot.isDestinationPassable(),
+                snapshot.getTargetForegroundLowByte(),
+                snapshot.getTargetForegroundSignedHighByte(),
+                snapshot.getAdjacentPlayerLayer(),
+                snapshot.getAdjacentForeground() & 0xFF,
+                snapshot.getMovementStateBits(),
+                snapshot.getIncomingReturnFlag());
+    }
+
 }
