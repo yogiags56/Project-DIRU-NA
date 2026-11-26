@@ -921,3 +921,23 @@ DEV-003W: reconcile all evaluator outputs with the original method's final state
 
 ### DEV-003V test-fixture correction
 - Corrected left/top edge fixtures to make the target cell (playerX+deltaX, playerY+deltaY) land on coordinate 0. This matches the source boundary check; the earlier fixtures started at 0 but stepped inward and therefore did not represent an edge target.
+
+
+## Resume update — 2026-11-27 (DEV-003W mutation-plan foundation)
+
+### Implemented
+- Added `LegacyCollisionMutationIntent`: typed layer, coordinate, expected old value, and requested new value.
+- Added `LegacyCollisionMutationPlan`: immutable ordered write-set with probe-mode marker.
+- Builder rejects all probe writes, repeated same-layer destinations, null intents, and reuse after build; distinct layers at the same coordinate remain separate destinations.
+- Added `LegacyCollisionMutationPlanTest` for immutability, ordering, probe rejection, duplicate rejection, layer separation, and builder lifecycle.
+- Added `DIRU-NA-DEV-003W_TRANSACTIONAL_COLLISION_INTENTS.md`.
+
+### CI finding and correction
+- Workflow #442 failed at `:core:compileTestJava`, before any test execution. The compiler identified one extra argument in the bottom-edge fixture of `LegacyPlayerLayerMinusOneEvaluatorTest`; corrected the fixture to match the helper signature.
+- No successful CI run has yet been confirmed after this correction.
+
+### Important boundary
+- Mutation plans are proposals only. No stage writes, player-state writes, animation/cache updates, expected-value validation, or atomic applier exists yet. Do not connect this plan to GameSession until all write channels and source parity are represented.
+
+### Next
+DEV-003W2: add typed local-player and presentation/cache intents; then implement a preflight validator against a mutable owner-thread stage model, followed by an all-or-nothing applier and tests. Re-run the full CI pipeline before integrating with GameSession.
