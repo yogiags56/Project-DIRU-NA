@@ -1415,3 +1415,72 @@ Do not claim all call sites are safe yet. Native should centralize a bounds-chec
 - `kVoid`: interior coordinates, all four edges, corners, and invalid coordinates; verify no partial grid mutation on failure.
 
 Static source analysis only. No Native gameplay code or executable tests added.
+
+
+## 30. Player-layer dispatch inside scheduler scan — 2026-11-26
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`, `ahVoid()` lines 13238–14196.
+
+### 30.1 Important execution order
+
+For each cell selected by the scheduler scan:
+1. Test `cByteArrArr[x][y] > 0` and selected-cell exclusion.
+2. Decrement scheduler byte by 6.
+3. Dispatch foreground low-byte handler.
+4. Continue into a separate player-layer switch for the same coordinate, unless an earlier labelled break skips the remainder.
+5. Some player-layer handlers mutate adjacent cells, schedule them, and update other grids.
+
+Thus player-layer dispatch is not an independent later pass. It is coupled to the same eligible scheduler visit and may run after foreground dispatch has already modified the cell. Native must preserve this ordering and the source's labelled early-exit semantics.
+
+### 30.2 Player-layer cases and evidenced roles
+
+| Player-layer code | Observed behavior |
+|---:|---|
+| 54 | Multi-stage spreading/activation: increments packed counter in `bIntArrArr`, then at midpoint processes a 3×3 neighborhood; can clear or convert codes 16/19/43/49, convert code 8 to 54, and trigger damage. |
+| 50 | Damage check when player overlaps, subject to timer threshold and invulnerability flag. |
+| 49 / 43 / 19 | Dispatch to `eVoid(code)` shared lifecycle helper. |
+| 48 | If metadata flag 0x8 absent, dispatch `dVoid(48)`; otherwise reconstruct moving object through `aiVoid()`. |
+| 46 | Complex moving/animated object. Uses low 5 metadata bits as state and bits 5–12 as progress; may fall/move to cell below, decrement progress by 6 for state 8/9, change direction/state, collide/damage, or clear/rebuild. |
+| 45 | Animation/hazard family. Uses low 4 metadata bits, bits 10–12 selector, bits 13–20 frame/progress; uses `bByteArrArr` as context-dependent timer and can move/replace occupancy after animation threshold. |
+| 44 | Calls `akVoid()`. |
+| 40 | Calls `lVoid(40)`. |
+| 36 | Checks metadata and cell above; may activate global mechanism or damage player. |
+| 28 | Checks a metadata-derived target cell, clears incompatible occupancy and updates it; schedules current cell. |
+| 16 | Paired/linked horizontal or vertical object behavior; shares metadata and timer state between neighboring cells, may damage player or clear both cells. |
+| 14 | Directional moving object. Uses metadata direction/phase and `bByteArrArr`; moves to adjacent cell, resets source, schedules destination, or updates direction/phase. |
+| 10 | Converts to foreground animation 32 when metadata counter is positive, clears player occupancy, invokes `lVoid`, and schedules cell. |
+| 21 | Directional moving mechanism with paired-cell/link behavior; updates occupancy, direction metadata, and progress/timer values. |
+| 32 / 11 | Calls `anVoid()` / `amVoid()`. |
+| 37 / 30 | Counter-driven multi-cell propagation/activation; schedules affected neighbors and eventually clears occupancy. |
+| 24 / 27 / 26 | Calls `mVoid(code)`. |
+| 42 / 2 / 53 / 51 / 52 / 5 / 4 / 6 / 7 / 41 | Calls `lVoid(code)`. |
+| 47 | Calls `aqVoid()` and `ajVoid()`. |
+| 1 / 0 / 9 / 8 | Calls `aqVoid()`, with code 9 also updating paired global counters for a specific packed metadata signature. |
+| 23 / 22 | Schedules current cell and performs horizontal player collision checks across a span derived from `n5`. |
+
+This is a source-level behavior inventory, not final human-readable object naming. Shared helpers `eVoid`, `dVoid`, `lVoid`, `mVoid`, `aqVoid`, `akVoid`, `anVoid`, and `amVoid` still require independent descriptor-aware tracing.
+
+### 30.3 Important multi-grid examples
+
+- Code 54 writes occupancy, metadata, and scheduler across a 3×3 region; its midpoint branch can clear/convert neighboring cells and apply damage.
+- Code 46 can move occupancy one cell downward, copy direction metadata, initialize destination progress to 18, clear source occupancy, and call `kVoid`.
+- Code 45 increments a packed progress field and updates `bByteArrArr`; at its threshold it relocates the active state into a target cell and clears the source.
+- Code 14 can move occupancy one cell down, copy metadata and progress, or decrement the current timer by 6 while waiting.
+- Code 21 maintains a directional pair/chain of code-21 cells, transferring metadata and progress between predecessor/current cells.
+- Code 16 shares metadata across adjacent cells and may mirror timer state between them.
+- Code 37/30 propagate counters to neighboring code-30 cells and schedule those cells.
+
+These handlers reinforce that the scheduler visit is a multi-grid transaction. Snapshot capture cannot occur in the middle of a handler or between its coupled writes.
+
+### 30.4 Bounds and neighborhood implications
+
+The scheduler scan itself uses interior coordinates. Several player-layer handlers access neighbors at x±1/y±1 and some derive a second target from direction arrays. This gives a strong reason to preserve stage border/wall invariants, but does not by itself prove every computed target is valid. The stage format/normalization and helper preconditions must be traced before translating direct array indexing into Native.
+
+### 30.5 Native test requirements
+
+- Preserve foreground dispatch before player-layer dispatch for the same cell.
+- Reproduce early exits/label breaks so player-layer processing is skipped in the same cases.
+- Add per-code golden vectors for 54, 46, 45, 14, 21, 16, 37, 30, and shared-helper dispatch codes.
+- Test coupled updates atomically across foreground, player occupancy, metadata, progress, and scheduler.
+- Test neighbor boundaries and directional target calculations for all four edges and corners.
+- Define capture only at end-of-tick/handler boundary; a mid-handler snapshot is invalid.
