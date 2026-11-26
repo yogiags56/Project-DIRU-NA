@@ -792,3 +792,28 @@ Foreground type 5 initially sets b2=true, but player-layer evaluation still foll
 - Added `LegacyForegroundFlowContractTest` to guard the labeled-exit fallthrough contract across types 1, 2, 3, 4, 5, 6, 7 and 28.
 - Explicit `n10=1` paths (type 7 nibble >= 2; type 3 signed high byte >= 3) are asserted to skip player-layer evaluation.
 - Latest source/test HEAD before this checkpoint update: `fe8be78736f931f0cbf6e72d4fc795f1d6acabf0`.
+
+
+## Resume update — 2026-11-27 (DEV-003R narrow player-layer evaluator)
+
+### Implemented
+- Added `LegacyPlayerLayerEvaluator` as a pure evaluator for the simple source branches.
+- Added tests for values 34/35, 31/49, explicit blocking set, type 10 mode/probe behavior, type 28 direction-clear intent, and NOT_HANDLED for geometry-dependent cases.
+- Added `DIRU-NA-DEV-003R_PLAYER_LAYER_NARROW_EVALUATOR.md` documenting scope and non-goals.
+
+### Source-derived behavior
+- 34/35 return the probe flag.
+- 31/49 return false.
+- The explicit blocking set returns true.
+- Type 10 only forces true when xByte==3; its metadata write to 1 is a non-probe intent when current metadata <= 0.
+- Type 28 clears active direction but preserves the incoming b2 value.
+
+### Deliberate limits
+- -1 depends on stage edges and nearby player-layer/door conditions.
+- 0/8/9/47 depend on two-cell geometry, counter, direction, and kByte==4 early return.
+- 48 depends on multi-cell push geometry and several world writes.
+- Default/unknown values remain NOT_HANDLED pending richer local-delta and animation intents.
+- No world mutation or GameSession integration is performed.
+
+### Next
+DEV-003S: pure geometry evaluator for 0/8/9/47 with explicit sampled cells and exact kByte==4 early-return behavior; then dedicated 48 push geometry and -1 boundary/door evaluator. CI must be checked against the latest exact branch HEAD.
