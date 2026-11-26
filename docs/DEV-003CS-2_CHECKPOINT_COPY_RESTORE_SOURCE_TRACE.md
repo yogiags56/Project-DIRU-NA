@@ -1544,3 +1544,41 @@ Native ports should use descriptive names based on proven role and typed paramet
 ### 31.10 Remaining helper audit
 
 Complete full method bodies and caller inventories for `amVoid()`, `anVoid()`, and `aqVoid()`; inspect all callers of each signature; trace remaining `dVoid(int,int)`, `lVoid(int,int)`, and `mVoid(int,int)` separately; build transaction-level golden vectors. No runtime implementation is justified by this source audit alone.
+
+
+## 32. Completion of selected helper bodies: `amVoid()`, `anVoid()`, `aqVoid()` — 2026-11-27
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 32.1 `amVoid()` — direction/substate transfer controller (full body inspected)
+
+- Reads substate from metadata bits 8–11 (`0xF00 >> 8`). If nonzero, states >=4 clear player occupancy; otherwise a global phase condition can advance substate by 1.
+- If substate is zero but optional packed stage cell is present, initializes substate to 1.
+- Otherwise, while progress byte <=4, reads direction low bits 0–2 and polarity bit 4, derives three candidate neighbor offsets, and checks them with `fBoolean`.
+- On a valid candidate and zero current progress, copies metadata/occupancy to target, sets target progress 18, clears source occupancy. Alternate branch can rotate direction bits and transfer to a different candidate.
+- If no candidate is available, updates direction bits in place.
+- Calls `kVoid(current)`; damages player on overlap; finally subtracts 5 from positive progress.
+- Direction mapping is encoded in the switch for direction values 1–4 and polarity; preserve exact mapping rather than normalizing to compass labels before golden vectors exist.
+
+### 32.2 `anVoid()` — directional neighbor controller (full body inspected)
+
+- Always schedules current cell 24.
+- If current progress is zero, selects neighbor at x±1 based on metadata bit 0 and reads neighbor player-layer/foreground state.
+- If packed counter (metadata >> 1) is positive and target is empty/eligible, decrements counter, schedules target 30, initializes target progress 18, and temporarily treats target as code 32 for subsequent branch logic.
+- A family of eligible occupancy codes selects movement/interaction state, updates player-relative exclusion coordinates and direction bits; invalid/blocked targets can trigger a scan clearing up to three code-32 cells.
+- In all cases it writes selected occupancy or progress back and calls `kVoid(current)`.
+- When current progress is nonzero, subtracts 6 from it and still schedules neighborhood.
+- Preserve the distinction between current scheduler=24 and target scheduler=30.
+
+### 32.3 `aqVoid()` — packed object interaction/movement controller (full body inspected through method end)
+
+- Derives side/target column from low metadata direction and optional-mode packed-cell presence/type.
+- A specific code-1 contact path with valid collision increments `aZInt`, clears current occupancy, decrements `aaInt`, updates terminal/objective occupancy when count reaches zero, and invokes adjacent/current cell updates.
+- Other branches can convert target foreground 33 to 32, move player position and apply damage; clear incompatible occupancy; move current object to target and transfer metadata/progress; or mutate direction, packed phase, progress and scheduler.
+- Progress handling includes decrement by 6, a special decrement by global phase parity for a particular state/foreground-6 combination, and threshold transitions at 0/12.
+- Late in the method, metadata high flags 0x20000000 and 0x40000000 are reconciled against current progress and optional-mode presence, invoking `bVoid`/`cVoid` on edge transitions. It then rewrites the high status flags and a derived top-bit state based on local occupancy, neighboring availability, foreground, and excluded coordinates. A separate 3-bit field at bits 6–8 is advanced cyclically over values 0–4.
+- Do not reduce this to a simple pickup handler: it is a composite object interaction/transfer controller with objective-count effects and derived occupancy flags.
+
+### 32.4 Snapshot consequences
+
+These three helpers write occupancy, metadata, progress, foreground, scheduler, objective counters, and global player/action state. They are multi-grid transactions. A checkpoint must be captured only after the full handler and its nested helper calls return at a stable game-owner tick boundary. Restore must rebuild transient scheduler/derived flags using the original reconstruction order and validate objective counter consistency; do not serialize derived transient flags as independent truth without evidence.
