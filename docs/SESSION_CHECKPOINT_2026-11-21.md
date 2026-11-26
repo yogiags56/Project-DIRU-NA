@@ -725,3 +725,30 @@ This only connects stage data to the existing bounds-checked sample capture API.
 3. Build the pure evaluator for the narrow, source-proven foreground type-3/type-7 subset with raw packed-value fixtures.
 4. Add caller-direction tests separately; keep production movement policy disconnected until source-derived fixtures pass.
 5. Keep PR #1 open and unmerged.
+
+
+## Resume update — 2026-11-27 (DEV-003I type-3 control-flow correction)
+
+### Source audit finding
+A full read of pinned `i.aBoolean(int,int,boolean)` around `Label_0738` exposed an incorrect prior interpretation of foreground type 3. The type-3 case exits the foreground switch block, after which `n3=n10` is assigned:
+- Signed high-byte `raw >> 8 < 3`: sets `b2=true`, leaves `n10=0`, therefore player-layer evaluation continues.
+- Signed high-byte `raw >> 8 >= 3`: sets `b2=false`, sets `n10=1`, therefore player-layer evaluation is skipped.
+Type 7 retains its separate packed-nibble test and existing flow.
+
+### Corrective commits on the branch
+- `LegacyForegroundBranchEvaluator`: type-3 flow now depends on signed high-byte threshold.
+- `LegacyForegroundPrecedence`: same source-derived correction.
+- `LegacyForegroundBranchEvaluatorTest`: asserts low/negative metadata continue to player-layer; threshold and above skip.
+- `LegacyForegroundPrecedenceTest`: updates type-3 flow assertions.
+- `DIRU-NA-DEV-003P_TYPE7_TYPE3_PURE_EVALUATION.md`: documents the corrected control-flow explanation.
+
+### Validation / boundary
+- The source audit was against pinned `kubikaugustyn/DiamondRushSource@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- These are source/test/documentation corrections only. No full collision evaluator or production GameSession policy is claimed.
+- CI for the newest exact HEAD must be checked before calling the correction build-verified.
+
+### Next
+1. Add a cross-model parity test ensuring `LegacyForegroundBranchEvaluator` and `LegacyForegroundPrecedence` agree for all type-3 and type-7 raw values across signed high-byte/nibble boundaries.
+2. Run CI on exact latest HEAD and inspect test results.
+3. Continue with source-derived foreground branch coverage; do not connect incomplete evaluator to production movement.
+4. Keep PR #1 open and unmerged.
