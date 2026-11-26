@@ -911,3 +911,9 @@ DEV-003V: model player-layer -1 edge/door/nearby-door predicates with a named im
 
 ### Next
 DEV-003W: reconcile all evaluator outputs with the original method's final state-commit section; define one transactional intent format and ensure probe calls never mutate player, stage, metadata, animation, or cache state. Then add replay fixtures and integrate with GameSession.
+
+
+### CI finding and correction — 2026-11-27
+- PR workflow run #432 reached `:core:test` and reported 398 tests with one failure: `LegacyForegroundFlowContractTest.explicitN10OneBranchesSkipPlayerLayer`.
+- The failing fixture used foreground raw `0x2007` but expected the type-7 skip path. Source condition is `((raw >> 8 & 0xF0) >> 4) < 2`; packed nibble 2 at `0x2007` correctly falls through to player-layer evaluation. The test fixture was corrected to `0x1007`, whose packed nibble 1 takes the skip path.
+- The workflow run was on earlier PR merge commit `94892cb` and failed before Android storage tests or APK assembly. The corrected branch HEAD is `a9ede7ef62934ba88d2f0236b58d93709ea628a4`; a fresh successful run has not yet been confirmed.
