@@ -650,3 +650,19 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Integrate the gameplay shell and record manual device/emulator verification
 
 **Status:** Contract committed; implementation not started. This does not mark DEV-002 complete and does not change the README playable milestone status.
+
+
+
+
+## DEV-002E — Stage Model & Ordinary Movement Primitive (implementation increment)
+
+- [x] Add immutable validated three-layer StageGrid with defensive copies and checked bounds
+- [x] Add isolated ordinary movement interpolation clock (18→12→6→0)
+- [x] Add JVM tests for layer validation/copying, bounds, overflow and movement clock
+- [ ] Add platform-independent single-writer GameSession owner
+- [ ] Add player logical state and immutable render projection
+- [ ] Integrate input dispatcher with owner tick without bypassing state gates
+- [ ] Add explicitly supported collision gate and typed no-commit outcomes
+- [ ] Add deterministic synthetic-stage movement integration tests
+
+**Status:** First core primitives committed; no gameplay owner or playable stage yet.
