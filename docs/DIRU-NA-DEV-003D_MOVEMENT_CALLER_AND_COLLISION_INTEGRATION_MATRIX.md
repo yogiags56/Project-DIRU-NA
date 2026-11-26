@@ -63,10 +63,10 @@ The helper is `aBoolean(int dx, int dy, boolean probe)`, approximately lines 120
 | Helper branch | Raw flags/effects | Caller implication |
 |---|---|---|
 | Destination outside stage bounds | `b2=true`; skips foreground/player-layer evaluation | Caller may still take the helper-true animation path; final helper commit block is independently gated by `b2 && aWInt==0` |
-| Foreground 1 | Non-probe timer/counter and helper call | Do not collapse into ordinary floor |
+| Foreground 1 | Non-probe timer/counter and helper call; exits foreground switch block with n3 still 0, so player-layer switch follows | Do not collapse into ordinary floor |
 | Foreground 2 | Non-probe `b3=true`; item/metadata-dependent `aDInt/aEInt` | `b3` affects the helper's `aDInt` reset condition; it is not the return flag |
 | Foreground 3 | Metadata threshold can set `b2`; alternate path sets local `n10` | Requires metadata-aware fixture |
-| Foreground 4 | Non-probe checkpoint index/save-state update | Checkpoint side effect is distinct from tile passability |
+| Foreground 4 | Non-probe checkpoint index/save-state update; player-layer switch follows | Checkpoint side effect is distinct from tile passability |
 | Foreground 5 | `b2=true`; non-probe enables `xBoolean` and `atBoolean=true` | Forced/scripted displacement path |
 | Foreground 7 | Metadata nibble controls local `n10` | May continue into player-layer logic |
 | Foreground 19 | Non-probe scripted path can mutate map/player state; probe exits before this scripted block | Probe fixture must not claim this branch mutates the map |
@@ -131,3 +131,12 @@ Before the first native collision simulator is accepted, tests must cover:
 ## 9. Next work item
 
 **DEV-003E — Collision Input Snapshot and Typed Branch Observation.** Define immutable synthetic grid-cell fixtures and a source-oriented input snapshot for one helper call. Keep map lookup, metadata, probe mode, caller flags, and writeback effects explicit. Only then build a pure-core collision evaluator.
+
+
+### 10.1 Foreground labeled-exit correction (2026-11-27)
+
+The source's `break Label_0738` exits the entire foreground block, bypassing the trailing `n3 = n10` assignment. Since `n3` was initialized to zero, the player-layer switch still executes. This applies to foreground types 1, 2, 4, 5, 6 and 28 (and the low-metadata type-3 path). Do not model these labeled exits as `SKIP_PLAYER_LAYER`.
+
+By contrast, type 7 with nibble < 2 and type 3 with signed high byte >= 3 set `n10=1`, reach `n3=n10`, and skip player-layer evaluation. The high-metadata type-3 path also sets `b2=false`.
+
+This control-flow distinction is now reflected in the type-156, type-2 and type-428 pure evaluator flow outputs and their unit-test expectations.
