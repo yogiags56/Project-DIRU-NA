@@ -407,3 +407,14 @@ Correction/refinement to §31: `cByteArrArr` is excluded from the checkpoint and
 `bIntArrArr` exposes overlapping context-specific masks (low 3 bits, bit 3, bits 3–5, 5–12, 10–12, 13–20, 22–27 and top-byte/sign metadata). These are not a canonical struct. Preserve all 32 bits and define per-consumer views.
 
 Snapshot/restore must treat foreground, player occupancy, packed metadata, and progress bytes as coupled authoritative grids, mutated transactionally on the game-owner thread. Capture requires a consistent tick boundary or immutable state view. Restore validates first, commits authoritative grids, then rebuilds scheduler/renderer-derived state. Exact mid-tick replay remains unproven.
+
+
+## 33. Scheduler value writer inventory — 2026-11-26
+
+A source-wide direct-assignment scan (candidate `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`) found scheduler writes for values 0, 24, 30, 48 and 127. The main contexts are stage initialization, special background normalizer case 3, player/object code initialization, player movement, door/lock transitions, multi-cell mechanism updates, optional packed-cell edits, and explicit cancellation. See Source Trace §28 for the region-by-region writer inventory.
+
+Important corrections:
+- 127 is only proven as a normalizer initialization value; it is not yet a semantic “127 tick timer”.
+- 24, 30 and 48 are distinct scheduling requests used by different object paths. The scan decrements a positive byte by 6 before dispatch, but handlers can overwrite, clear, or reschedule it. Value divided by six is not a universal duration formula.
+- `kVoid` writes 48 to a 3×3 neighborhood without its own bounds checks; valid call-site coordinate constraints still need exhaustive proof.
+- Scheduler state is transient and excluded from checkpoint; restore reconstructs it from authoritative grids. Exact mid-tick equivalence remains unproven.
