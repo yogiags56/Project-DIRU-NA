@@ -27,11 +27,14 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
 
     /** Convenience empty-state constructor for isolated tests and prototypes. */
     public LegacyCollisionStageStateStore(StageGrid stage) {
-        this(new LegacyCollisionStageStateSeed(stage,
-                new int[Math.multiplyExact(stage.width(),stage.height())],
-                new int[Math.multiplyExact(stage.width(),stage.height())],
-                new int[Math.multiplyExact(stage.width(),stage.height())],
-                0,0,0,0,0,0,0,0));
+        this(emptySeed(stage));
+    }
+
+    private static LegacyCollisionStageStateSeed emptySeed(StageGrid stage) {
+        if(stage==null) throw new IllegalArgumentException("stage is required");
+        int count=Math.multiplyExact(stage.width(),stage.height());
+        return new LegacyCollisionStageStateSeed(stage,new int[count],new int[count],new int[count],
+                0,0,0,0,0,0,0,0);
     }
 
     /** Production constructor: imports all decoded world and local-session state. */
