@@ -868,3 +868,26 @@ DEV-003U: model player-layer 48's separate two-cell push using an immutable snap
 - Direction codes follow source priority: +X=2, -X=4, -Y=1, otherwise=3.
 - Snapshot-based evaluation now uses the resolved direction bits for the early-return animation selector, not raw state bits.
 - Added tests for all four direction codes and the corresponding right/left animation selection. Corrected the rightward expectation to code 2.
+
+
+## Resume update — 2026-11-27 (DEV-003U player-layer 48)
+
+### Implemented
+- Added `LegacyPlayerLayer48Snapshot`, an immutable carrier for source and destination player-layer samples and their named coordinates.
+- Reconstructed the metadata-bit-0x8 offset selection: destination pair offsets are (-1,0) when clear and (0,+1) when set.
+- Encoded target coordinates `(playerX+2*deltaX, playerY+2*deltaY)`, source coordinates `(playerX+deltaX, playerY+deltaY)`, and guard sample `(sourceX, sourceY+offsetB+1)`.
+- Added `LegacyPlayerLayer48Evaluator` for the counter/probe/direction/two-empty-destinations/nonnegative-guard acceptance gate.
+- Accepted non-probe pushes emit two destination writes, two source clears, metadata copy/update, animation-byte-18, and foreground-cache write intents. Probe acceptance suppresses every world write.
+- Rejected pushes preserve the incoming return flag and emit local direction-clear / movement-block intents when horizontal delta is non-zero.
+- Added `LegacyPlayerLayer48EvaluatorTest` for offset geometry, both directions, counter and probe gates, destination/guard blockers, and write suppression.
+- Added `DIRU-NA-DEV-003U_PLAYER_LAYER_48_PUSH.md`.
+
+### Source-specific note
+- The original source repeats the same foreground-cache assignment three times. The evaluator represents its final observable effect as one write intent; it does not preserve redundant write count.
+
+### Limits
+- Snapshot values are caller-sampled; no stage-array access, bounds checking, mutation executor, animation invocation, or GameSession integration is present.
+- Tests are synthetic. Run the existing Gradle core suite and Android build through the PR workflow before treating this milestone as verified.
+
+### Next
+DEV-003V: model player-layer -1 edge/door/nearby-door predicates with a named immutable snapshot. Then design a transactional intent applier shared by 0/8/9/47 and 48, with probe-mode no-mutation guarantees and replay fixtures.
