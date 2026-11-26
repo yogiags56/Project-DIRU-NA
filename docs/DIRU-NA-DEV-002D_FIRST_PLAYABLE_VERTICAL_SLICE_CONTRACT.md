@@ -126,3 +126,16 @@ First isolated core primitives have now been added:
 - Unit tests cover defensive copying, row-major reads, bounds, overflow/invalid layer sizes, interpolation sequence, active-move guard, invalid direction, and reset.
 
 Not implemented yet: GameSession owner, player logical state, collision gate, input-to-tick integration, immutable render projection, Android shell hookup, and end-to-end synthetic fixture. This is a foundation increment, not a playable milestone.
+
+
+## Implementation increment — DEV-002E GameSession foundation (2026-11-27)
+
+Added:
+- `PlayerMotionState`: immutable player position/direction/interpolation projection with consistency validation.
+- `GameplayRenderSnapshot`: immutable render-facing snapshot containing stage, player state, and simulation tick.
+- `GameSession`: platform-independent single-writer owner; captures owner thread, dispatches source-compatible input, rejects out-of-bounds moves before policy invocation, fails closed when collision policy is absent/unsupported, commits logical tile coordinate only after an injected ACCEPTED decision, and publishes immutable snapshots.
+- `GameSessionTest`: tests missing-policy fail-closed behavior, blocked no-mutation, accepted move + interpolation start, input suppression while interpolating, stage edge rejection, and owner-thread enforcement.
+
+Important limitation: the injected `MoveAcceptancePolicy` is an integration seam, not the original game's collision evaluator. The accepted-policy test uses a deterministic test double. Production collision semantics are still not implemented. Special movement, scripted displacement, object pushing, contextual interaction, animation, camera, and Android rendering are outside this increment.
+
+This is a single-writer gameplay foundation, not a first playable milestone. The stage model is immutable and the session currently owns only player logical motion state; it does not mutate any of the stage's source layers.
