@@ -941,3 +941,23 @@ DEV-003W: reconcile all evaluator outputs with the original method's final state
 
 ### Next
 DEV-003W2: add typed local-player and presentation/cache intents; then implement a preflight validator against a mutable owner-thread stage model, followed by an all-or-nothing applier and tests. Re-run the full CI pipeline before integrating with GameSession.
+
+
+## Resume update — 2026-11-27 (DEV-003W2 state intents and preflight)
+
+### CI baseline
+- Verified workflow run #455 for prior checkpoint `01e2270017fb511176cc5832b21a66d27828f9c3`: completed successfully. Core JVM tests, Android storage unit tests, and Android debug APK assembly all passed. This is a baseline for that exact commit, not for the new W2 commits.
+
+### Implemented
+- Added `LegacyCollisionStateIntent` with validated PLAYER, ANIMATION, MOVEMENT_FLAGS, and coordinate-scoped FOREGROUND_CACHE fields.
+- Extended `LegacyCollisionMutationPlan` to carry immutable grid and state intent lists; probe mode rejects both; duplicate destinations are rejected.
+- Added `LegacyCollisionMutationTarget` owner-thread adapter contract with grid/state reads and a single atomic commit method.
+- Added `LegacyCollisionMutationApplier` to preflight owner-thread, bounds, and expected values before invoking exactly one atomic commit; probe is a no-op.
+- Added tests for state-channel validation, probe state-write rejection, duplicate state writes, out-of-bounds cells, stale grid/state values, owner-thread rejection, commit rejection, and one commit invocation.
+- Added `DIRU-NA-DEV-003W2_STATE_INTENTS_AND_PREFLIGHT.md`.
+
+### Atomicity caveat
+- Production atomicity is NOT implemented. It is a mandatory contract on `LegacyCollisionMutationTarget.commitAtomically`; current tests use a recording fake only. Existing `StageGrid` is immutable and `GameSession` has no production collision transaction adapter.
+
+### Next
+DEV-003W3: implement a production owner-backed mutable stage/state store with copy-on-write transaction commit (validate all intents, clone affected layers/state, apply to clones, swap one immutable state root), then test rollback/no partial visibility and owner-thread enforcement. Only after that map evaluator decisions into plans and integrate with GameSession.
