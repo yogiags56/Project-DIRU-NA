@@ -891,3 +891,23 @@ DEV-003U: model player-layer 48's separate two-cell push using an immutable snap
 
 ### Next
 DEV-003V: model player-layer -1 edge/door/nearby-door predicates with a named immutable snapshot. Then design a transactional intent applier shared by 0/8/9/47 and 48, with probe-mode no-mutation guarantees and replay fixtures.
+
+
+## Resume update — 2026-11-27 (DEV-003V player-layer -1)
+
+### Implemented
+- Added immutable `LegacyPlayerLayerMinusOneSnapshot` with explicit target, near-below, above, and below coordinates and caller-supplied samples.
+- Added `LegacyPlayerLayerMinusOneEvaluator` for outer-stage-edge blocking and the three source door/neighbor exceptions.
+- Preserved distinct door rules: counter A >= 24 requires player-layer 28 with metadata bit 0x8 clear; counter B >= 24 accepts player-layer 28 without that metadata test.
+- Preserved horizontal near-below rule: deltaX non-zero, sampled player-layer 0, metadata low bits exactly 3.
+- Probe mode suppresses every interior exception. Movement-block bit 0x8 is cleared in all -1 paths.
+- Added synthetic unit tests for all edges, exact near-below conditions, both door-counter rules, and probe suppression.
+- Added `DIRU-NA-DEV-003V_PLAYER_LAYER_MINUS_ONE.md`.
+
+### Limits
+- Snapshot sampling is caller-owned; no bounds-safe array sampler or world mutation executor is connected.
+- The original method's incoming return flag is false at this switch branch; evaluator keeps it explicit for reuse.
+- CI and recorded gameplay replay remain necessary.
+
+### Next
+DEV-003W: reconcile all evaluator outputs with the original method's final state-commit section; define one transactional intent format and ensure probe calls never mutate player, stage, metadata, animation, or cache state. Then add replay fixtures and integrate with GameSession.
