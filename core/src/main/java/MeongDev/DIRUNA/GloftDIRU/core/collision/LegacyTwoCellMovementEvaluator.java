@@ -106,7 +106,7 @@ public final class LegacyTwoCellMovementEvaluator {
                 snapshot.getTargetForegroundSignedHighByte(),
                 snapshot.getAdjacentPlayerLayer(),
                 snapshot.getAdjacentForeground() & 0xFF,
-                snapshot.getMovementStateBits(),
+                snapshot.getResolvedMovementStateBits(),
                 snapshot.getIncomingReturnFlag());
     }
 
