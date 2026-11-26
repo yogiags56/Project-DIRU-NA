@@ -450,3 +450,10 @@ Do not merge overload semantics by name. See Source Trace §31 for observed cont
 Full bodies of `amVoid()`, `anVoid()`, and `aqVoid()` were inspected through their closing braces. `amVoid` is a direction/substate transfer controller; `anVoid` is a directional neighbor controller that distinguishes current scheduler 24 from target scheduler 30; `aqVoid` is a composite object interaction/transfer controller that can increment pickup/progression state, decrement remaining-object count, transfer occupancy/metadata/progress, mutate foreground, and reconcile derived high metadata flags.
 
 These methods must be modeled as atomic multi-grid transitions, not isolated counter or animation callbacks. See Source Trace §32 for detailed control-flow observations and snapshot implications. The two-coordinate overload families and complete caller inventories remain open; no final snapshot schema is approved.
+
+
+## 38. Caller and overload contract cross-check — 2026-11-27
+
+Exact caller inventory confirms `amVoid()` is dispatched for player-layer code 11, `anVoid()` for code 32, and `aqVoid()` for codes 47/1/0/9/8. The coordinate overloads have separate responsibilities: `dVoid(int,int)` is a player-layer cleanup/paired-cell helper called by stage transition and cleanup scans; `lVoid(int,int)` selects an optional-mode adjacent packed cell and sets xByte=5; `mVoid(int,int)` performs coordinate lookup in the secondary packed-record table and is called by initial foreground-19 activation and optional-mode queue processing.
+
+The outer caller often continues writing occupancy, scheduler, counters, or invokes another helper after a callee returns. Therefore snapshot atomicity must cover the full dispatch/caller branch and nested calls, not just individual helper bodies. See Source Trace §33 for direct caller sites and exact contexts.
