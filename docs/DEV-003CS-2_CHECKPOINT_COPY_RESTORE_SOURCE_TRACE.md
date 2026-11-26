@@ -1287,3 +1287,66 @@ Native mutation APIs should therefore perform multi-grid changes as one game-own
 3. Decode `bByteArrArr` values by object family with golden vectors.
 4. Build descriptor-aware `bIntArrArr` accessor map and identify true overlapping unions.
 5. Test restore reconstruction against a captured gameplay state over multiple ticks; keep physical/runtime validation distinct from static source evidence.
+
+
+## 28. Scheduler writer inventory and cadence evidence — 2026-11-26
+
+Pinned source: `i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+
+### 28.1 Writer families
+
+A full textual occurrence scan found direct `cByteArrArr` assignments at the following source regions. This is a writer inventory, not yet a complete semantic proof of every caller or stage-specific branch.
+
+| Source region | Value | Context established |
+|---|---:|---|
+| 3504 | 0 | Runtime grid initialization |
+| 3657 | 127 | Background-layer normalizer case 3; special stage cell |
+| 3741 | 48 | Player-layer code 47 normalization |
+| 3748, 3755, 3760 | 24 | Player-layer codes 46, 45, 44 initialization |
+| 3876 | 48 | Player-layer code 11 initialization |
+| 3973, 3980 | 48 | Player-layer codes 0/1 initialization |
+| 4049 | 24 | Foreground code 7 special neighboring-cell setup |
+| 789 | 24 | Player current-cell interaction path |
+| 8650, 9895–9913 | 24 | World/stage-specific event and scripted object placement |
+| 10470, 10731 | 24/30 | Interaction and directional player movement setup |
+| 11051, 11091 | 24 | Door/lock state transitions |
+| 12367–12369, 14283–14285, 14755, 15179–15187 | 48 | Multi-cell object/mechanism scheduling; includes 3×3 `kVoid` |
+| 12861–15679 and 16716 | 24/30 | Object update, animation, door, mechanism, packed optional-mode record mutations |
+| 13128 | 0 | Explicit scheduler cancellation/reset in an object transition |
+| 15895–15896 | 24 | Optional packed-cell mutation schedules the edited cell and its adjacent cell |
+
+The source also creates local row aliases for reads; direct assignments are visible above. The inventory does not infer semantics solely from the numeric value.
+
+### 28.2 Value 127 is not proven to be a 127-tick timer
+
+The only directly established initialization site is normalizer case 3 (3657), where the scheduler byte is set to 127. Because `ahVoid()` subtracts 6 on each eligible update, a positive 127 would follow the arithmetic sequence 127, 121, 115, ... until it reaches 1 and then -5, if it remains eligible and no handler overwrites it. However, the cell's foreground low byte and handler may change the value or other grids during that sequence. Do not encode 127 as a fixed timer duration or assume the cell survives all passes.
+
+### 28.3 Value 24/30/48 are scheduling requests, not universal durations
+
+- 24 is written by many interaction and mutation helpers to schedule an affected cell.
+- 30 is explicitly written in movement/interaction paths (e.g. 10731, 15035, 15603); it is not interchangeable with 24.
+- 48 is written for selected initialized objects and multi-cell neighborhoods. `kVoid` writes 48 to all nine positions around a coordinate without local bounds checks.
+- The scheduler scan is player-centered, clipped to x/y interior range [1, width-2] and [1, height-2], with nominal radius 8. It excludes one selected cell when `biInt` matches its coordinate.
+- A cell's counter is decremented by 6 before the foreground-code switch dispatch. The handler can then overwrite the counter, clear it to zero, mutate other grids, or move the scheduled work.
+
+Therefore, a simplistic formula “value / 6 = exact number of updates” is not generally valid.
+
+### 28.4 Scheduler and authoritative-grid coupling
+
+Examples from the source:
+- Player movement creates occupancy code 32, sets `bByteArrArr=18`, writes packed `bIntArrArr=4|direction`, and schedules `cByteArrArr=30` (10724–10732).
+- Optional object movement can set target metadata, scheduler 30, and progress byte 18 together (15023–15037).
+- Door/lock interactions schedule 24 while modifying foreground and connected mechanism metadata.
+- Optional packed-cell accessors schedule the edited cell and, for one setter, its adjacent cell (15890–15897).
+- Scheduler 48 may be written to a 3×3 region, but bounds safety relies on call-site coordinate constraints not yet exhaustively proven.
+
+These examples reinforce that scheduler updates are transient side effects of authoritative multi-grid transitions.
+
+### 28.5 Native implementation requirements and open risks
+
+1. Keep scheduler state out of the durable snapshot schema, matching source capture/restore.
+2. Rebuild scheduler from restored authoritative state using the original restore scan and neighborhood semantics.
+3. Do not convert values 24/30/48/127 to a single enum or timer duration until per-handler behavior is characterized.
+4. Implement bounds-safe neighborhood scheduling, but first prove or reproduce the source's valid call-site coordinate constraints; do not silently clip in a way that changes intended semantics.
+5. Golden tests should include: 24 and 30 overwritten before/after decrement; 48 neighborhood scheduling; 127 signed-byte countdown; explicit zero cancellation; skipped current cell; edge coordinates; and handlers that reschedule themselves.
+6. Mid-tick snapshot/replay equivalence remains unproven; capture must be on a defined game-owner tick boundary or use an immutable consistent view.
