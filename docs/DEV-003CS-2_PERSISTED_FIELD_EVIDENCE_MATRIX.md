@@ -490,3 +490,10 @@ Correction/refinement to §41: `hashtable2` and `hashtable3` are local tables cr
 No writes to `lByteArr` occur after stage-load population in the pinned class. It is read by `texts[lByteArr[cmInt]]` for a door dialog and nulled at stage teardown. Therefore it is stage/mode-derived lookup metadata, reconstructible on stage load and not part of mutable checkpoint payload, conditional on same stage/mode identity. `mByteArr` remains mutable and directly checkpointed alongside `cmInt`.
 
 Exact binary record/field that initially populates the background-layer group ID has not yet been identified; current proof starts from decoded stage grids. See Source Trace §37.
+
+
+## 43. Binary stage layer format identified; group-ID range still open — 2026-11-27
+
+Source trace §38 identifies each world resource (`/w0.bin`, `/w1.bin`, `/w2.bin`) as a sequence with a leading byte, one-byte stage count, then per-stage 4-byte little-endian unsigned width/height header and three row-major byte layers (player, background, foreground), each width×height. The selected stage maps flat index `x + y*width` into `grid[x][y]`. Background bytes are widened as signed Java bytes into `bIntArrArr`; original checkpoint copies that int grid.
+
+Critical unresolved: door-group builder uses `1 << background` with a 32-bit signed int mask and only checks background >= 0. Java masks shift distances modulo 32, so values >=32 alias. Actual resource enumeration is required to prove valid group IDs and maximum dimensions. Source loader also ignores short-read counts and skip counts; Native parser must use checked read-fully/seek semantics and bounded dimensions.
