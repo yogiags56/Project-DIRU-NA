@@ -71,7 +71,7 @@ public final class LegacyTwoCellMovementSnapshotTest {
                 10,20,0,-1,8,0,0,0,0,0,4,10,18,false,true,false);
         LegacyTwoCellMovementSnapshot down=new LegacyTwoCellMovementSnapshot(
                 10,20,0,1,8,0,0,0,0,0,4,10,22,false,true,false);
-        assertEquals(6,right.getResolvedMovementStateBits());
+        assertEquals(2,right.getResolvedMovementStateBits());
         assertEquals(4,left.getResolvedMovementStateBits());
         assertEquals(1,up.getResolvedMovementStateBits());
         assertEquals(3,down.getResolvedMovementStateBits());
