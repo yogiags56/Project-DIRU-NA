@@ -444,3 +444,22 @@ Static source analysis only. No Native gameplay code/tests added. PR #1 remains 
 - Run #350 completed successfully for commit `adf0c50f383b5d28ad3227a012419b0a4f8ad8d4`; Run #349 also succeeded for the preceding documented snapshot. The new helper documentation commit and checkpoint update still require a clean CI run.
 - Earlier Run #348 did reach `:app:testDebugUnitTest`: 22 tests completed, 2 AndroidCheckpointStorageTest cases failed with an IOException surfaced via MavenArtifactFetcher.java:129. Run #351 provides a separate, explicit Maven Central 429 cause for its own dependency-resolution failure; do not conflate the two runs.
 - Current branch HEAD at this checkpoint update is `7382aabcfca1f5c68408553c44cb9125c907ce70`. No code changes or merge actions were performed.
+
+
+## Resume update — 2026-11-27 (complete selected helper bodies)
+
+### Work completed
+- Inspected full `amVoid()` body: metadata substate 8–11, direction/polarity mapping, three-candidate neighbor selection, occupancy/metadata/progress transfer, kVoid scheduling, collision damage, progress decrement by 5.
+- Inspected full `anVoid()` body: directional x-neighbor selection, packed counter decrement, target scheduler 30 vs current scheduler 24, target progress 18, occupancy eligibility, code-32 cleanup scan, final neighborhood scheduling.
+- Inspected full `aqVoid()` body through closing brace: optional-mode target side, objective/pickup counters, `aaInt` decrement, occupancy transfer, foreground mutation, progress thresholds, high metadata flag reconciliation through bVoid/cVoid, cyclic 3-bit substate.
+- Clarified `aqVoid()` is not simply a pickup handler; it is a composite interaction/transfer controller with objective and derived-state side effects.
+- Added Source Trace §32 and Evidence Matrix §37.
+
+### Next
+1. Continue full caller inventories for `amVoid()`, `anVoid()`, and `aqVoid()`; capture the caller context and preconditions for every invocation.
+2. Trace `dVoid(int,int)`, `lVoid(int,int)`, and `mVoid(int,int)` by exact descriptor, plus all other overloaded helper signatures.
+3. Build transition tables and golden vectors for objective count, derived high flags, optional-mode cell, and neighbor movement.
+4. Complete full foreground dispatch and neighbor bounds proof.
+5. Keep CS-2 open; no production snapshot provider until a real Native gameplay owner and validated schema exist.
+
+Static-source analysis only. No Native runtime code/tests added. PR #1 remains unmerged absent explicit approval.
