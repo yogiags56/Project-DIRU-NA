@@ -1830,3 +1830,17 @@ The original checkpoint copies `bIntArrArr` (int background grid) but not `bByte
 4. Verify resource header and stage-count byte semantics.
 5. Build parser tests for truncated header, short layer reads, short skip, overflow, negative/signed group values, and every real stage.
 6. Keep CS-2 open; static source format is now identified, but resource-level validation is not complete.
+
+
+## 39. Reconciliation with completed AUDIT-029 binary inventory — 2026-11-27
+
+Important scope correction: the actual three world binary resources have already been decoded and fully inventoried in DIRU-NA-AUDIT-029. Do not repeat the whole-file extraction as an open task. Existing evidence establishes:
+- `w0.bin`: 14 stages, 47,686 bytes, exact consumption.
+- `w1.bin`: 13 stages, 46,956 bytes, exact consumption.
+- `w2.bin`: 14 stages, 56,887 bytes, exact consumption.
+- 41 stage records, dimensions, layer sizes, and no trailing bytes are documented.
+- Largest stage is 30×75; widest is 104×17.
+
+The remaining group-ID question is narrower: enumerate the actual background-layer byte values at foreground-code-17 coordinates, apply Java signed-byte widening, and compare the resulting nonnegative group IDs with the 32-bit mask operation `1 << background`. The GitHub text-fetch interface rejects raw .bin resources as non-UTF-8; no binary bytes were available through that interface in this session. The existing AUDIT-029 inventory remains valid for dimensions and file boundaries, but it does not provide this targeted value histogram. Obtain the bytes through an approved binary-capable file route or a locally supplied legally usable audit copy; do not claim the group range has been proven yet.
+
+This narrows rather than reopens the completed stage-stream parser inventory. See `DIRU-NA-AUDIT-029_WORLD_STAGE_STREAM_BINARY_INVENTORY.md`.
