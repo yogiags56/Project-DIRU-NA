@@ -94,3 +94,38 @@ Before a production executor is allowed:
 ## Current milestone
 
 W9.1 is documentation/evidence only. No production preprocessing algorithm, collision activation or GameSession wiring is introduced. Next slice: finish Pass B player-object record trace and enumerate the remaining Pass A foreground switch before writing deterministic transformation code.
+
+
+## W9.2 — Pass B player-object records and helper semantics
+
+Further inspection of the same pinned source resolves the previously open Pass B player switch:
+
+### Player-layer Pass B cases
+- **48 (multi-cell / special object):** only processed when `bIntArrArr[x][y] & 0x8` is nonzero. It derives a candidate x coordinate from the current x and the direction bit stored in the cell below (`bIntArrArr[x][y+1] & 0x10`). It calls `dInt(candidateX,y)`; when the returned object code is nonnegative, it writes a three-byte record to `eByteArr`: candidate x, candidate x, current y. Otherwise the third byte is -1. It stores the record index in the high byte of the current background cell and increments the record counter.
+- **26, 42, 24, 27, 40:** append one-byte type tags to `pByteArr`, respectively 25, 11, 22, 23, 24. These tags are a separate player-object table, not foreground group IDs.
+- The `array8` write occurs after the switch. For player values outside those cases, the decompiled control flow must be checked carefully before assuming a null-safe default; the source's surrounding labels/continues determine whether the write is reached.
+
+### Exact helper semantics
+- `dInt(x,y)` is a classifier over the player layer at the candidate coordinate:
+  - negative player-layer value => -1
+  - code 1 => 34
+  - code 45 => 35
+  - codes 19 or 43 => 37
+  - code 46 => 36
+  - code 49 => 39
+  - all other values => -1
+  It does not mutate any grid.
+- `kVoid(x,y)` writes cByte value 48 to the complete 3×3 neighborhood centered at (x,y). It performs no bounds checks. Its caller (player code 48 preprocessing) first writes a new player marker at (x,y-1), then calls this helper; malformed edge placements can therefore throw.
+- `iVoid(x,y)` sets the low byte of the foreground cell to 14 while preserving the upper packed metadata bits, and sets feature bit `0x400000` in `cLong`. It is used as a normalization/effect helper from multiple player-code branches; it is not a generic object constructor.
+
+### Consequences for native model design
+- `eByteArr` is a packed sequence of three-byte records. A future typed adapter may expose a record object, but the binary-compatible encoding must remain explicit until all readers/writers and save semantics are traced.
+- The first two bytes in the code-48 record are intentionally equal in this branch. Do not "correct" one to y or infer a second coordinate.
+- `kVoid` requires a one-cell border around every call site for a 3×3 write. Preserve source exception behavior or reject malformed stage geometry before preprocessing; never clamp the neighborhood.
+- The classifier `dInt` is safe to implement as a pure helper with table-driven tests, but it is not wired into production preprocessing yet.
+
+### Remaining gates
+- Trace the exact Pass B loop labels and the post-switch `array8` write reachability for every player-layer value.
+- Trace all readers of `eByteArr` and `pByteArr`, plus checkpoint capture/restore.
+- Complete Pass A foreground switch inventory and all helper call preconditions.
+- No production executor or runtime integration is authorized by this evidence update.
