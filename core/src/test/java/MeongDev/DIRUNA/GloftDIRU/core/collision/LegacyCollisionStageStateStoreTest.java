@@ -120,4 +120,37 @@ public final class LegacyCollisionStageStateStoreTest {
         } catch(IllegalArgumentException expected) { }
     }
 
+    @Test public void importsAndAtomicallyUpdatesRawByteStateGrids() {
+        byte[] b={1,2,3,4}, c={24,48,0,127};
+        LegacyCollisionStageStateSeed seed=new LegacyCollisionStageStateSeed(
+                stage(),new int[4],new int[4],new int[4],b,c,
+                0,0,0,0,0,0,0,0);
+        b[0]=99;c[1]=99;
+        LegacyCollisionStageStateStore store=new LegacyCollisionStageStateStore(seed);
+        assertEquals(1,store.bByteAt(0,0));
+        assertEquals(48,store.cByteAt(1,0));
+        LegacyCollisionMutationPlan plan=LegacyCollisionMutationPlan.builder(false)
+                .addState(LegacyCollisionStateIntent.cell(
+                        LegacyCollisionStateIntent.Channel.B_BYTE_STATE,
+                        LegacyCollisionStateIntent.Field.BYTE_VALUE,0,0,1,30))
+                .addState(LegacyCollisionStateIntent.cell(
+                        LegacyCollisionStateIntent.Channel.C_BYTE_STATE,
+                        LegacyCollisionStateIntent.Field.BYTE_VALUE,1,0,48,24))
+                .build();
+        assertEquals(LegacyCollisionMutationApplier.Result.APPLIED,
+                LegacyCollisionMutationApplier.apply(plan,store));
+        assertEquals(30,store.bByteAt(0,0));
+        assertEquals(24,store.cByteAt(1,0));
+        assertEquals(1,store.byteStateSnapshot().bByteAt(0,0));
+    }
+
+    @Test public void signedByteExpectedValueIsPreserved() {
+        byte[] b={-1,0,0,0}, c={0,0,0,0};
+        LegacyCollisionStageStateStore store=new LegacyCollisionStageStateStore(
+                new LegacyCollisionStageStateSeed(stage(),new int[4],new int[4],new int[4],
+                        b,c,0,0,0,0,0,0,0,0));
+        assertEquals(-1,store.readState(LegacyCollisionStateIntent.Channel.B_BYTE_STATE,
+                LegacyCollisionStateIntent.Field.BYTE_VALUE,true,0,0));
+    }
+
 }
