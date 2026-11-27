@@ -225,3 +225,16 @@ It stops at the first other occupant or the source-defined edge. The new `Moving
 **Important:** legacy `VVoid()` does more than endpoint recalculation. For every cell in the inclusive span it calls `aBoolean(x,y)`. If `dInt` recognizes the occupant, that helper calls `kVoid`, changes the player-layer code to 9, rewrites packed background metadata (including the special snake-43 flag), and calls `cVoid(x,y,1)`. It can also hurt the hero when collision/animation preconditions hold. These gameplay side effects are deliberately not performed by the pure updater and remain a separate transaction milestone.
 
 Synthetic tests cover endpoint movement, traversable/blocked cells, inactive sentinels, invalid row/endpoints, and signed-byte dimension limits. Full-source golden vectors and the per-cell gameplay mutation transaction remain open.
+
+## 14. Detached interaction mutation plan (DEV-003CS-3E)
+
+The recognized-occupant portion of legacy `aBoolean(x,y)` is now represented as an immutable plan, not immediately applied to live stage state. For each recognized occupant inside an active span's inclusive interval, the plan records:
+
+1. player-layer replacement with code 9;
+2. packed background metadata update using `(old & 0xF03FFFFF) | (dInt << 22) | snake43Flag`, where the additional `0x10000000` flag is used only for code 43;
+3. the nine `cByteArrArr` marker writes of value 48 in the centered 3×3 region, matching `kVoid(x,y)`;
+4. the `cVoid(x,y,1)` interaction-queue event.
+
+The planner validates the active span interval and requires the full 3×3 marker region to be inside the stage. It does not mutate the source `StageGrid`.
+
+**Explicit exclusions:** the legacy hero-overlap damage branch in `aBoolean` depends on player position, cooldown, animation selection, and sprite animation state. The ring-buffer mechanics behind `cVoid` also depend on its live queue index. Neither is executed by this detached plan. A later transaction layer must apply cell changes, marker writes, and queue events atomically and separately model collision damage with the correct gameplay context.
