@@ -1288,3 +1288,43 @@ DEV-003W9.4: trace all call sites and lifecycle timing for `VVoid`, `EVoid`, `aB
 
 ### Next
 DEV-003W9.5: trace `jVoid`, `cVoid`, `aByte` and all coordinate/bounds preconditions; then define a source-derived fixture schema for multi-object restore. Do not wire collision/gameplay until helper semantics and fixtures are complete.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.5 helper/bounds audit)
+
+### Source identity
+- Static source: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Rechecked exact helper declarations and call sites for jVoid, cVoid and aByte.
+
+### Important disambiguation
+- `jVoid()` and `jVoid(x,y)` are unrelated overloads. Coordinate overload sets foreground metadata bit 0x10000000 and calls alVoid().
+- `cVoid(boolean)` is unrelated to `cVoid(x,y,type)`. The three-argument overload enqueues an event into an eight-entry ring using aByteArr (x/y), cByteArr (type), bByteArr (reset state), cursor aeInt and mask 7.
+- `aByte(worldIndex,stageIndex)` is an unrelated stage-record accessor. The four-argument static aByte(x,direction,bound,row) expands special-object endpoints.
+
+### Endpoint expansion
+- Starts at x+direction; applies asymmetric boundary checks; accepts empty player-layer cells, code 31, or cells recognized by dInt.
+- Continues along direction while the loop condition accepts the next cell, returns last accepted X narrowed to byte.
+- VVoid uses left direction -1/bound 0 and right direction +1/bound width-1, stores endpoints, then calls mutating aBoolean for every inclusive X.
+- Do not replace with conventional clamping or flood-fill.
+
+### cVoid event ring
+- Stores X/Y byte values in aByteArr at aeInt*2.
+- Stores event type in cByteArr[aeInt].
+- Resets bByteArr[aeInt] to zero.
+- Advances cursor with (aeInt + 1) & 7.
+- This is distinct from kVoid's cByte neighborhood write.
+
+### Implemented
+- Added `docs/DIRU-NA-DEV-003W9-HELPER_BOUNDS_AUDIT.md`.
+- Commit: `8b5d9fac09abcf02093f0dde4ca12f1192a87bab`.
+- No production code or runtime integration added.
+
+### Remaining gates
+- Trace event-ring consumers and alVoid side effects.
+- Prove stage border invariants from source stage data.
+- Test byte narrowing around signed-byte limits.
+- Add endpoint fixtures and event ring wraparound/overwrite fixtures.
+- Keep all similarly named overloads separate in native naming.
+
+### Next
+DEV-003W9.6: trace the event-ring consumer, alVoid side effects and exact coordinate bounds/asset border assumptions. Then write deterministic pure helper tests for ring wraparound and endpoint expansion; do not activate collision/gameplay before these pass.
