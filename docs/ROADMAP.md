@@ -717,6 +717,9 @@ Project-owner approval is required before treating this proposal as the official
 - [x] Implement bounded inner `demo.f` tagged-chunk reader with first-match compatibility
 - [x] Implement bounded `demoSpr.bin` reader with duplicate/missing-ID handling
 - [x] Add synthetic malformed-input, ordering, and defensive-copy tests
+- [x] Parse selected payload sprite-ID header with signed-short index validation
+- [x] Preserve script-record tail as opaque bounded bytes
+- [x] Add synthetic tests for count, IDs, duplicates, ordering, truncation, and immutability
 - [ ] Validate core tests and Android build in GitHub Actions
 
-**Status:** Parser implementation and synthetic tests committed; CI verification is pending. Outer resource-directory parsing, sprite-ID header decoding, script records, interpreter execution, shared sprite cache ownership, and gameplay integration remain deferred.
+**Status:** Inner archive readers and selected-payload header reader committed; CI verification is pending. Outer resource-directory parsing, script-record decoding, interpreter execution, shared sprite cache ownership, and gameplay integration remain deferred.
