@@ -1450,3 +1450,38 @@ Close DEV-003W9 with a source coverage matrix and readiness review. List unresol
 
 ### Next
 DEV-003W10.2: trace `iVoid(x,y)` and all object/entity allocation paths invoked by stage preprocessing; establish slot counts, constructor selection, packed metadata, per-cell ownership and lifecycle. Do not implement object runtime until allocation/lifecycle invariants are established.
+
+
+## Resume update — 2026-11-27 (DEV-003W10.2 script/demo slot audit)
+
+### CI baseline
+- PR #1 head before this audit: `414b223ebe8847fcd453075de36fd9a2a53dd47e`.
+- Run #584 / ID `45956367664` completed with conclusion `success`.
+- PR #1 remains open, draft, mergeable, base `main`.
+- Latest audit commits still require their own workflow run.
+
+### Important correction
+- W10.1 incorrectly described `iVoid(x,y)` calls as object initializer calls.
+- Exact overload `iVoid(int,int)` only sets feature bit `0x400000` and rewrites the foreground low byte to `0x0E), preserving packed high bits.
+- It is not the no-argument `iVoid()` UI/seal-arrow method and is not a script-object allocator.
+- Player codes 40/42/6/24/27 call this foreground-normalization helper; they do not directly allocate a `c` script object.
+
+### DEV-003W10.2 completed
+- Audited `i.java` and `c.java` at pinned source revision `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Added `docs/DEV-003W10-2_STAGE_SCRIPT_OBJECT_SLOT_AND_DEMO_RECORD_AUDIT.md`.
+- Commit: `5118b63e7e81850c335da8c47df6c7df732dc7be`.
+- Documentation/source audit only; no runtime parser/interpreter added.
+
+### Findings
+- `aClasscArr` and `pByteArr` are parallel stage-scoped script/demo slot and tag arrays, sized by preprocessing counters.
+- pByteArr tags are appended from foreground codes 0/30 and player-layer codes 26,42,24,27,40 with respective tags (foreground packed high value; 25,11,22,23,24).
+- Second population scan is Y-major then X-minor, distinct from first mutation pass's X-major then Y-minor.
+- `c` is a demo/script record interpreter, not a generic physics entity.
+- `c.aVoid(int tag)` selects a demo.f chunk, loads required sprites from demoSpr.bin into a shared sprite cache, and parses bytecode-like records including nested groups.
+- Resource loading constructs `c` instances in the slot table and calls `aVoid(pByteArr[index])`; this is resource-loading flow, not direct allocation from the tile cases above.
+- `kVoid(tag)` scans tags linearly; duplicate tags select the last matching slot.
+- Script byte buffers are per-instance; sprite cache is shared; teardown frees per-slot script objects.
+- Native parser must preserve record namespaces, nested length boundaries, last-match-wins tag selection and surface malformed/truncated data as diagnostics.
+
+### Next
+DEV-003W10.3: trace demo.f/demoSpr.bin resource format and script execution lifecycle (tick/update ordering, termination, nested buffer selection, rendering vs update, shared sprite-cache ownership). Define bounded native parser contract and binary fixtures before implementation.
