@@ -1189,3 +1189,32 @@ DEV-003W9: build a branch-by-branch source evidence table for the complete step-
 
 ### Next
 DEV-003W9.2: finish Pass B player-layer object switch and trace helpers/coordinate records, then complete remaining Pass A foreground switch inventory. Only after this can deterministic, source-derived transformation slices be implemented with tests.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.2 Pass B object records)
+
+### Source identity
+- Pinned static candidate: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Re-inspected Pass B player switch and helper definitions.
+
+### New evidence
+- Pass B player code 48 is conditional on background flag bit 0x8. It derives a candidate x from the cell below's 0x10 direction bit, classifies the player-layer value at (candidateX,y), and writes a three-byte eByteArr record. First two bytes are both candidateX in the inspected source; third byte is y or -1. It stores the record index in the high byte of the current background cell.
+- Player codes 26, 42, 24, 27, 40 append tags 25, 11, 22, 23, 24 respectively to pByteArr.
+- dInt(x,y) is a pure player-layer classifier: 1->34, 45->35, 19/43->37, 46->36, 49->39, otherwise -1.
+- kVoid(x,y) writes cByte=48 to a 3x3 neighborhood without bounds checks. Caller must provide a one-cell border; do not clamp.
+- iVoid(x,y) preserves foreground upper packed bits, replaces low byte with 14, and sets cLong bit 0x400000.
+
+### Implemented
+- Added `LegacyPlayerLayerClassifier.java`, a pure source-derived classifier.
+- Added `LegacyPlayerLayerClassifierTest.java` covering all mapped and unmapped codes.
+- Updated `DIRU-NA-DEV-003W9-STEP9_MUTATION_LEDGER.md` with Pass B player records, helper semantics, array encoding, and remaining evidence gates.
+- No production stage executor, collision activation or GameSession integration.
+
+### Cautions
+- Verify Pass B post-switch label reachability before assigning defaults to unknown player-layer values.
+- Trace every eByteArr/pByteArr reader and checkpoint path before changing their representation.
+- eByteArr's first two equal coordinates are preserved as observed; do not reinterpret.
+- Evidence is static decompiled source, not retail runtime proof.
+
+### Next
+DEV-003W9.3: trace all eByteArr/pByteArr readers and persistence behavior; finish Pass B control-flow reachability and remaining Pass A foreground switch. Then add exact binary/array-layout fixtures. Run CI and inspect PR head after the documentation/code commits.
