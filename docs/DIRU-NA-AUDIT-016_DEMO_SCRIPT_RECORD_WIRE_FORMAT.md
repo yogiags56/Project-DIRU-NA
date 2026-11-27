@@ -157,3 +157,8 @@ The helper overloads used by the pinned source write 16-bit and 32-bit values li
 `DemoScriptNormalizer` converts immutable decoded records into immutable-by-copy legacy byte arrays. It reconstructs opcode-specific layouts, sentinels, coordinate scaling, group offset tables, and the opcode 18 overlapping write. It has no interpreter, stage, sprite, or rendering side effects.
 
 Synthetic tests cover opcode 1 coordinate scaling and sentinels, opcode 2 variable text, opcode 18's legacy write quirk, opcode 27 payload layout, group length-table packing, signed-short variable-length rejection, and defensive copying. These are source-derived fixture expectations; they are not yet a comparison against a captured retail demo binary.
+
+
+## 12. CI validation note — 2026-11-27
+
+GitHub Actions run #639 reached successful checkout, JDK setup, Android SDK setup, package installation, and core main-source compilation. It failed during test-source compilation because the opcode-10 fixture initialized a Java `byte[]` with integer literal `255` without an explicit narrowing cast. The fixture now uses `(byte) 255` (commit `73260e0559e05c7820daf513a490b9bbb087d26a`). The run therefore provides no test-pass evidence and no Android APK build evidence; both remain pending verification on the corrected head.
