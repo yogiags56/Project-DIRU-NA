@@ -158,3 +158,25 @@ The pinned stage-preprocessing path provides additional evidence for the derived
 This confirms that `eByteArr` is a derived moving-object span/index structure consumed by rendering, runtime span updates, and collision/interaction checks. It is not an independent save payload. The exact meaning of every endpoint sentinel and every packed high-byte slot lifecycle still needs a full writer/consumer audit.
 
 **Native implication:** reconstruct `eByteArr` only after the authoritative player/background layers and packed slot metadata are restored. Keep its allocation count and three-byte record layout deterministic; validate slot index bounds, candidate coordinates, and endpoint sentinels before publication. Rendering must consume the derived records read-only.
+
+## 10. Span capacity and recognized-object predicate
+
+The stage-preprocessing pass resets `awInt = 0`. For each player-layer code-48 cell it:
+- sets the cell's background/property integer to 16 when its low three bits equal 4, otherwise sets it to 0;
+- increments `awInt`;
+- creates a second code-48 cell one row above, with background/property value 8;
+- writes the 3×3 `cByteArrArr` value-48 neighborhood around that upper cell.
+
+After this pass, `eByteArr` is allocated to exactly `awInt * 3` bytes. A later stage scan fills one three-byte record for each code-48 cell whose background/property bit 8 is set. The packed high byte of that cell's background/property value stores the record slot. This explains why the table is a fixed three-byte-per-preprocessed-object array rather than a growable list.
+
+The static predicate `dInt(x,y)` used while building the initial endpoint returns:
+- 34 for player-layer code 1 (violet gem);
+- 35 for code 45 (monkey);
+- 37 for codes 19 or 43 (snake variants);
+- 36 for code 46 (wasp);
+- 39 for code 49 (turtle);
+- -1 for empty/other values.
+
+Thus initial endpoint validity depends on a specific neighboring occupant set, not merely on array bounds. Keep this mapping source-derived and do not infer visual semantics beyond the source comments/call sites.
+
+**Remaining uncertainty:** the full slot identity and endpoint update lifecycle across all code-48 movement branches is not yet proven. In particular, do not assume slot order remains stable if objects are removed, split, or re-created; trace all writes to the packed high-byte slot index and all writes to `eByteArr` before choosing a Native stable-ID design.
