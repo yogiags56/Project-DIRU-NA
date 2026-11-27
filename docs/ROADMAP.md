@@ -942,3 +942,14 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Add golden fixtures from actual stage snapshots and full-source trace
 
 **Status:** Immutable transaction result implemented. No live gameplay-owner integration or hero-damage behavior is claimed. Latest source/test increment requires its own CI result.
+
+
+### DEV-003CS-3F CI correction — ring-buffer wrap expectation
+
+- [x] Inspect failed workflow #725 (run ID `46058777495`)
+- [x] Confirm all 493 core tests compiled and executed; one new transaction test failed
+- [x] Identify the fixture error: queue index 7 advances by `(7 + 1) & 7 = 0`, not 1
+- [x] Correct the expected next index to zero while retaining the event at slot 7
+- [ ] Verify the corrected current head with Core JVM tests, Android storage tests, and APK assembly
+
+**CI status:** Workflow #725 failed on a test expectation only. The implementation's ring-buffer wrap rule matches the source; the test assertion was wrong. Do not mark the new head green until its own CI completes.
