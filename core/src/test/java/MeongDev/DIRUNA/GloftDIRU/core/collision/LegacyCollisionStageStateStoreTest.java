@@ -129,6 +129,7 @@ public final class LegacyCollisionStageStateStoreTest {
         LegacyCollisionStageStateStore store=new LegacyCollisionStageStateStore(seed);
         assertEquals(1,store.bByteAt(0,0));
         assertEquals(48,store.cByteAt(1,0));
+        LegacyCollisionByteStateGrids beforeCommit=store.byteStateSnapshot();
         LegacyCollisionMutationPlan plan=LegacyCollisionMutationPlan.builder(false)
                 .addState(LegacyCollisionStateIntent.cell(
                         LegacyCollisionStateIntent.Channel.B_BYTE_STATE,
@@ -141,7 +142,8 @@ public final class LegacyCollisionStageStateStoreTest {
                 LegacyCollisionMutationApplier.apply(plan,store));
         assertEquals(30,store.bByteAt(0,0));
         assertEquals(24,store.cByteAt(1,0));
-        assertEquals(1,store.byteStateSnapshot().bByteAt(0,0));
+        assertEquals(1,beforeCommit.bByteAt(0,0));
+        assertEquals(30,store.byteStateSnapshot().bByteAt(0,0));
     }
 
     @Test public void signedByteExpectedValueIsPreserved() {
