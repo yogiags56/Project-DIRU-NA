@@ -238,3 +238,19 @@ The recognized-occupant portion of legacy `aBoolean(x,y)` is now represented as 
 The planner validates the active span interval and requires the full 3×3 marker region to be inside the stage. It does not mutate the source `StageGrid`.
 
 **Explicit exclusions:** the legacy hero-overlap damage branch in `aBoolean` depends on player position, cooldown, animation selection, and sprite animation state. The ring-buffer mechanics behind `cVoid` also depend on its live queue index. Neither is executed by this detached plan. A later transaction layer must apply cell changes, marker writes, and queue events atomically and separately model collision damage with the correct gameplay context.
+
+## 15. Atomic detached moving-span mutation transaction (DEV-003CS-3F)
+
+A transaction layer now applies the detached `MovingObjectSpanMutationPlan` to private copies and returns one immutable result containing the updated `StageGrid`, byte-valued marker layer, and interaction queue snapshot.
+
+Source-backed details:
+- The legacy interaction queue uses eight slots; its next index advances with `(index + 1) & 0x7`.
+- Each queue write stores x, y, and type as bytes and resets the corresponding status byte to zero.
+- The marker grid is byte-valued, matching the legacy `cByteArrArr` representation.
+- Cell mutations carry expected player/background values. All cell preconditions and all marker/event bounds are checked before any result is published.
+- The planner now simulates sequential player-layer mutation across overlapping spans, so a recognized object converted to code 9 by an earlier span is not enqueued a second time by a later overlapping span.
+- Stage dimensions above 128 are rejected at both planning and application boundaries because span/queue coordinates are signed bytes.
+
+Synthetic tests cover sequential overlap, queue wraparound, cell/marker/queue publication, stale-precondition rejection, and preservation of caller-owned input state.
+
+**Boundary:** this is an immutable transaction result, not yet a live GameSession integration. Hero collision/damage still needs explicit player position, cooldown, animator state, and a source-derived decision model. Runtime queue consumption and stage-owner publication also remain open.
