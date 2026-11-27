@@ -1421,3 +1421,32 @@ DEV-003W9.8: audit cnInt, oByteArr, lByteArr writers and checkpoint capture orde
 
 ### Next
 Close DEV-003W9 with a source coverage matrix and readiness review. List unresolved evidence gaps, define the smallest deterministic native implementation slice and tests. Keep GroupCountdownState mutable and GroupTextIndexTable immutable/separate; preserve signed-byte semantics and capture/restore ordering.
+
+
+## Resume update — 2026-11-27 (DEV-003W10.1 stage preprocessing mutation ledger)
+
+### CI / repository baseline verified
+- PR #1 head branch: `dev-003cr-snapshot-provider-boundary`, head commit at baseline `a47cf3af4d2a070b913b120672b0e906a9808ab5`; PR open, draft, mergeable, base `main`.
+- Run #580 / ID `45955656194` for that head completed successfully.
+- Job `Core JVM tests and Android debug build` passed all steps: checkout, JDK 17, Android SDK, SDK packages, core JVM tests, Android storage tests, debug APK assembly, and APK upload.
+- This is a verified success for the checked head. Later commits still require their own CI run before claiming green.
+
+### DEV-003W10.1 completed
+- Read full stage initialization step 9 from pinned source `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Added `docs/DEV-003W10-1_STAGE_PREPROCESSING_MUTATION_LEDGER.md`.
+- Commit: `c30a31045760c7c2a0e9d2a511f2648526d6ee65`.
+- Documentation/source audit only; no production code or assets changed.
+
+### Main source findings
+- Preprocessing loops X-major then Y-minor.
+- At each cell, bByte/cByte state are zeroed, then foreground switch executes, then player/object switch executes using a captured local signed byte read before foreground mutations.
+- Several deliberate Java switch fall-through chains are material: foreground 31→19, 8→9, 30→1/26; player 35→31/33, 6→7→0, 7→0, 26→24/27, 8→4→5→2→0, and 1→53/51/52.
+- Foreground code 17 builds group counts and text metadata through hashtable2/3; group arrays are materialized after scan from highest group bit.
+- Foreground code 7 writes door coordinate arrays indexed by background value; native code needs validated bounds, with malformed input behavior explicitly decided rather than silently clamped.
+- Player code 79 is the explicit spawn marker in this pass; clears marker and mutates player/camera-related coordinates.
+- Multiple player-layer cases initialize independent background runtime, bByte, cByte, feature masks, and object initialization calls. Do not collapse into a single tile enum.
+- Java signed byte semantics and exact scan order are parity requirements.
+- Calls to fBoolean, aBoolean, iVoid and special world configuration remain dependencies and must be traced before deterministic end-to-end fixture assertions.
+
+### Next
+DEV-003W10.2: trace `iVoid(x,y)` and all object/entity allocation paths invoked by stage preprocessing; establish slot counts, constructor selection, packed metadata, per-cell ownership and lifecycle. Do not implement object runtime until allocation/lifecycle invariants are established.
