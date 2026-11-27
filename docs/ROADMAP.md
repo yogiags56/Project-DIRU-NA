@@ -713,9 +713,10 @@ Project-owner approval is required before treating this proposal as the official
 - [x] Define bounded `demoSpr.bin` sprite-archive reader contract
 - [x] Specify fail-closed parse outcomes and overflow-safe bounds rules
 - [x] Define synthetic binary fixture matrix and parser ownership boundary
-- [ ] Verify exact source byte order and signedness for every archive field before implementation
-- [ ] Implement bounded archive readers and deterministic lookup
-- [ ] Add malformed-input and immutability tests
-- [ ] Validate core tests and Android build
+- [x] Verify exact source byte order and signedness for archive fields against pinned decompiled source
+- [x] Implement bounded inner `demo.f` tagged-chunk reader with first-match compatibility
+- [x] Implement bounded `demoSpr.bin` reader with duplicate/missing-ID handling
+- [x] Add synthetic malformed-input, ordering, and defensive-copy tests
+- [ ] Validate core tests and Android build in GitHub Actions
 
-**Status:** Contract committed; parser implementation not started. Script record decoding, interpreter execution, shared sprite cache ownership, and gameplay integration remain deferred.
+**Status:** Parser implementation and synthetic tests committed; CI verification is pending. Outer resource-directory parsing, sprite-ID header decoding, script records, interpreter execution, shared sprite cache ownership, and gameplay integration remain deferred.
