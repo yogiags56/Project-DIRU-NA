@@ -765,3 +765,14 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Compare normalized records against a captured demo payload / legacy runtime trace
 
 **Status:** Source-derived normalizer and synthetic byte-layout tests committed. No interpreter execution, stage mutation, sprite allocation, or rendering integration. CI and retail-fixture verification remain pending.
+
+
+### DEV-003W10.9 CI follow-up — 2026-11-27
+
+- [x] Inspect failed GitHub Actions run #639 (run ID 45971114514)
+- [x] Identify failure as Java test-source compilation: `DemoScriptNormalizerTest.java:70`, integer literal 255 cannot be narrowed into a byte array initializer
+- [x] Correct fixture to use explicit `(byte) 255` cast; fix committed as `73260e0559e05c7820daf513a490b9bbb087d26a`
+- [ ] Verify a workflow run for the corrected branch head and obtain passing core JVM tests
+- [ ] Verify Android storage tests and debug APK assembly
+
+**CI finding:** The prior run compiled `:core:compileJava` successfully, then failed at `:core:compileTestJava` on the test fixture literal. The remaining test and APK steps were skipped. The corrected commit is the current PR #1 head, but a completed workflow result for that exact head has not yet been exposed by the available run lookup. Do not mark CI green.
