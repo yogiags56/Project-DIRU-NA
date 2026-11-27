@@ -751,3 +751,17 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Run core JVM tests and Android build in CI
 
 **Status:** Bounded decoder and synthetic tests committed. Semantic opcode mapping, legacy normalized-record reconstruction, interpreter execution, and gameplay integration remain deferred. CI/build verification is pending.
+
+
+## DIRU-NA-DEV-003W10.9 — Legacy script normalization layer
+
+- [x] Reconstruct normalized layouts for all currently decoded opcodes
+- [x] Reproduce opcode 1 coordinate scaling and sentinel coordinates
+- [x] Reproduce opcode 2 and 27 variable-payload layouts and legacy signed-short length boundary
+- [x] Reproduce opcode 0 packed group header, u32 child-length table, and concatenated normalized children
+- [x] Reproduce opcode 18 overlapping 32-bit write quirk byte-for-byte
+- [x] Add synthetic golden-byte tests for representative layouts and malformed legacy length boundary
+- [ ] Run core JVM tests and Android build in GitHub Actions
+- [ ] Compare normalized records against a captured demo payload / legacy runtime trace
+
+**Status:** Source-derived normalizer and synthetic byte-layout tests committed. No interpreter execution, stage mutation, sprite allocation, or rendering integration. CI and retail-fixture verification remain pending.
