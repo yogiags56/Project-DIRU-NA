@@ -850,3 +850,15 @@ Do not mark the workflow green until all required steps finish successfully.
 - [x] Verify APK ZIP integrity; no corrupt entries found
 
 **Tested source commit:** `e74acd1b16ef955ea2d901579c766ac035ccd583`. Later commits in this increment update documentation only; no source or test code changed after the tested commit. Artifact SHA-256: `4c896862b969567c4b20fa2e0368162cc71f60dcd5a61fbfcd6fc963c109aac2`. This is a successful debug build, not a release-signing or on-device gameplay validation result.
+
+
+### DEV-003CS-3B — Immutable moving-object span view
+
+- [x] Add platform-independent `MovingObjectSpanTable` with exact three-byte signed record preservation
+- [x] Validate triple alignment and slot bounds
+- [x] Defensively copy source and exported raw arrays
+- [x] Add synthetic tests for ordering, sentinel preservation, invalid input, and copying
+- [ ] Implement stage-preprocessing reconstruction only after full slot lifecycle and mutable stage ownership are closed
+- [ ] Re-run CI on the new code/test commits
+
+**Status:** Immutable derived-state view implemented; no renderer, collision, restore, or persistence integration. CI for this latest code increment is pending.
