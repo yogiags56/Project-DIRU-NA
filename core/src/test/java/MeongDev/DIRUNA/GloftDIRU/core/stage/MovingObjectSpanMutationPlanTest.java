@@ -86,7 +86,7 @@ public final class MovingObjectSpanMutationPlanTest {
         MovingObjectSpanMutationPlan plan = MovingObjectSpanMutationPlan.plan(source,
                 new MovingObjectSpanTable(new byte[]{2, 2, 2}));
         MovingObjectSpanMutationTransaction.Result result =
-                MovingObjectSpanMutationTransaction.apply(source, new int[36],
+                MovingObjectSpanMutationTransaction.apply(source, new byte[36],
                         new MovingObjectSpanMutationTransaction.QueueState(
                                 new byte[8], new byte[8], new byte[8], new byte[8], 7), plan);
 
@@ -106,7 +106,7 @@ public final class MovingObjectSpanMutationPlanTest {
         StageGrid source = stage(6, 6, player, new int[36]);
         MovingObjectSpanMutationPlan plan = MovingObjectSpanMutationPlan.plan(source,
                 new MovingObjectSpanTable(new byte[]{2, 2, 2}));
-        int[] markers = new int[36];
+        byte[] markers = new byte[36];
         try {
             MovingObjectSpanMutationTransaction.apply(
                     stage(6, 6, new int[36], new int[36]), markers,
