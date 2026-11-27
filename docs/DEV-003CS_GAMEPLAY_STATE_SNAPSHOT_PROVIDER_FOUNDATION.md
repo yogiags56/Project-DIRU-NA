@@ -118,3 +118,10 @@ CS-1 is complete as an architecture/evidence document only. No production
 gameplay owner or snapshot provider is claimed to exist. CS-2 must next produce
 an evidence-backed persisted-field matrix. The implementation dependency remains
 the first reproducible gameplay state owner in the DEV-002 workstream.
+
+
+## CS-3A implementation note — stable owner-thread view
+
+A narrow `GameSession.captureStableView()` seam has been added and documented in [DEV-003CS-3A Stable GameSession Capture Seam](DEV-003CS-3A_STABLE_GAMESESSION_CAPTURE_SEAM.md). It enforces the existing owner thread and rejects capture while ordinary movement interpolation is active. Tests cover settled capture, in-flight rejection, post-settlement capture, and cross-thread rejection.
+
+This is only a stable immutable projection of the current `GameSession` slice. It is not the complete authoritative gameplay model and must not be passed to checkpoint persistence as a complete snapshot. Full CS-3 remains blocked on mutable stage/runtime ownership, production collision behavior, complete CS-2 field/invariant closure, and atomic aggregate restore.
