@@ -110,3 +110,36 @@ Any helper that can invoke damage, door transitions, or mutate multiple layers m
 - Obtain runtime/retail-JAR vectors before claiming behavioral compatibility.
 
 **Exit:** Four helper bodies are recorded with exact observed writes and branch conditions. CS-2 remains open; no production gameplay checkpoint provider is implemented.
+
+## 8. `hVoid(int doorIndex)` — checkpoint-time door countdown side effect
+
+This helper is reached from `dVoid((byte)48)` when the restored moving-object cell has `bByteArrArr[x][y] == 6` and the foreground low byte at that cell equals 6.
+
+Observed behavior:
+
+1. A negative door index returns immediately. Otherwise the helper reads the door's x/y coordinates from `crtStageDoorXs[doorIndex]` and `crtStageDoorYs[doorIndex]`.
+2. It reads the foreground low byte and signed high portion at the door coordinate. If high metadata has any of bits `0xF0` set, it returns.
+3. It checks that the foreground low byte is 7 and that the high metadata's upper byte identifies the same door index. A mismatch only prints a diagnostic; it does not stop the operation.
+4. It decrements the low-nibble door countdown.
+5. If the countdown reaches zero:
+   - set high-metadata bit `0x10` at the door cell;
+   - call `aVoid(x, y-1, +1, 0, 1)` and `aVoid(x, y-1, -1, 0, 1)`;
+   - OR bit `0x200` into the high metadata of the foreground cell directly above the door;
+   - write 24 to `cByteArrArr[x][y]`.
+6. Otherwise, write the decremented low nibble back while preserving the other high-metadata bits.
+7. Write the updated high metadata and original low-byte foreground code back to the door cell, then play sound 8.
+
+### 8.1 Transitive horizontal head propagation
+
+The called five-argument `aVoid(x,y,dx,dy,flag)` walks in one direction while the next coordinate remains strictly inside stage bounds. It continues only through foreground low-byte codes 8 or 9. For each matching cell it sets high-metadata bit `0x200` when flag is 1 (or clears that bit for flag 0), then recursively continues in the same direction. Any other foreground code stops the walk.
+
+For this restore call, the two directions are horizontal across the row immediately above the door. The resulting mutation marks a contiguous run of foreground 8/9 cells on both sides, bounded by the first nonmatching cell or stage edge.
+
+**Native implication:** door countdown handling is a gameplay mutation, not merely cache reconstruction. It must be evaluated against a detached candidate and preserve exact door index mapping, countdown nibble, foreground high bits, horizontal run boundaries, and mode/timer preconditions. Do not run it as a side effect against live state before restore validation.
+
+### 8.2 Remaining door gaps
+
+- Trace stage-load creation/order of `crtStageDoorXs/Ys` and verify index stability for the same stage/mode.
+- Trace all writers/readers of foreground code 6, 7, 8, 9 and high-metadata bits `0x10`, `0xF0`, and `0x200`.
+- Determine whether the restore-triggered timer==6 path is reachable in shipped gameplay and whether it can overlap other door-controller transitions.
+- Add golden fixtures for countdown values 1 and greater than 1, high-metadata early return, horizontal propagation stop boundaries, and invalid door indices.
