@@ -180,3 +180,16 @@ The static predicate `dInt(x,y)` used while building the initial endpoint return
 Thus initial endpoint validity depends on a specific neighboring occupant set, not merely on array bounds. Keep this mapping source-derived and do not infer visual semantics beyond the source comments/call sites.
 
 **Remaining uncertainty:** the full slot identity and endpoint update lifecycle across all code-48 movement branches is not yet proven. In particular, do not assume slot order remains stable if objects are removed, split, or re-created; trace all writes to the packed high-byte slot index and all writes to `eByteArr` before choosing a Native stable-ID design.
+
+## 11. Native immutable span-view boundary (DEV-003CS-3B)
+
+A platform-independent `MovingObjectSpanTable` value type now preserves the observed three-byte record layout as immutable signed-byte triples:
+
+- `firstX`, `secondX`, and `rowY` are retained exactly as bytes;
+- input length must be divisible by three;
+- slot access is bounds checked;
+- constructor input and exported raw bytes are defensively copied.
+
+Synthetic tests cover slot ordering, negative row sentinel preservation, defensive copying, malformed partial triples, null input, and slot bounds.
+
+This is intentionally a **read-only representation boundary**, not a reconstruction algorithm. It does not infer endpoint meaning, allocate legacy slots, mutate stage layers, update spans, or serialize the table as checkpoint state. Full integration remains blocked on complete slot-lifecycle evidence and the authoritative mutable stage owner.
