@@ -924,3 +924,21 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Add golden vectors from real stage snapshots
 
 **Status:** Detached mutation plan implemented. No live gameplay state is changed; collision and queue execution remain explicit follow-up work.
+
+
+### DEV-003CS-3F — Atomic detached moving-span mutation transaction
+
+- [x] Capture expected player/background values in each planned cell mutation
+- [x] Simulate sequential source mutation when spans overlap
+- [x] Preserve byte-valued 3×3 marker grid
+- [x] Model eight-slot x/y/type/status interaction ring buffer
+- [x] Preserve queue status reset and `(index + 1) & 7` wraparound
+- [x] Preflight all cell, marker, and event bounds before publishing output
+- [x] Reject stale cell preconditions without mutating source objects
+- [x] Add tests for overlap, queue wrap, atomic publication, and stale input
+- [ ] Integrate transaction result with authoritative mutable GameSession owner
+- [ ] Implement hero collision/damage using player position, cooldown, and animator context
+- [ ] Implement interaction queue consumer and validate runtime ordering
+- [ ] Add golden fixtures from actual stage snapshots and full-source trace
+
+**Status:** Immutable transaction result implemented. No live gameplay-owner integration or hero-damage behavior is claimed. Latest source/test increment requires its own CI result.
