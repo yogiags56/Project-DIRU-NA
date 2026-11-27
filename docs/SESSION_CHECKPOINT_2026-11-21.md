@@ -1161,3 +1161,31 @@ DEV-003W10: implement a narrow phased preprocessing pass beginning with per-cell
 
 ### Next
 DEV-003W9: build a branch-by-branch source evidence table for the complete step-9 method (scan order, conditions, reads/writes, fall-through, derived outputs, neighbor preconditions). Implement only the first independently testable transformations with deterministic fixtures; preserve x-major/y-minor ordering and fail closed for unsupported codes. Then verify current branch head and Actions status.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.1 mutation ledger)
+
+### Repository state
+- Branch: `dev-003cr-snapshot-provider-boundary`.
+- PR #1 was previously checked at W8 HEAD `2e8c5031f783d992160e3a04fb69e7590086bca9`: open, draft, mergeable=false at that time. Recheck after W9.1 commit.
+- No merge authorized.
+
+### Source audit correction
+- Re-opened pinned source `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Important correction: step 9 is not a single x-major pass. Pass A scans x outer/y inner; Pass B scans y outer/x inner. Both have stateful neighbor effects and must remain distinct.
+- Pass A resets bByte and cByte at each cell and runs foreground/player switches. The player switch has substantial Java fall-through, which must be preserved.
+- Pass B repacks/collects foreground groups and checks neighboring door codes; it can mutate foreground and cByte. It also builds group/dialog arrays and object coordinate tables.
+- Legacy arrays are x-major `grid[x][y]`; StageGrid is flat row-major. Explicit conversion required.
+
+### Implemented
+- Added `docs/DIRU-NA-DEV-003W9-STEP9_MUTATION_LEDGER.md`.
+- Ledger records Pass A and Pass B traversal separately, known foreground/player code effects, counter-based allocations, neighbor preconditions, and implementation gates.
+- Commit: `827f3938db24bdd75e6b1780be3b9c69df57a634`.
+
+### Scope / safety
+- W9.1 is evidence documentation only.
+- No production preprocessing executor, collision activation, GameSession wiring, or retail-runtime equivalence claimed.
+- Several helper methods, full foreground switch coverage, complete Pass B player object cases, counters/Hashtables and checkpoint ownership still require trace.
+
+### Next
+DEV-003W9.2: finish Pass B player-layer object switch and trace helpers/coordinate records, then complete remaining Pass A foreground switch inventory. Only after this can deterministic, source-derived transformation slices be implemented with tests.
