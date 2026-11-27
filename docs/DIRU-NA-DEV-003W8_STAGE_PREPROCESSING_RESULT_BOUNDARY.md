@@ -40,3 +40,19 @@ Added `LegacyStagePreprocessingResultTest`:
 ## Next
 
 DEV-003W9: produce a source-evidence matrix for each step-9 mutation branch, including scan order, read/write coordinates, source values, derived arrays/counters, and neighbor preconditions. Then implement small isolated transformation functions with table-driven tests. Do not claim full preprocessing until every branch and side effect in the audited method is covered.
+
+
+## Follow-up source trace — branch ordering and side effects
+
+A second pass over the step-9 body confirms additional details that must be retained by the future executor:
+
+- The primary pass is x-major then y-minor. It is stateful: writes to neighboring cells can affect later iterations.
+- Player code 79 sets player start coordinates and camera-related vertical offsets, then clears the player-layer marker.
+- Player codes 34/35 alter player/foreground cells and feature flags; codes 38/39 activate optional-mode state, with code 38 normalizing foreground to 27.
+- Codes 14 and 28 set cByte state to 24 and may normalize background runtime data. Code 11 sets background to 16 or 0 according to its authored value and sets cByte to 48.
+- Codes 43/19, 22/23 and 49 set feature bits and selected cByte values. Codes 30/37/10 clear background values; code 16 may move a marker upward and copy background state to the adjacent cell.
+- The switch includes Java fall-through across codes 6/7/24/26/27/8/4/5/2/0/1. A Native port must encode this as explicit ordered effects or preserve exact fall-through; independent per-code handlers would silently change behavior.
+- A later foreground pass repacks foreground code 7 using local group lookup data, checks adjacent code-17 doors, may set cByte to 24 and may clear the foreground cell above.
+- Foreground code 17 creates stage-derived group counters and dialog selectors. The mutable group counter is checkpointed; the dialog selector is rebuilt from stage data.
+
+These findings remain static-source evidence. They do not establish retail-runtime equivalence or complete coverage of every branch.
