@@ -1129,3 +1129,35 @@ DEV-003W9: build a per-branch step-9 source-evidence matrix (scan order, reads/w
 
 ### Next
 DEV-003W10: implement a narrow phased preprocessing pass beginning with per-cell byte resets and only fully bounded, directly evidenced branches. Unsupported/unmapped codes must fail closed. Add table-driven fixtures and do not publish production collision state from partial preprocessing.
+
+
+## Resume update — 2026-11-27 (DEV-003W8 preprocessing result boundary)
+
+### Repository state
+- Working branch: `dev-003cr-snapshot-provider-boundary`.
+- PR #1 remains open, draft, unmerged; latest checked head before this W8 work was `2be29c9300a0a4fcca94541411cb9731cc7b5899`. Recheck PR head and CI after these commits.
+- Do not merge PR #1 without explicit authorization.
+
+### Implemented / verified
+- Confirmed `LegacyStagePreprocessingResult.java` already exists on the branch (blob `1249d10a15ef2797e835d4c5953ff895f6da488f`). It provides immutable copies of transformed StageGrid, separate background runtime values, bByte and cByte grids; validates exact cell counts; bounds-checks reads; preserves signed bytes.
+- Strengthened `LegacyStagePreprocessingResultTest.java` with input and output defensive-copy tests, length validation for all three runtime arrays, coordinate bounds, and signed-byte checks. Test commit: `7d19e17088779ff6af5cfa430a6ca29d260e79bd`.
+- Updated `DIRU-NA-DEV-003W8_STAGE_PREPROCESSING_RESULT_BOUNDARY.md` with a second source trace pass. Documentation commit: `0c010ad1b669faf51a1c64374b0d2f01abb31c70`.
+
+### Step-9 source findings added
+- Static source pinned at `kubikaugustyn/DiamondRushSource@215c71d04057d66a1b08419b1a4b1043ae3e0881`, `src/main/java/i.java`.
+- Primary pass is x-major/y-minor and stateful; neighbor writes can affect later cells.
+- Player code 79 sets player start/camera-related values and clears the marker.
+- Codes 34/35, 38/39, 14/28, 11, 43/19, 22/23, 49, 30/37/10 and 16 have distinct layer, byte-state, or feature-flag side effects.
+- Java switch fall-through across codes 6/7/24/26/27/8/4/5/2/0/1 is behaviorally significant.
+- Later foreground pass handles code 7 neighbor/door packing and code 17 group counters/dialog selectors.
+- Group counters are mutable/checkpointed; dialog selectors are stage-derived/rebuilt.
+- All evidence remains static decompilation, not runtime validation.
+
+### Boundaries
+- W8 is a result model only. No step-9 executor, decoder adapter, production collision seed, or GameSession activation.
+- cByte checkpoint inclusion remains unproven. Result-type presence does not imply persistence eligibility.
+- Runtime-background ownership versus StageGrid background layer must be reconciled before integration.
+- Derived flags, door/group tables, counters, player/camera scalars, entity arrays and resource ownership remain separately traced.
+
+### Next
+DEV-003W9: build a branch-by-branch source evidence table for the complete step-9 method (scan order, conditions, reads/writes, fall-through, derived outputs, neighbor preconditions). Implement only the first independently testable transformations with deterministic fixtures; preserve x-major/y-minor ordering and fail closed for unsupported codes. Then verify current branch head and Actions status.
