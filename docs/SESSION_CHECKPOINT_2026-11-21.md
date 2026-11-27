@@ -1218,3 +1218,36 @@ DEV-003W9.2: finish Pass B player-layer object switch and trace helpers/coordina
 
 ### Next
 DEV-003W9.3: trace all eByteArr/pByteArr readers and persistence behavior; finish Pass B control-flow reachability and remaining Pass A foreground switch. Then add exact binary/array-layout fixtures. Run CI and inspect PR head after the documentation/code commits.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.3 runtime array lifecycle)
+
+### Source identity
+- Pinned static candidate: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Re-audited every textual occurrence of `eByteArr` and `pByteArr`, including allocation, Pass B population, rendering, movement, interaction, teardown, and checkpoint restore.
+
+### eByteArr findings
+- Allocated as `awInt * 3`; Pass B initially populates three-byte records and stores record index in the high byte of `bIntArrArr`.
+- Initial equal X endpoints are not invariant: `VVoid()` updates the horizontal endpoints; `EVoid()` renders the active span; interaction and object-removal paths read/write records.
+- Not directly copied by saveCheckpoint/restoreCheckpoint.
+- Restore first restores stage/object grids and player layer, rebuilds cByte neighborhood state, then scans player-layer code 48 and dispatches to `dVoid(48)` or `aiVoid()` to reconstruct/update records.
+- Treat as mutable runtime state, not immutable preprocessing output or a checkpoint blob.
+
+### pByteArr findings
+- Allocated with the same length as `aClasscArr`; populated from foreground group codes and player-layer object tags.
+- Used to initialize paired resource objects during asynchronous loading.
+- Runtime `kVoid(type)` scans all entries and selects the paired resource; no break means last duplicate match wins.
+- Cleared with its paired resource array during teardown; not directly included in checkpoint copies.
+- Treat as stage-derived resource metadata, not mutable gameplay checkpoint state.
+
+### Implemented documentation
+- Added `docs/DIRU-NA-DEV-003W9-ARRAY_CONSUMER_PERSISTENCE_AUDIT.md`.
+- Updated `docs/DIRU-NA-DEV-003W9-STEP9_MUTATION_LEDGER.md`.
+- W9.3 documentation commits: `8e7db6fceea2e6d1f05e70ff36c137129a0430fa` and `fc6a1544289b26a6a1f826d546bec9e413c28ddc`.
+
+### Boundaries
+- No runtime record adapter, checkpoint serializer, preprocessing executor, collision activation, or GameSession integration added.
+- Evidence is static decompiled source only; full scalar/checkpoint audit and all call-site timing remain open.
+
+### Next
+DEV-003W9.4: trace all call sites and lifecycle timing for `VVoid`, `EVoid`, `aBoolean(x,y)`, `dVoid(...)`, and `aiVoid()`; audit every eByteArr writer/index and checkpoint scalar/array. Then build source-proven fixtures for active/inactive spans, duplicate resource tags, signed -1 sentinels, and restore reconstruction.
