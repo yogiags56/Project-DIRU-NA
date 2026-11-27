@@ -899,3 +899,13 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Reconcile updater and checkpoint/restore publication order
 
 **Important scope:** `VVoid()` calls `aBoolean()` for every cell in the recomputed inclusive span. That helper can transform eligible occupants into code 9, update packed background metadata, invoke `cVoid(...,1)`, and hurt the hero. The new updater intentionally computes only the endpoint projection; it does not claim to reproduce those gameplay side effects.
+
+
+### DEV-003CS-3D follow-up — signed-byte and side-effect audit
+
+- [x] Guard legacy signed-byte coordinate capacity (maximum dimension 128)
+- [x] Add a regression test for oversized stage dimensions
+- [x] Document the separate `aBoolean()` mutation/collision side effects
+- [ ] Capture source-derived golden vectors from real stage states
+- [ ] Implement gameplay mutation transaction with hero collision preconditions
+- [ ] Run CI against the complete updater increment
