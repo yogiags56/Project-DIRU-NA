@@ -193,3 +193,20 @@ A platform-independent `MovingObjectSpanTable` value type now preserves the obse
 Synthetic tests cover slot ordering, negative row sentinel preservation, defensive copying, malformed partial triples, null input, and slot bounds.
 
 This is intentionally a **read-only representation boundary**, not a reconstruction algorithm. It does not infer endpoint meaning, allocate legacy slots, mutate stage layers, update spans, or serialize the table as checkpoint state. Full integration remains blocked on complete slot-lifecycle evidence and the authoritative mutable stage owner.
+
+## 12. Native detached initial-span reconstruction increment (DEV-003CS-3C)
+
+A first detached `MovingObjectSpanReconstructor` has been added against immutable `StageGrid`. It implements the static stage-preprocessing projection only:
+
+- row-major traversal;
+- select player-layer code 48 with background metadata bit `0x8`;
+- choose the candidate x coordinate from bit `0x10` in the cell below;
+- preserve the candidate x in both endpoint bytes;
+- use the source y coordinate when the candidate occupant is one of the recognized source codes (1, 45, 19, 43, 46, 49), otherwise preserve the source's `-1` row sentinel;
+- write the zero-based slot into the high byte of the detached packed background metadata while preserving the lower 24 bits.
+
+The result contains an immutable `MovingObjectSpanTable` and a defensive copy of the packed metadata. The supplied `StageGrid` is never mutated. Invalid source geometry (missing below-cell or candidate outside the stage) is rejected rather than reading outside the grid.
+
+Synthetic tests cover right/left candidate selection, row-major slot assignment, recognized and unrecognized occupants, non-flagged code-48 cells, detached metadata, and invalid geometry. The direction fixtures were corrected after review so the below-cell bit and expected candidate agree with the source rule.
+
+**Boundary:** this is only the initial preprocessing projection. It does not yet implement the later span updater, moving-object runtime/collision mutation, restore-time helper sequence, slot removal/reuse lifecycle, or atomic checkpoint publication. Do not claim full moving-object gameplay support.
