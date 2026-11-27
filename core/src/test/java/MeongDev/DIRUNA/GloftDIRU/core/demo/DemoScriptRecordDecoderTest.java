@@ -17,7 +17,7 @@ public class DemoScriptRecordDecoderTest {
     }
 
     @Test public void decodesAllObservedFixedAndVariableOpcodeShapes() {
-        byte[] input = script(17,
+        byte[] input = script(19,
             1, 1,0, 2,0, 3,0,
             2, 7, 8,0, 2,0, 65,66,
             4, 1,0,2,0,3,0,4,0,5,0,6,0,7,0,
@@ -38,10 +38,10 @@ public class DemoScriptRecordDecoderTest {
             27, 2,0, 9,8
         );
         DemoScriptRecordDecoder.DecodedScript decoded = DemoScriptRecordDecoder.decode(input);
-        assertEquals(17, decoded.records().size());
+        assertEquals(19, decoded.records().size());
         assertEquals(0xFFFFFFL, decoded.records().get(15).operands()[1]);
         assertArrayEquals(new byte[]{65,66}, decoded.records().get(1).copyData());
-        assertArrayEquals(new byte[]{9,8}, decoded.records().get(16).copyData());
+        assertArrayEquals(new byte[]{9,8}, decoded.records().get(18).copyData());
     }
 
     @Test public void parsesOneLevelGroupAndPreservesWireBytes() {
