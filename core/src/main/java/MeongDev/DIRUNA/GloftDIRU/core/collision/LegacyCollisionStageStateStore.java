@@ -11,12 +11,14 @@ import java.util.Map;
 public final class LegacyCollisionStageStateStore implements LegacyCollisionMutationTarget {
     private static final class Root {
         final int[] player, background, foreground, metadata, auxiliary, foregroundCache;
+        final byte[] bByteArrArr,cByteArrArr;
         final Map<String,Integer> state;
         final long version;
         Root(int[] player,int[] background,int[] foreground,int[] metadata,int[] auxiliary,
-             int[] foregroundCache,Map<String,Integer> state,long version) {
+             int[] foregroundCache,byte[] bByteArrArr,byte[] cByteArrArr,Map<String,Integer> state,long version) {
             this.player=player; this.background=background; this.foreground=foreground;
             this.metadata=metadata; this.auxiliary=auxiliary; this.foregroundCache=foregroundCache;
+            this.bByteArrArr=bByteArrArr;this.cByteArrArr=cByteArrArr;
             this.state=state; this.version=version;
         }
     }
@@ -52,7 +54,8 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
         state.put(stateKey(LegacyCollisionStateIntent.Channel.ANIMATION,LegacyCollisionStateIntent.Field.ANIMATION_FRAME,false,0,0),seed.animationFrame());
         state.put(stateKey(LegacyCollisionStateIntent.Channel.MOVEMENT_FLAGS,LegacyCollisionStateIntent.Field.BLOCKED_FLAG,false,0,0),seed.blockedFlag());
         root=new Root(stage.copyPlayerLayer(),stage.copyBackgroundLayer(),stage.copyForegroundLayer(),
-                seed.copyMetadata(),seed.copyAuxiliary(),seed.copyForegroundCache(),state,0L);
+                seed.copyMetadata(),seed.copyAuxiliary(),seed.copyForegroundCache(),
+                seed.copyBByteArrArr(),seed.copyCByteArrArr(),state,0L);
     }
 
     @Override public int width(){return width;}
@@ -75,6 +78,13 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
                 throw new IllegalArgumentException("foreground cache requires a coordinate-scoped cache field");
             return r.foregroundCache[index(x,y)];
         }
+        if(channel==LegacyCollisionStateIntent.Channel.B_BYTE_STATE
+                || channel==LegacyCollisionStateIntent.Channel.C_BYTE_STATE) {
+            if(!coordinateScoped || field!=LegacyCollisionStateIntent.Field.BYTE_VALUE)
+                throw new IllegalArgumentException("byte state requires a coordinate-scoped byte field");
+            return channel==LegacyCollisionStateIntent.Channel.B_BYTE_STATE
+                    ? r.bByteArrArr[index(x,y)] : r.cByteArrArr[index(x,y)];
+        }
         return value(r.state,stateKey(channel,field,coordinateScoped,x,y));
     }
 
@@ -91,13 +101,14 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
         }
         for(LegacyCollisionStateIntent i:plan.getStateIntents()) {
             if(i.isCoordinateScoped() && !contains(i.getX(),i.getY())) return false;
-            if(value(before.state,stateKey(i.getChannel(),i.getField(),i.isCoordinateScoped(),i.getX(),i.getY()))
-                    !=i.getExpectedValue()) return false;
+            int current=readStateFromRoot(before,i);
+            if(current!=i.getExpectedValue()) return false;
         }
 
         int[] player=before.player.clone(), background=before.background.clone();
         int[] foreground=before.foreground.clone(), metadata=before.metadata.clone();
         int[] auxiliary=before.auxiliary.clone(), cache=before.foregroundCache.clone();
+        byte[] bBytes=before.bByteArrArr.clone(),cBytes=before.cByteArrArr.clone();
         Map<String,Integer> state=new HashMap<String,Integer>(before.state);
         for(LegacyCollisionMutationIntent i:plan.getIntents())
             grid(player,background,foreground,metadata,auxiliary,i.getLayer())[index(i.getX(),i.getY())]=i.getNewValue();
@@ -105,9 +116,13 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
             String key=stateKey(i.getChannel(),i.getField(),i.isCoordinateScoped(),i.getX(),i.getY());
             if(i.getChannel()==LegacyCollisionStateIntent.Channel.FOREGROUND_CACHE)
                 cache[index(i.getX(),i.getY())]=i.getNewValue();
+            else if(i.getChannel()==LegacyCollisionStateIntent.Channel.B_BYTE_STATE)
+                bBytes[index(i.getX(),i.getY())]=(byte)i.getNewValue();
+            else if(i.getChannel()==LegacyCollisionStateIntent.Channel.C_BYTE_STATE)
+                cBytes[index(i.getX(),i.getY())]=(byte)i.getNewValue();
             else state.put(key,i.getNewValue());
         }
-        root=new Root(player,background,foreground,metadata,auxiliary,cache,state,before.version+1L);
+        root=new Root(player,background,foreground,metadata,auxiliary,cache,bBytes,cBytes,state,before.version+1L);
         return true;
     }
 
@@ -117,10 +132,21 @@ public final class LegacyCollisionStageStateStore implements LegacyCollisionMuta
         return new StageGrid(width,height,r.player,r.background,r.foreground);
     }
     public int foregroundCacheAt(int x,int y){checkCell(x,y);return root.foregroundCache[index(x,y)];}
+    public byte bByteAt(int x,int y){checkCell(x,y);return root.bByteArrArr[index(x,y)];}
+    public byte cByteAt(int x,int y){checkCell(x,y);return root.cByteArrArr[index(x,y)];}
+    public LegacyCollisionByteStateGrids byteStateSnapshot(){Root r=root;return new LegacyCollisionByteStateGrids(width,height,r.bByteArrArr,r.cByteArrArr);}
     public long version(){return root.version;}
     public int readStateValue(LegacyCollisionStateIntent.Channel channel,
             LegacyCollisionStateIntent.Field field) {
         return value(root.state,stateKey(channel,field,false,0,0));
+    }
+
+    private int readStateFromRoot(Root r,LegacyCollisionStateIntent i) {
+        LegacyCollisionStateIntent.Channel ch=i.getChannel();
+        if(ch==LegacyCollisionStateIntent.Channel.FOREGROUND_CACHE) return r.foregroundCache[index(i.getX(),i.getY())];
+        if(ch==LegacyCollisionStateIntent.Channel.B_BYTE_STATE) return r.bByteArrArr[index(i.getX(),i.getY())];
+        if(ch==LegacyCollisionStateIntent.Channel.C_BYTE_STATE) return r.cByteArrArr[index(i.getX(),i.getY())];
+        return value(r.state,stateKey(ch,i.getField(),i.isCoordinateScoped(),i.getX(),i.getY()));
     }
 
     private int[] grid(Root r,LegacyCollisionMutationIntent.Layer layer) {
