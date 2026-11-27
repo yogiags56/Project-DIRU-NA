@@ -1328,3 +1328,37 @@ DEV-003W9.5: trace `jVoid`, `cVoid`, `aByte` and all coordinate/bounds precondit
 
 ### Next
 DEV-003W9.6: trace the event-ring consumer, alVoid side effects and exact coordinate bounds/asset border assumptions. Then write deterministic pure helper tests for ring wraparound and endpoint expansion; do not activate collision/gameplay before these pass.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.6 event queue and alVoid)
+
+### Source identity
+- Static source: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Rechecked three-argument cVoid producer, all event ring array references, cursor uses, stage reset, and alVoid definition/callers.
+
+### Event queue findings
+- Three-argument cVoid writes x/y bytes, event type byte, resets frame counter, advances tail aeInt modulo 8.
+- adInt is consumer/head; aeInt is producer/tail.
+- Render paths draw pending entries from head to tail, using sprite set 2 for negative type values and sprite set 9 for nonnegative types.
+- Tick path increments each pending entry's frame counter and advances head when that entry animation completes.
+- This is a shared transient animation queue, not a special-object-only queue. Callers include special-object mutation, player interactions, collection/removal and other events.
+- No full check exists. With head==tail as empty, conventional ring capacity is 7; an eighth unconsumed enqueue can make the queue appear empty/overwrite unread entries. This is an inferred overflow hazard, not proof of a retail bug.
+- Stage transition resets both head and tail to zero together before checkpoint save in the inspected path.
+
+### alVoid findings
+- Separate from cVoid and jVoid(x,y).
+- Conditional early return for kByte 3/4/5 while aqInt>0.
+- Decrements mByteArr[cmInt]; on zero plays sound 8 and scans interior cells Y-major then X-minor.
+- Matches foreground low byte 0x11 with packed group index cmInt.
+- Above code 7: conditionally sets packed payload flag 0x10 and cByte=24.
+- Above code 14 or 33: clears packed high metadata, retaining low code.
+- jVoid(x,y) sets foreground bit 0x10000000 then invokes alVoid().
+- Door/group interpretation remains provisional until all cmInt/mByteArr writers and fixtures are audited.
+
+### Implemented
+- Added `docs/DIRU-NA-DEV-003W9-EVENT_QUEUE_ALVOID_AUDIT.md`.
+- Commit: `2edc61a78f1ac926fee3570797b816780cecbf93`.
+- Documentation only; no production queue or group/door logic.
+
+### Next
+DEV-003W9.7: trace cmInt, mByteArr, aqInt writers and stage-border invariants; define deterministic fixtures for queue wrap/overflow, event animation completion, alVoid countdown zero, packed foreground above-tile cases. Revisit percentage using explicit project scope/milestone denominator; distinguish foundation/CI, source audit, native gameplay implementation, and first playable validation. Do not imply audit progress equals playable-game completion.
