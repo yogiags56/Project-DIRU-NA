@@ -35,6 +35,9 @@ public final class MovingObjectSpanMutationPlan {
                                                      MovingObjectSpanTable spans) {
         if (stage == null) throw new IllegalArgumentException("stage is required");
         if (spans == null) throw new IllegalArgumentException("span table is required");
+        if (stage.width() > 128 || stage.height() > 128) {
+            throw new IllegalArgumentException("stage dimensions exceed signed-byte span coordinates");
+        }
 
         List<CellMutation> cells = new ArrayList<>();
         List<MarkerWrite> markers = new ArrayList<>();
