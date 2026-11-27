@@ -1007,3 +1007,30 @@ DEV-003W4: define complete immutable initial-stage/session import including meta
 
 ### Next
 DEV-003W5: audit actual decoded-stage formats and the loader path, build a source-derived seed factory, and add real stage asset round-trip fixtures. Only after that map verified evaluator decisions to plans and refactor GameSession to use the store as its single state owner.
+
+
+## Resume update — 2026-11-27 (DEV-003W5 raw legacy byte-state grids)
+
+### Source audit correction
+- Stage loader audit distinguishes the three serialized layers (player/object, background `bIntArrArr`, foreground) from runtime arrays.
+- Packed tile metadata `eIntArrArr` is a separate 32-bit grid with three 9-bit groups.
+- `bByteArrArr` and `cByteArrArr` are separate per-cell byte grids. Existing audits show `cByteArrArr` receives values including 24/30/48/127 and is decremented by 6 when positive; the six-argument metadata writer refreshes current and next-column cells to 24.
+- Do not conflate the byte grids, packed metadata, and background runtime grid.
+
+### Implemented
+- Added `LegacyCollisionByteStateGrids` immutable snapshot type.
+- Added typed `B_BYTE_STATE` and `C_BYTE_STATE` state channels with coordinate-scoped `BYTE_VALUE` fields.
+- Extended `LegacyCollisionStageStateSeed` to import both byte grids defensively and validate exact cell counts.
+- Extended copy-on-write store root, preflight reads, expected-value revalidation, cloning, commit writes, and snapshot access for both byte arrays.
+- Signed byte values are preserved on reads; writes narrow to Java byte as source array assignment does.
+- Added tests for defensive import, signed values, atomic multi-grid writes and immutable prior snapshots.
+- Added `DIRU-NA-DEV-003W5_LEGACY_BYTE_STATE_GRID_IMPORT.md`.
+
+### Boundaries
+- The old seed `metadata` port corresponds to the packed-metadata slot; the source-derived factory must map actual `eIntArrArr` values into it.
+- The old `auxiliary` and `foregroundCache` ports remain compatibility abstractions, not substitutes for bByte/cByte arrays.
+- `bIntArrArr` is already StageGrid.backgroundLayer.
+- No real decoder-to-seed adapter or GameSession integration yet.
+
+### Next
+DEV-003W6: trace all source allocation/read/write sites for bByteArrArr, cByteArrArr and eIntArrArr; introduce a named decoder-to-seed factory; add synthetic binary and real-format round-trip fixtures. Keep runtime activation disabled until a single authoritative owner exists.
