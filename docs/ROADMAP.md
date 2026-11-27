@@ -909,3 +909,18 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Capture source-derived golden vectors from real stage states
 - [ ] Implement gameplay mutation transaction with hero collision preconditions
 - [ ] Run CI against the complete updater increment
+
+
+### DEV-003CS-3E — Detached moving-span interaction mutation plan
+
+- [x] Plan recognized occupant conversion to player code 9
+- [x] Preserve source packed-metadata mask and encoded object type
+- [x] Preserve special snake-code-43 flag
+- [x] Plan 3×3 value-48 marker writes and interaction queue event
+- [x] Validate active interval and marker bounds
+- [x] Add immutable-plan tests for recognized, unrecognized, inactive, and boundary cases
+- [ ] Implement atomic application against a mutable stage transaction
+- [ ] Model hero collision/damage preconditions and interaction ring-buffer semantics
+- [ ] Add golden vectors from real stage snapshots
+
+**Status:** Detached mutation plan implemented. No live gameplay state is changed; collision and queue execution remain explicit follow-up work.
