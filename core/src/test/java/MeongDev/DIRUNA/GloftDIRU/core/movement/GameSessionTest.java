@@ -53,6 +53,45 @@ public final class GameSessionTest {
         assertFalse(called[0]);
         assertEquals(2,session.renderSnapshot().player().tileX());
     }
+
+    @Test public void stableViewIsAvailableAtSettledMovementBoundary() {
+        GameSession session=new GameSession(stage(),1,1,null);
+        GameplayRenderSnapshot stable=session.captureStableView();
+        assertNotNull(stable);
+        assertEquals(1,stable.player().tileX());
+        assertEquals(1,stable.player().tileY());
+        assertEquals(0,stable.player().interpolationProgress());
+    }
+
+    @Test public void stableViewRejectsActiveInterpolationUntilMovementSettles() {
+        GameSession session=new GameSession(stage(),1,1,
+                (s,fx,fy,tx,ty)->GameSession.MoveDecision.ACCEPTED);
+        session.tick(LegacyInputMasks.RIGHT,context());
+        try {
+            session.captureStableView();
+            fail("capture must reject active movement interpolation");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage().contains("interpolation"));
+        }
+        session.tick(0,context());
+        session.tick(0,context());
+        session.tick(0,context());
+        GameplayRenderSnapshot stable=session.captureStableView();
+        assertEquals(2,stable.player().tileX());
+        assertEquals(0,stable.player().interpolationProgress());
+    }
+
+    @Test public void stableViewEnforcesGameSessionOwnerThread() throws Exception {
+        GameSession session=new GameSession(stage(),1,1,null);
+        final Throwable[] failure={null};
+        Thread other=new Thread(()->{
+            try { session.captureStableView(); }
+            catch(Throwable t) { failure[0]=t; }
+        });
+        other.start(); other.join();
+        assertTrue(failure[0] instanceof IllegalStateException);
+    }
+
     @Test public void ownerThreadRestrictionRejectsCrossThreadMutation() throws Exception {
         GameSession session=new GameSession(stage(),1,1,(s,fx,fy,tx,ty)->GameSession.MoveDecision.ACCEPTED);
         final Throwable[] failure={null};
