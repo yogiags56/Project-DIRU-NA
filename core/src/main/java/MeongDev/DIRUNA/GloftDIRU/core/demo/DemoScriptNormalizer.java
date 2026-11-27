@@ -78,7 +78,8 @@ public final class DemoScriptNormalizer {
                 return out;
             case 7: case 14: case 15:
                 return header(opcode, 2);
-            case 9:
+            // Opcode 8 reaches the opcode-9 callback through legacy switch fall-through.
+            case 8: case 9:
                 out = header(opcode, 8);
                 for (int i = 0; i < 3; i++) putShort(out, 2 + i * 2, (short) v[i]);
                 return out;
