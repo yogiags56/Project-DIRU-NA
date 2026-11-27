@@ -14,10 +14,9 @@ public final class MovingObjectSpanReconstructorTest {
         player[1 + 0 * 5] = 48;
         metadata[1 + 0 * 5] = 0x8;
         player[2 + 0 * 5] = 1;
-        metadata[1 + 1 * 5] = 0x10;
-
         player[3 + 2 * 5] = 48;
         metadata[3 + 2 * 5] = 0x8;
+        metadata[3 + 3 * 5] = 0x10;
         player[2 + 2 * 5] = 45;
         metadata[3 + 3 * 5] = 0x10;
 
