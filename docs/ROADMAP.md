@@ -838,3 +838,15 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Close all endpoint sentinel and slot lifecycle cases with fixtures
 
 **Status:** Major `eByteArr` lifecycle consumers identified from static source; runtime and full slot invariants remain open.
+
+
+### CI result — Android Build and Core Tests #656 (2026-11-27)
+
+- [x] Core JVM tests — passed
+- [x] Android storage unit tests — passed
+- [x] Assemble Android debug APK — passed
+- [x] Upload debug APK artifact — passed
+- [x] Download and inspect artifact ZIP; it contains `app-debug.apk` (991,170 bytes)
+- [x] Verify APK ZIP integrity; no corrupt entries found
+
+**Tested source commit:** `e74acd1b16ef955ea2d901579c766ac035ccd583`. Later commits in this increment update documentation only; no source or test code changed after the tested commit. Artifact SHA-256: `4c896862b969567c4b20fa2e0368162cc71f60dcd5a61fbfcd6fc963c109aac2`. This is a successful debug build, not a release-signing or on-device gameplay validation result.
