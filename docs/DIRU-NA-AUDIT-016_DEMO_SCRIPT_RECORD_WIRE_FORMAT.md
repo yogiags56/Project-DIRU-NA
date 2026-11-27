@@ -102,3 +102,24 @@ Native decoder policy:
 ## 7. Next
 
 DEV-003W10.8 — implement a bounded wire-record decoder that produces immutable typed wire records and a validated one-level group representation. Do not execute records, mutate stage state, create sprites, or integrate with the interpreter in this increment.
+
+
+## 8. Additional opcodes found during decoder implementation
+
+A second full pass over the complete opcode switch identified three additional forms that were absent from the initial summary:
+
+| Opcode | Wire operands | Total wire bytes | Normalized legacy record |
+|---:|---|---:|---|
+| 25 | two u16, then two u8 | 7 | 8 bytes |
+| 26 | two u16, then one u32 | 9 | 10 bytes |
+| 27 | length:u16, then exactly length opaque bytes | 3 + length | 8 + length bytes |
+
+Opcode 27's length is an unsigned 16-bit wire value, but the legacy implementation casts it to signed Java `short` before allocating and copying. The safe parser keeps it unsigned and bounds-checks against remaining input; any later compatibility-normalization layer must decide explicitly how to handle values above 32767. Opcode 2 similarly carries a one-byte mode, a u16 value, a u16 data length, then that many bytes.
+
+The decoder supports opcodes 25, 26, and 27 as wire records. Their semantic interpretation remains unknown and is deliberately not inferred.
+
+## 9. DEV-003W10.8 implementation boundary
+
+`DemoScriptRecordDecoder` parses the leading u16 top-level logical-record count, then exactly that many records. It supports the observed opcode forms 0, 1, 2, 4–7, 9–18, and 25–27. Opcode 0 is represented as an immutable one-level group with parsed child records. Nested opcode-0 groups, unknown opcodes, truncated operands, invalid signed-short top-level counts, and trailing bytes fail closed.
+
+The decoder retains each record's original wire bytes, typed integer operands, opaque variable data, and byte offset. It does not construct the legacy normalized runtime byte arrays, execute opcodes, allocate sprites, mutate stages, or render.
