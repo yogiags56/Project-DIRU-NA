@@ -723,3 +723,16 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Validate core tests and Android build in GitHub Actions
 
 **Status:** Inner archive readers and selected-payload header reader committed; CI verification is pending. Outer resource-directory parsing, script-record decoding, interpreter execution, shared sprite cache ownership, and gameplay integration remain deferred.
+
+
+## DIRU-NA-DEV-003W10.7 — Demo script record layout audit
+
+- [x] Trace top-level script buffer count and framing
+- [x] Enumerate observed fixed-size opcode operands and wire sizes
+- [x] Identify variable-length text and 24-bit integer forms
+- [x] Document opcode 0 group packing and child length table
+- [x] Record unsupported opcode and malformed-input fail-closed policy
+- [x] Separate source-proven one-level group behavior from unproven recursive nesting
+- [ ] Implement bounded wire-record decoder and synthetic fixtures (DEV-003W10.8)
+
+**Status:** Static source audit committed. No record decoder, interpreter execution, stage mutation, or rendering integration is included.
