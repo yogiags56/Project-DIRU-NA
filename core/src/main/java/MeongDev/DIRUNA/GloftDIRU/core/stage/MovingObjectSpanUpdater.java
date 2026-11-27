@@ -16,6 +16,11 @@ public final class MovingObjectSpanUpdater {
     public static MovingObjectSpanTable update(StageGrid stage, MovingObjectSpanTable source) {
         if (stage == null) throw new IllegalArgumentException("stage is required");
         if (source == null) throw new IllegalArgumentException("span table is required");
+        // Legacy span coordinates are signed bytes. A larger grid cannot be
+        // represented losslessly by this record format.
+        if (stage.width() > 128 || stage.height() > 128) {
+            throw new IllegalArgumentException("stage dimensions exceed signed-byte span coordinates");
+        }
 
         byte[] updated = source.copyRawTriples();
         for (int slot = 0; slot < source.size(); slot++) {
