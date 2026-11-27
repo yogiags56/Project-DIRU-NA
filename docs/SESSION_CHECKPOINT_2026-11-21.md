@@ -1083,3 +1083,26 @@ DEV-003W7: build a provenance-safe per-world/per-stage fixture manifest and add 
 
 ### Next
 DEV-003W8: define a separate immutable stage-preprocessing result model only after tracing exact allocation, write order and ownership for each runtime-derived field. Keep unknown fields unresolved and keep GameSession integration/collision activation blocked.
+
+
+## Resume update — 2026-11-27 (DEV-003W8 preprocessing result boundary)
+
+### Source inspection
+- Re-fetched AUDIT-012, AUDIT-014, W7 manifest, StageGrid, W6 parser, and collision seed from the working branch.
+- Fetched pinned candidate `kubikaugustyn/DiamondRushSource/src/main/java/i.java@215c71d04057d66a1b08419b1a4b1043ae3e0881` and directly inspected stage-load step 8 and step-9 preprocessing.
+- Step 9 scans x-major/y-minor; resets bByte/cByte per cell; mutates foreground and background runtime layers; sets byte-state values; and builds derived counters, flags, coordinate/entity tables.
+- Foreground codes can read/write neighboring cells. Preserve source scan order and explicitly validate neighbor preconditions in Native implementation.
+
+### Implemented
+- Added `core/.../stage/LegacyStagePreprocessingResult.java`: immutable defensive-copy boundary for transformed StageGrid, background runtime values, bByte and cByte grids.
+- Added `LegacyStagePreprocessingResultTest.java`: copy isolation, exact lengths, bounds checks.
+- Added `DIRU-NA-DEV-003W8_STAGE_PREPROCESSING_RESULT_BOUNDARY.md`.
+
+### Scope guard
+- This is a result container, not the full step-9 preprocessing algorithm.
+- Derived door tables, counters, feature flags, entity arrays, player/camera setup are not yet represented.
+- No ParsedStage-to-result adapter, collision seed creation, or GameSession integration.
+- Static candidate source only; no runtime validation.
+
+### Next
+DEV-003W9: build a per-branch step-9 source-evidence matrix (scan order, reads/writes, neighboring-cell preconditions, derived arrays/counters/flags) and implement isolated transformations with table-driven tests. Keep unverified behavior unresolved.
