@@ -1059,3 +1059,27 @@ DEV-003W6: trace all source allocation/read/write sites for bByteArrArr, cByteAr
 
 ### Next
 DEV-003W7: build a provenance-safe per-world/per-stage fixture manifest and add an explicit stage preprocessing result model based on the complete audited step-9 pass. Continue distinguishing serialized authored layers from runtime-derived state. Do not construct a production collision seed until every required runtime field has a verified source and owner.
+
+
+## Resume update — 2026-11-27 (DEV-003W7 stage fixture manifest)
+
+### Verified baseline
+- Working branch: `dev-003cr-snapshot-provider-boundary`.
+- PR #1 remains open, draft and unmerged; do not merge without explicit authorization.
+- Stage parser W6 and AUDIT-029 were fetched and reviewed before this update.
+- AUDIT-029 records 41 stage dimensions from the pinned candidate resource audit: Angkor 14, Scotland resource/Bavaria UI 13, Tibet resource/Siberia UI 14; total 50,453 cells per layer.
+- The 14/13/14 inventory is not a title or map-node mapping. Angkor and Tibet/Siberia have unresolved catalog count mismatches.
+
+### Implemented
+- Added `core/.../stage/WorldStageFixtureManifest.java` with explicit world identities, zero-based indices, dimensions, checked cell counts and defensive entry enumeration.
+- Added `WorldStageFixtureManifestTest.java` verifying counts, selected dimensions, total 50,453 cells per layer, and invalid input handling.
+- Added `DIRU-NA-DEV-003W7_WORLD_STAGE_FIXTURE_MANIFEST.md`.
+
+### Integrity boundary
+- No per-stage SHA-256 values were invented. The current audit provides whole-resource sizes and parsing results, but per-stage hashes were not recomputed from verified source bytes in this implementation session.
+- No source payloads were copied into the app or repository.
+- No stage title/map node relationships were inferred.
+- This is static manifest metadata and JVM tests, not retail-runtime validation.
+
+### Next
+DEV-003W8: define a separate immutable stage-preprocessing result model only after tracing exact allocation, write order and ownership for each runtime-derived field. Keep unknown fields unresolved and keep GameSession integration/collision activation blocked.
