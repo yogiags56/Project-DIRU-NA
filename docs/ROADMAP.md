@@ -827,3 +827,14 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Add deterministic golden fixtures for door countdown and propagation boundaries
 
 **Status:** Door helper's direct and transitive grid write set documented; runtime reachability and complete door lifecycle remain open.
+
+
+### DEV-003CS-2B follow-up — derived span lifecycle
+
+- [x] Confirm `eByteArr` allocation as `awInt * 3` bytes
+- [x] Trace initial code-48 span population from stage preprocessing and packed slot metadata
+- [x] Identify observed renderer, updater, and collision/interaction consumers
+- [x] Record that span records are derived state, not an independent checkpoint payload
+- [ ] Close all endpoint sentinel and slot lifecycle cases with fixtures
+
+**Status:** Major `eByteArr` lifecycle consumers identified from static source; runtime and full slot invariants remain open.
