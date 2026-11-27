@@ -862,3 +862,18 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Re-run CI on the new code/test commits
 
 **Status:** Immutable derived-state view implemented; no renderer, collision, restore, or persistence integration. CI for this latest code increment is pending.
+
+
+### DEV-003CS-3C — Detached initial moving-object span reconstruction
+
+- [x] Rebuild fixed-width span slots in row-major stage scan order
+- [x] Apply candidate-X direction from below-cell metadata bit `0x10`
+- [x] Preserve recognized-occupant endpoint and negative-row sentinel rules
+- [x] Rebuild packed slot high-byte metadata in a detached array
+- [x] Reject invalid grid geometry without out-of-bounds reads
+- [x] Add synthetic fixtures for direction, slot order, recognized/unknown occupants, detached output, and invalid edges
+- [ ] Add full-source golden vectors from stage preprocessing
+- [ ] Implement and test runtime span updater separately from initial reconstruction
+- [ ] Close slot removal/reuse and restore-time reconstruction lifecycle
+
+**Status:** Initial stage-preprocessing projection implemented. Runtime moving-object lifecycle remains out of scope.
