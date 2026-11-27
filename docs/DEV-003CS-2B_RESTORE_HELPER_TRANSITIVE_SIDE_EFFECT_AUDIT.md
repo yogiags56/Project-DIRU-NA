@@ -143,3 +143,18 @@ For this restore call, the two directions are horizontal across the row immediat
 - Trace all writers/readers of foreground code 6, 7, 8, 9 and high-metadata bits `0x10`, `0xF0`, and `0x200`.
 - Determine whether the restore-triggered timer==6 path is reachable in shipped gameplay and whether it can overlap other door-controller transitions.
 - Add golden fixtures for countdown values 1 and greater than 1, high-metadata early return, horizontal propagation stop boundaries, and invalid door indices.
+
+## 9. `eByteArr` allocation, initial population, and observed consumers
+
+The pinned stage-preprocessing path provides additional evidence for the derived three-byte records:
+
+- Allocation: when `awInt > 0`, `eByteArr = new byte[awInt * 3]`.
+- Initial population: the stage scan visits player-layer code 48 cells whose background/property bit `0x8` is set. It derives a neighboring x-coordinate from the current background cell's bit `0x10`, checks that candidate with `dInt(candidateX,y)`, and writes a three-byte tuple at `slot * 3`. The high byte of the source background cell stores the slot index. If the candidate is invalid, the third tuple byte is set to `-1`.
+- Restore reconstruction: `aiVoid()` uses that packed slot index to rewrite the tuple after restoring/moving a code-48 object.
+- Renderer: `EVoid()` iterates the array in steps of three and uses the tuple's y and two x endpoints to calculate visible moving-object geometry and animation.
+- Runtime updater: `VVoid()` iterates the same records, recalculates both x endpoints through `aByte(...)`, then visits the inclusive horizontal span.
+- Collision/interaction: another source branch scans tuples in steps of three to detect whether a code-48 span already covers a candidate cell before initiating a new interaction.
+
+This confirms that `eByteArr` is a derived moving-object span/index structure consumed by rendering, runtime span updates, and collision/interaction checks. It is not an independent save payload. The exact meaning of every endpoint sentinel and every packed high-byte slot lifecycle still needs a full writer/consumer audit.
+
+**Native implication:** reconstruct `eByteArr` only after the authoritative player/background layers and packed slot metadata are restored. Keep its allocation count and three-byte record layout deterministic; validate slot index bounds, candidate coordinates, and endpoint sentinels before publication. Rendering must consume the derived records read-only.
