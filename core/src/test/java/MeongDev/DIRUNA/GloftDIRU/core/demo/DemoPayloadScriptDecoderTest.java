@@ -23,7 +23,7 @@ public class DemoPayloadScriptDecoderTest {
         assertArrayEquals(new int[]{3,9}, decoded.sortedUniqueSpriteIds());
         assertEquals(2, decoded.scriptRecordCount());
         assertEquals(7, decoded.wireRecordOpcode(0));
-        assertEquals(0, decoded.wireRecordOffset(0));
+        assertEquals(2, decoded.wireRecordOffset(0));
         assertArrayEquals(new byte[]{7}, decoded.copyWireRecord(0));
         assertArrayEquals(new byte[]{7,0}, decoded.copyNormalizedRecord(0));
         assertArrayEquals(new byte[]{10,(byte)255}, decoded.copyWireRecord(1));
