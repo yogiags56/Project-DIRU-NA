@@ -11,7 +11,7 @@ import java.util.List;
  * queue events. It does not mutate StageGrid or execute hero-collision damage.
  */
 public final class MovingObjectSpanMutationPlan {
-    public record CellMutation(int x, int y, int playerCode, int backgroundMetadata) { }
+    public record CellMutation(int x, int y, int expectedPlayerCode, int expectedBackgroundMetadata, int playerCode, int backgroundMetadata) { }
     public record MarkerWrite(int x, int y, int value) { }
     public record InteractionEvent(int x, int y, int type) { }
 
@@ -38,6 +38,8 @@ public final class MovingObjectSpanMutationPlan {
 
         List<CellMutation> cells = new ArrayList<>();
         List<MarkerWrite> markers = new ArrayList<>();
+        int[] workingPlayer = stage.copyPlayerLayer();
+        int[] workingBackground = stage.copyBackgroundLayer();
         List<InteractionEvent> events = new ArrayList<>();
 
         for (int slot = 0; slot < spans.size(); slot++) {
@@ -52,7 +54,8 @@ public final class MovingObjectSpanMutationPlan {
             }
 
             for (int x = left; x <= right; x++) {
-                int occupant = stage.playerAt(x, y);
+                int cellIndex = x + y * stage.width();
+                int occupant = workingPlayer[cellIndex];
                 int encoded = encodedObjectType(occupant);
                 if (encoded < 0) continue;
 
@@ -63,10 +66,15 @@ public final class MovingObjectSpanMutationPlan {
 
                 int snakeVariantFlag = encoded == 37 && occupant == 43
                         ? 0x10000000 : 0;
-                int oldMetadata = stage.backgroundAt(x, y);
+                int oldMetadata = workingBackground[cellIndex];
                 int nextMetadata = (oldMetadata & 0xF03FFFFF)
                         | (encoded << 22) | snakeVariantFlag;
-                cells.add(new CellMutation(x, y, 9, nextMetadata));
+                cells.add(new CellMutation(x, y, occupant, oldMetadata, 9, nextMetadata));
+                // The legacy loop mutates the live player layer immediately.
+                // Subsequent overlapping spans therefore see code 9, not the
+                // original recognized occupant, and must not enqueue it twice.
+                workingPlayer[cellIndex] = 9;
+                workingBackground[cellIndex] = nextMetadata;
                 for (int markerY = y - 1; markerY <= y + 1; markerY++) {
                     for (int markerX = x - 1; markerX <= x + 1; markerX++) {
                         markers.add(new MarkerWrite(markerX, markerY, 48));
