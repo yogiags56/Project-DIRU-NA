@@ -4,7 +4,8 @@ package MeongDev.DIRUNA.GloftDIRU.core.demo;
 public final class DemoParseException extends IllegalArgumentException {
     public enum Code {
         INVALID_ARGUMENT, TRUNCATED_HEADER, TRUNCATED_PAYLOAD, INVALID_LENGTH,
-        INVALID_COUNT, DUPLICATE_ID, MISSING_ID, TRAILING_BYTES
+        INVALID_COUNT, DUPLICATE_ID, MISSING_ID, TRAILING_BYTES,
+        UNKNOWN_OPCODE, NESTED_GROUP
     }
 
     private final Code code;
