@@ -76,3 +76,10 @@ This outer wrapper is not the same structure as the inner tagged `demo.f` chunk-
 ## 6. Scope and remaining uncertainty
 
 This audit verifies archive byte order and field layout from the pinned source. It does not prove that every retail resource variant is identical, does not validate real asset contents, and does not resolve shared sprite-cache lifetime. Those remain separate evidence and implementation tasks.
+
+
+## 7. Selected demo payload header (follow-up source inspection)
+
+The selected matching tagged payload begins with an unsigned little-endian 16-bit sprite-ID count, followed by that many little-endian 16-bit ID bit patterns. The legacy loader casts each ID to Java `short` and uses it as an index into `c.aClassfArr`; it also casts the count to `short`. Consequently the native parser accepts IDs only in the nonnegative signed-short index range 0..32767. The bytes immediately after the ID list are the script-record buffer; this milestone preserves them as opaque bytes and does not decode them.
+
+The legacy loader insertion-sorts the requested IDs ascending. The native header reader preserves original order for evidence and separately exposes a sorted, deduplicated request list. This prevents duplicate IDs from causing repeated cache requests without discarding the original header evidence.
