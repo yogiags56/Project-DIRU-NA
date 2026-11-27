@@ -1251,3 +1251,40 @@ DEV-003W9.3: trace all eByteArr/pByteArr readers and persistence behavior; finis
 
 ### Next
 DEV-003W9.4: trace all call sites and lifecycle timing for `VVoid`, `EVoid`, `aBoolean(x,y)`, `dVoid(...)`, and `aiVoid()`; audit every eByteArr writer/index and checkpoint scalar/array. Then build source-proven fixtures for active/inactive spans, duplicate resource tags, signed -1 sentinels, and restore reconstruction.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.4 special-object lifecycle)
+
+### Source identity
+- Pinned static source: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Rechecked all direct `eByteArr` references and the relevant method bodies.
+
+### Lifecycle findings
+- Main gameplay update invokes `VVoid()` when `awInt > 0`; it expands record endpoints using `aByte(...)`, then calls mutating `aBoolean(x,y)` across the inclusive span.
+- `aBoolean` classifies recognized player-layer cells, marks cByte neighborhood, converts player-layer cell to 9, packs entity type into background/object grid, invokes `cVoid`, and may damage the player on overlap.
+- Render path invokes `EVoid()` when records exist and reads endpoints/row to draw viewport-clipped animated spans.
+- Interaction path separately checks row and adjacent endpoints.
+- Coordinate overload `dVoid(int,int)` is a cleanup/removal path; byte overload `dVoid(byte)` is the code-48 movement/update path. Keep them distinct.
+- Coordinate overload removal marks eByteArr row byte -1 through the stable record index; no array compaction observed.
+- `aiVoid()` derives candidate X from direction bits in the cell below and rewrites all three record bytes, or marks row -1 if candidate cell is occupied.
+- Byte overload `dVoid(byte)` updates object movement/grid/byte-state and calls `kVoid` and `aiVoid`.
+- Restore rebuilds cByte neighborhood state first, then scans player-layer code 48 in Y-major/X-minor order and dispatches to byte overload or aiVoid based on background bit 0x8.
+
+### Corrections
+- eByteArr endpoints are not permanently equal; VVoid expands them.
+- aBoolean is a mutating operation, not a pure predicate.
+- dVoid overloads have distinct responsibilities.
+- Restore scan order and dispatch condition are explicit source behavior.
+
+### Implemented
+- Added `docs/DIRU-NA-DEV-003W9-SPECIAL_OBJECT_LIFECYCLE_AUDIT.md`.
+- Commit: `efc8da9c026b57cfba3704325abd57388e6326cf`.
+- No production runtime code or gameplay integration added.
+
+### Remaining dependencies
+- Trace `jVoid`, `cVoid`, and `aByte` before implementing mutation/endpoint expansion.
+- Build deterministic fixtures for endpoint expansion, occupied endpoints, removal, overlap damage, and both restore branches.
+- Audit full scalar and checkpoint ownership beyond the special-object subset.
+
+### Next
+DEV-003W9.5: trace `jVoid`, `cVoid`, `aByte` and all coordinate/bounds preconditions; then define a source-derived fixture schema for multi-object restore. Do not wire collision/gameplay until helper semantics and fixtures are complete.
