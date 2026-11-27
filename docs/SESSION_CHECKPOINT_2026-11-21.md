@@ -1362,3 +1362,32 @@ DEV-003W9.6: trace the event-ring consumer, alVoid side effects and exact coordi
 
 ### Next
 DEV-003W9.7: trace cmInt, mByteArr, aqInt writers and stage-border invariants; define deterministic fixtures for queue wrap/overflow, event animation completion, alVoid countdown zero, packed foreground above-tile cases. Revisit percentage using explicit project scope/milestone denominator; distinguish foundation/CI, source audit, native gameplay implementation, and first playable validation. Do not imply audit progress equals playable-game completion.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.7 group countdown and stage bounds)
+
+### Source identity
+- Static source: `kubikaugustyn/DiamondRushSource/src/main/java/i.java` at `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Rechecked all direct `cmInt` assignments, `mByteArr` writes, `aqInt` assignments/use, group activation case 26, alVoid and checkpoint restore.
+
+### Findings
+- `mByteArr` is populated by stage package record type 17 from parsed group tables. Missing countdown defaults to 0; parallel `lByteArr` metadata defaults to 57. Java byte narrowing/sign matters.
+- Foreground interaction case 26 extracts group ID from foreground high bits, validates against mByteArr length, scans matching group cells (low byte 0x11) and resolves associated foreground/player-layer target; activation tile is cleared.
+- `alVoid()` decrements active group's signed-byte countdown, mode-gated by kByte 3/4/5 while aqInt>0. At zero, sound 8 and group completion mutations occur.
+- `aqInt` is a distinct mode/phase counter, not a group countdown.
+- Checkpoint restore explicitly sets `cmInt = cnInt` and copies `oByteArr` into `mByteArr` when present.
+- Group scans are interior-only, but this does not prove a universal safe one-cell border for all stage assets or other routines.
+
+### Implemented
+- Added `docs/DIRU-NA-DEV-003W9-GROUP_COUNTDOWN_STAGE_BOUNDS_AUDIT.md`.
+- Commit: `8cc838dceb8d038d78fc7b7313feccbb18d0b64c`.
+- Documentation only; no runtime group/checkpoint code added.
+
+### Corrections and gates
+- Door/group interpretation now has stronger source evidence, but keep native naming descriptive pending package fixture validation.
+- Preserve signed byte semantics, group-ID high-bit extraction, exact mode guard, scan order, and checkpoint restoration from cnInt/oByteArr.
+- Trace cnInt/oByteArr/lByteArr lifecycle and snapshot capture order; validate type-17 parser with legally usable binary fixtures.
+- Do not claim a universal stage border invariant.
+
+### Next
+DEV-003W9.8: audit cnInt, oByteArr, lByteArr writers and checkpoint capture order; correlate record type 17 against legally usable stage fixtures; draft group countdown/checkpoint deterministic test vectors. Then close W9 with a coverage matrix and implementation readiness review.
