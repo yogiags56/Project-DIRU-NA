@@ -21,7 +21,8 @@ public final class MovingObjectSpanMutationPlanTest {
 
         assertEquals(1, plan.cellMutations().size());
         assertEquals(new MovingObjectSpanMutationPlan.CellMutation(
-                2, 2, 9, (0x00ABCDEF & 0xF03FFFFF) | (37 << 22) | 0x10000000),
+                2, 2, 43, 0x00ABCDEF, 9,
+                (0x00ABCDEF & 0xF03FFFFF) | (37 << 22) | 0x10000000),
                 plan.cellMutations().get(0));
         assertEquals(9, plan.markerWrites().size());
         assertEquals(new MovingObjectSpanMutationPlan.MarkerWrite(1, 1, 48),
@@ -67,4 +68,53 @@ public final class MovingObjectSpanMutationPlanTest {
             fail("incomplete marker region must be rejected");
         } catch (IllegalArgumentException expected) { }
     }
+    @Test public void overlappingSpansPlanAnObjectOnlyOnceLikeSequentialLegacyWrites() {
+        int[] player = new int[36];
+        player[2 + 2 * 6] = 43;
+        StageGrid source = stage(6, 6, player, new int[36]);
+        MovingObjectSpanMutationPlan plan = MovingObjectSpanMutationPlan.plan(source,
+                new MovingObjectSpanTable(new byte[]{1, 3, 2, 2, 4, 2}));
+        assertEquals(1, plan.cellMutations().size());
+        assertEquals(1, plan.interactionEvents().size());
+    }
+
+    @Test public void transactionPublishesStageMarkersAndRingBufferTogether() {
+        int[] player = new int[36];
+        int[] metadata = new int[36];
+        player[2 + 2 * 6] = 43;
+        StageGrid source = stage(6, 6, player, metadata);
+        MovingObjectSpanMutationPlan plan = MovingObjectSpanMutationPlan.plan(source,
+                new MovingObjectSpanTable(new byte[]{2, 2, 2}));
+        MovingObjectSpanMutationTransaction.Result result =
+                MovingObjectSpanMutationTransaction.apply(source, new int[36],
+                        new MovingObjectSpanMutationTransaction.QueueState(
+                                new byte[8], new byte[8], new byte[8], new byte[8], 7), plan);
+
+        assertEquals(43, source.playerAt(2, 2));
+        assertEquals(9, result.stage().playerAt(2, 2));
+        assertEquals(48, result.copyMarkerLayer()[1 + 1 * 6]);
+        assertEquals(1, result.queue().nextIndex());
+        assertEquals(2, result.queue().copyX()[7]);
+        assertEquals(2, result.queue().copyY()[7]);
+        assertEquals(1, result.queue().copyType()[7]);
+        assertEquals(0, result.queue().copyStatus()[7]);
+    }
+
+    @Test public void stalePreconditionRejectsWholeTransactionWithoutMutatingInputs() {
+        int[] player = new int[36];
+        player[2 + 2 * 6] = 43;
+        StageGrid source = stage(6, 6, player, new int[36]);
+        MovingObjectSpanMutationPlan plan = MovingObjectSpanMutationPlan.plan(source,
+                new MovingObjectSpanTable(new byte[]{2, 2, 2}));
+        int[] markers = new int[36];
+        try {
+            MovingObjectSpanMutationTransaction.apply(
+                    stage(6, 6, new int[36], new int[36]), markers,
+                    MovingObjectSpanMutationTransaction.QueueState.empty(), plan);
+            fail("stale cell precondition must reject transaction");
+        } catch (IllegalStateException expected) { }
+        assertEquals(43, source.playerAt(2, 2));
+        assertEquals(0, markers[1 + 1 * 6]);
+    }
+
 }
