@@ -776,3 +776,17 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Verify Android storage tests and debug APK assembly
 
 **CI finding:** The prior run compiled `:core:compileJava` successfully, then failed at `:core:compileTestJava` on the test fixture literal. The remaining test and APK steps were skipped. The corrected commit is the current PR #1 head, but a completed workflow result for that exact head has not yet been exposed by the available run lookup. Do not mark CI green.
+
+
+### DEV-003CS-3A — Stable GameSession capture seam
+
+- [x] Add owner-thread-only `GameSession.captureStableView()`
+- [x] Reject capture while ordinary movement interpolation is active
+- [x] Verify settled capture before and after an accepted move completes
+- [x] Verify cross-thread capture rejection
+- [x] Document the exact limited projection and non-persistence boundary
+- [ ] Complete CS-2 field/invariant closure and production mutable gameplay-state owner
+- [ ] Implement complete atomic gameplay checkpoint provider only after the authoritative owner exists
+- [ ] Verify current-head CI: core tests, Android storage tests, and debug APK assembly
+
+**Status:** Stable projection seam committed. This is not a complete checkpoint/provider and does not mark DEV-003CS complete. Workflow verification for the latest head remains pending.
