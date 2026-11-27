@@ -110,3 +110,8 @@ This ordering is evidence for a multi-phase restore transaction. The exact trans
 - Independent tests proving invalid candidates never mutate live state.
 
 **Exit:** The direct copy/restore assignment inventory for the pinned method bodies is now recorded. CS-2 is not complete: semantics, invariants, helper side effects, and runtime compatibility remain open. No production snapshot schema or provider is authorized by this document.
+
+
+## 8. Clarification to restore side-effect step 6
+
+The restore-loop helper `kVoid(x,y)` is statically confirmed to write byte value 48 to the nine cells in the 3×3 neighborhood centered at `(x,y)` in `i.cByteArrArr`. It is not yet proven that these bytes are generic dirty markers. See `DEV-003CS-2B_RESTORE_HELPER_TRANSITIVE_SIDE_EFFECT_AUDIT.md` for the exact write set and the separate code-48 continuation helper. Native work must preserve the observed target array and value without assigning an unsupported semantic label.
