@@ -129,3 +129,12 @@ Further inspection of the same pinned source resolves the previously open Pass B
 - Trace all readers of `eByteArr` and `pByteArr`, plus checkpoint capture/restore.
 - Complete Pass A foreground switch inventory and all helper call preconditions.
 - No production executor or runtime integration is authorized by this evidence update.
+
+
+## W9.3 consumer audit addendum — array lifecycle corrections
+
+- `eByteArr` is allocated at three bytes per counted special-object record, initially populated during Pass B, and indexed from the high byte of the corresponding background/object grid cell.
+- The first two coordinate bytes being equal is only an initial form for one Pass B branch. Runtime `VVoid()` mutates the horizontal endpoints; `EVoid()` renders them as a span.
+- `eByteArr` is not copied by `saveCheckpoint()`. Restore rebuilds/updates records by restoring source stage grids and player layer, rebuilding cByte neighborhoods, then scanning player-layer code 48 and dispatching to `dVoid(48)` or `aiVoid()` based on background flag 0x8.
+- `pByteArr` is stage-derived and paired by index with `aClasscArr`; it initializes resource objects and is searched by runtime `kVoid(type)`. The scan does not break, so duplicate tags use the last matching resource.
+- Neither array is directly copied by the observed checkpoint capture/restore path. Do not treat their absence from snapshots as accidental omission.
