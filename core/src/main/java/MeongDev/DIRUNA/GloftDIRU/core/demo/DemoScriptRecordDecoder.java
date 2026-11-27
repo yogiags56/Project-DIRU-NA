@@ -118,7 +118,9 @@ public final class DemoScriptRecordDecoder {
             case 7: case 14: case 15:
                 values = new long[0];
                 break;
-            case 9:
+            // Opcode 8 falls through into opcode 9 in the legacy executor and
+            // therefore carries the same three-u16 callback operands.
+            case 8: case 9:
                 values = new long[]{u16(), u16(), u16()};
                 break;
             case 10:
