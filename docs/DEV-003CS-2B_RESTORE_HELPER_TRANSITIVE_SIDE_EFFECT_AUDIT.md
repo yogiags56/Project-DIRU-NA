@@ -210,3 +210,18 @@ The result contains an immutable `MovingObjectSpanTable` and a defensive copy of
 Synthetic tests cover right/left candidate selection, row-major slot assignment, recognized and unrecognized occupants, non-flagged code-48 cells, detached metadata, and invalid geometry. The direction fixtures were corrected after review so the below-cell bit and expected candidate agree with the source rule.
 
 **Boundary:** this is only the initial preprocessing projection. It does not yet implement the later span updater, moving-object runtime/collision mutation, restore-time helper sequence, slot removal/reuse lifecycle, or atomic checkpoint publication. Do not claim full moving-object gameplay support.
+
+## 13. Runtime span endpoint updater and gameplay side-effect boundary (DEV-003CS-3D)
+
+The legacy `VVoid()` iterates `eByteArr` in three-byte records and only updates records whose row byte is greater than zero. For each active record it recalculates the first endpoint with `aByte(firstX, -1, 0, row)` and the second with `aByte(secondX, +1, width-1, row)`, then visits every cell in the inclusive updated interval.
+
+The directional scan continues through:
+- negative/empty player-layer values;
+- code 31;
+- occupants recognized by `dInt`: 1, 45, 19, 43, 46, and 49.
+
+It stops at the first other occupant or the source-defined edge. The new `MovingObjectSpanUpdater` reproduces the endpoint projection as a detached, pure operation over immutable `StageGrid`. It preserves inactive row sentinels, rejects invalid active coordinates, and rejects dimensions above 128 because legacy coordinates are signed bytes.
+
+**Important:** legacy `VVoid()` does more than endpoint recalculation. For every cell in the inclusive span it calls `aBoolean(x,y)`. If `dInt` recognizes the occupant, that helper calls `kVoid`, changes the player-layer code to 9, rewrites packed background metadata (including the special snake-43 flag), and calls `cVoid(x,y,1)`. It can also hurt the hero when collision/animation preconditions hold. These gameplay side effects are deliberately not performed by the pure updater and remain a separate transaction milestone.
+
+Synthetic tests cover endpoint movement, traversable/blocked cells, inactive sentinels, invalid row/endpoints, and signed-byte dimension limits. Full-source golden vectors and the per-cell gameplay mutation transaction remain open.
