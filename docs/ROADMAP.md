@@ -703,3 +703,19 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Connect production collision policy to GameSession after golden fixtures pass
 
 **Status:** Collision data bridge committed; collision outcome evaluation remains incomplete.
+
+
+## DIRU-NA-DEV-003W10.4 — Demo archive parser contract
+
+**Working document:** [Demo Archive Parser Contract](DEV-003W10-4_DEMO_ARCHIVE_PARSER_CONTRACT.md)
+
+- [x] Define bounded `demo.f` tagged-chunk reader contract
+- [x] Define bounded `demoSpr.bin` sprite-archive reader contract
+- [x] Specify fail-closed parse outcomes and overflow-safe bounds rules
+- [x] Define synthetic binary fixture matrix and parser ownership boundary
+- [ ] Verify exact source byte order and signedness for every archive field before implementation
+- [ ] Implement bounded archive readers and deterministic lookup
+- [ ] Add malformed-input and immutability tests
+- [ ] Validate core tests and Android build
+
+**Status:** Contract committed; parser implementation not started. Script record decoding, interpreter execution, shared sprite cache ownership, and gameplay integration remain deferred.
