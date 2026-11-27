@@ -67,7 +67,7 @@ public class DemoScriptNormalizerTest {
         assertArrayEquals(new byte[]{7,0}, normalize(1, 7));
         assertArrayEquals(new byte[]{9,0, 1,0,2,0,3,0},
                 normalize(1, 9, 1,0,2,0,3,0));
-        assertArrayEquals(new byte[]{10,0, 255}, normalize(1, 10, 255));
+        assertArrayEquals(new byte[]{10,0, (byte) 255}, normalize(1, 10, 255));
         assertArrayEquals(new byte[]{11,0, 1,0,2,0},
                 normalize(1, 11, 1,0,2,0));
         assertArrayEquals(new byte[]{12,0, 3,0,4,0},
