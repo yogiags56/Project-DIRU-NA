@@ -57,6 +57,11 @@ public class DemoScriptNormalizerTest {
     }
 
 
+    @Test public void normalizesOpcode8WithOpcode9CallbackLayout() {
+        assertArrayEquals(new byte[]{8,0, 1,0,2,0,3,0},
+                normalize(1, 8, 1,0,2,0,3,0));
+    }
+
     @Test public void normalizesRemainingFixedWidthOpcodeLayouts() {
         assertArrayEquals(new byte[]{4,0, 1,0,2,0,3,0,4,0,5,0,6,0,7,0},
                 normalize(1, 4, 1,0,2,0,3,0,4,0,5,0,6,0,7,0));
