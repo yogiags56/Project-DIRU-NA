@@ -1106,3 +1106,26 @@ DEV-003W8: define a separate immutable stage-preprocessing result model only aft
 
 ### Next
 DEV-003W9: build a per-branch step-9 source-evidence matrix (scan order, reads/writes, neighboring-cell preconditions, derived arrays/counters/flags) and implement isolated transformations with table-driven tests. Keep unverified behavior unresolved.
+
+
+## Resume update — 2026-11-27 (DEV-003W9 step-9 evidence matrix)
+
+### Source inspection
+- Directly inspected the pinned `i.java` step-9 source at commit `215c71d04057d66a1b08419b1a4b1043ae3e0881`.
+- Confirmed x-major/y-minor traversal and per-cell reset of bByte/cByte.
+- Mapped directly observed foreground branches including 31/19/17/14/33/2/8/9/7/30/1/26/0/4/5/28/3/6/20..25/34.
+- Mapped directly observed player/object branches including 48/47/46/45/44/42/41/40/12/36/18/34/35/39/38/14/28/79/11/49/43/19/22/23/30/37/10/16/6/7/26/24/27/8/4/5/2/0/1.
+- Recorded derived arrays and counters created after the first scan. Second scan remains incomplete.
+- Recorded neighbor and index hazards; no full semantic tile catalog claimed.
+
+### Implemented
+- Added `DIRU-NA-DEV-003W9_STEP9_MUTATION_EVIDENCE_MATRIX.md` as a source-evidence matrix. This is documentation/audit, not executable preprocessing.
+
+### Scope guard
+- W8 result type exists but is only a container.
+- No full preprocessing executor, production seed adapter, or GameSession integration.
+- The branch matrix is partial; exact helper semantics, second scan, and safe edge behavior remain unresolved.
+- No runtime validation against retail build.
+
+### Next
+DEV-003W10: implement a narrow phased preprocessing pass beginning with per-cell byte resets and only fully bounded, directly evidenced branches. Unsupported/unmapped codes must fail closed. Add table-driven fixtures and do not publish production collision state from partial preprocessing.
