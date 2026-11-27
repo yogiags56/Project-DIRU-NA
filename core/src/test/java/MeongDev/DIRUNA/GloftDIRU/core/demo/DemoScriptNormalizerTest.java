@@ -56,6 +56,36 @@ public class DemoScriptNormalizerTest {
         }
     }
 
+
+    @Test public void normalizesRemainingFixedWidthOpcodeLayouts() {
+        assertArrayEquals(new byte[]{4,0, 1,0,2,0,3,0,4,0,5,0,6,0,7,0},
+                normalize(1, 4, 1,0,2,0,3,0,4,0,5,0,6,0,7,0));
+        assertArrayEquals(new byte[]{5,0, 1,0,2,0,3},
+                normalize(1, 5, 1,0,2,0,3));
+        assertArrayEquals(new byte[]{6,0, 1,2,3,4},
+                normalize(1, 6, 1,2,3,4));
+        assertArrayEquals(new byte[]{7,0}, normalize(1, 7));
+        assertArrayEquals(new byte[]{9,0, 1,0,2,0,3,0},
+                normalize(1, 9, 1,0,2,0,3,0));
+        assertArrayEquals(new byte[]{10,0, 255}, normalize(1, 10, 255));
+        assertArrayEquals(new byte[]{11,0, 1,0,2,0},
+                normalize(1, 11, 1,0,2,0));
+        assertArrayEquals(new byte[]{12,0, 3,0,4,0},
+                normalize(1, 12, 3,0,4,0));
+        assertArrayEquals(new byte[]{13,0, 1,0,2,0,3,0, 0x10,0x27, 0x10,0x27},
+                normalize(1, 13, 1,0,2,0,3,0));
+        assertArrayEquals(new byte[]{14,0}, normalize(1, 14));
+        assertArrayEquals(new byte[]{15,0}, normalize(1, 15));
+        assertArrayEquals(new byte[]{16,0, 1,0,2,0},
+                normalize(1, 16, 1,0,2));
+        assertArrayEquals(new byte[]{17,0, 3,0,4,0},
+                normalize(1, 17, 3,0,4));
+        assertArrayEquals(new byte[]{25,0, 1,0,2,0,3,4},
+                normalize(1, 25, 1,0,2,0,3,4));
+        assertArrayEquals(new byte[]{26,0, 5,0,6,0,1,2,3,4},
+                normalize(1, 26, 5,0,6,0,1,2,3,4));
+    }
+
     @Test public void normalizedRecordsAreDefensivelyCopied() {
         DemoScriptNormalizer.NormalizedScript normalized =
                 DemoScriptNormalizer.normalize(DemoScriptRecordDecoder.decode(script(1, 7)));
