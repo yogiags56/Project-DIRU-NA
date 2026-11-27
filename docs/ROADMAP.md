@@ -816,3 +816,14 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Debug APK assembly and artifact upload
 
 Do not mark the workflow green until all required steps finish successfully.
+
+
+### DEV-003CS-2B follow-up — door restore branch
+
+- [x] Trace `hVoid(int)` reached by the code-48 restore continuation
+- [x] Trace five-argument `aVoid` horizontal propagation through foreground codes 8/9
+- [x] Record door countdown nibble, high-metadata updates, cByteArrArr write, and sound side effect
+- [ ] Confirm door-index construction and restore-time reachability
+- [ ] Add deterministic golden fixtures for door countdown and propagation boundaries
+
+**Status:** Door helper's direct and transitive grid write set documented; runtime reachability and complete door lifecycle remain open.
