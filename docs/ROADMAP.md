@@ -877,3 +877,25 @@ Do not mark the workflow green until all required steps finish successfully.
 - [ ] Close slot removal/reuse and restore-time reconstruction lifecycle
 
 **Status:** Initial stage-preprocessing projection implemented. Runtime moving-object lifecycle remains out of scope.
+
+
+### CI #685 — Initial span reconstruction
+
+- [x] Core JVM tests passed
+- [x] Android storage tests passed
+- [x] Android debug APK assembled
+- [x] Debug APK artifact uploaded
+
+**Tested head:** `8289aee0b3dcecacb3a136df9345af903fb94321`. The later commits introducing the pure runtime updater are separate and require their own CI run.
+
+### DEV-003CS-3D — Pure runtime span endpoint updater
+
+- [x] Trace legacy `VVoid()` endpoint update and `aByte(...)` directional scan
+- [x] Implement detached left/right endpoint recalculation over immutable StageGrid
+- [x] Preserve source traversability set: empty, code 31, and recognized `dInt` occupants
+- [x] Add tests for both directions, stop boundaries, sentinels, and invalid coordinates
+- [ ] Add golden fixtures captured from actual legacy stage states
+- [ ] Implement the separate per-cell gameplay mutation performed by legacy `aBoolean()`
+- [ ] Reconcile updater and checkpoint/restore publication order
+
+**Important scope:** `VVoid()` calls `aBoolean()` for every cell in the recomputed inclusive span. That helper can transform eligible occupants into code 9, update packed background metadata, invoke `cVoid(...,1)`, and hurt the hero. The new updater intentionally computes only the endpoint projection; it does not claim to reproduce those gameplay side effects.
