@@ -117,4 +117,30 @@ public final class MovingObjectSpanMutationPlanTest {
         assertEquals(0, markers[1 + 1 * 6]);
     }
 
+    @Test public void queueStateDefensivelyCopiesEveryBackingArray() {
+        byte[] x = new byte[8], y = new byte[8], type = new byte[8], status = new byte[8];
+        x[0] = 4; y[0] = 3; type[0] = 1; status[0] = 7;
+        MovingObjectSpanMutationTransaction.QueueState queue =
+                new MovingObjectSpanMutationTransaction.QueueState(x, y, type, status, 1);
+        x[0] = 99; y[0] = 99; type[0] = 99; status[0] = 99;
+        assertEquals(4, queue.copyX()[0]);
+        assertEquals(3, queue.copyY()[0]);
+        assertEquals(1, queue.copyType()[0]);
+        assertEquals(7, queue.copyStatus()[0]);
+        byte[] exported = queue.copyX();
+        exported[0] = 88;
+        assertEquals(4, queue.copyX()[0]);
+    }
+
+    @Test public void planningRejectsDimensionsOutsideSignedByteCoordinateDomain() {
+        int width = 129;
+        int[] layer = new int[width * 2];
+        try {
+            MovingObjectSpanMutationPlan.plan(
+                    new StageGrid(width, 2, layer, layer, layer),
+                    new MovingObjectSpanTable(new byte[0]));
+            fail("oversized stage must be rejected");
+        } catch (IllegalArgumentException expected) { }
+    }
+
 }
