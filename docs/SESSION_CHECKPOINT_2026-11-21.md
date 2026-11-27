@@ -1034,3 +1034,28 @@ DEV-003W5: audit actual decoded-stage formats and the loader path, build a sourc
 
 ### Next
 DEV-003W6: trace all source allocation/read/write sites for bByteArrArr, cByteArrArr and eIntArrArr; introduce a named decoder-to-seed factory; add synthetic binary and real-format round-trip fixtures. Keep runtime activation disabled until a single authoritative owner exists.
+
+
+## Resume update — 2026-11-27 (DEV-003W6 bounded stage stream parser)
+
+### Repository / evidence baseline
+- Working branch remains `dev-003cr-snapshot-provider-boundary`; PR #1 remains the existing review boundary (do not merge without explicit authorization).
+- Read the current W3/W4/W5 implementation and source audits AUDIT-012 and AUDIT-029.
+- AUDIT-029 confirms the stage stream layout: opaque prefix byte, unsigned stage-count byte, then repeated LE u16 width/height and three width×height byte layers (player/object, background, foreground).
+- The pinned static binary inventory covers 41 records: 14 Angkor, 13 Scotland/Bavaria-resource, 14 Tibet/Siberia-resource. The opaque prefix meaning and two map/title count anomalies remain unresolved.
+
+### Implemented
+- Added `core/.../stage/WorldStageStreamParser.java`.
+- Parser uses a bounded cursor, validates selected index, dimensions and configured limits, checks payload availability before allocation, skips unselected records exactly, and rejects trailing bytes.
+- Preserves signed-byte widening into StageGrid integer arrays.
+- Added `WorldStageStreamParserTest.java` for multi-record selection/skipping, layer order/dimensions, signed bytes, invalid index, truncation, trailing bytes, limits, zero count and zero dimensions.
+- Added `DIRU-NA-DEV-003W6_WORLD_STAGE_STREAM_PARSER.md`.
+
+### Scope guard
+- Parser returns the three serialized authored layers only. It is not a full runtime-preprocessed stage or collision seed.
+- Runtime arrays `bByteArrArr`, `cByteArrArr`, `eIntArrArr`, transformed foreground, session scalars and object tables are created or changed by later initialization passes.
+- No GameSession integration or gameplay collision activation.
+- No real source assets copied into this repository; static audit evidence only.
+
+### Next
+DEV-003W7: build a provenance-safe per-world/per-stage fixture manifest and add an explicit stage preprocessing result model based on the complete audited step-9 pass. Continue distinguishing serialized authored layers from runtime-derived state. Do not construct a production collision seed until every required runtime field has a verified source and owner.
