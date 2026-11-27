@@ -64,4 +64,15 @@ public final class MovingObjectSpanUpdaterTest {
             fail("negative active endpoint must be rejected");
         } catch (IllegalArgumentException expected) { }
     }
+    @Test public void rejectsDimensionsThatCannotFitSignedByteCoordinates() {
+        int width = 129, height = 1;
+        int[] player = new int[width * height];
+        try {
+            MovingObjectSpanUpdater.update(
+                    new StageGrid(width, height, player, player, player),
+                    new MovingObjectSpanTable(new byte[0]));
+            fail("width above signed-byte coordinate capacity must be rejected");
+        } catch (IllegalArgumentException expected) { }
+    }
+
 }
