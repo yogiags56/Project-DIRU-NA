@@ -1391,3 +1391,33 @@ DEV-003W9.7: trace cmInt, mByteArr, aqInt writers and stage-border invariants; d
 
 ### Next
 DEV-003W9.8: audit cnInt, oByteArr, lByteArr writers and checkpoint capture order; correlate record type 17 against legally usable stage fixtures; draft group countdown/checkpoint deterministic test vectors. Then close W9 with a coverage matrix and implementation readiness review.
+
+
+## Resume update — 2026-11-27 (DEV-003W9.8 checkpoint/group lifecycle)
+
+### CI verification
+- Run #576, ID `45951692166`, for commit `40694b56418dbc77900e2ae952fba8037182fe3c` completed with conclusion `success`.
+- Earlier failure #574 was isolated to a test that inspected the current store snapshot instead of retaining the pre-commit immutable snapshot.
+- Test was corrected to assert old snapshot remains 1 and new snapshot becomes 30.
+- No production behavior was changed for this CI fix.
+
+### Source findings
+- Stage setup clears `cmInt=-1`, `mByteArr=null`, `lByteArr=null`.
+- Parser allocates `mByteArr` and `lByteArr` at equal length based on highest group index.
+- Record/tile code 17 resolves group values through parsed hash tables:
+  - `mByteArr[group]` from hashtable2, default 0, narrowed to byte.
+  - `lByteArr[group]` from hashtable3, default 57, narrowed to byte.
+- `lByteArr` is consumed as `texts[lByteArr[cmInt]]` for localized prompt selection; no runtime writer was found. Treat it as immutable stage metadata, not a second timer.
+- `saveCheckpoint()` captures scalar state, then `cnInt=cmInt`, copies `mByteArr` to `oByteArr`, then copies stage grids and optional mode-specific state.
+- `restoreCheckpoint()` restores scalar/mode state, then `cmInt=cnInt`, copies `oByteArr` to `mByteArr`, restores stage grids, recomputes cByte neighborhoods, then restores optional mode state.
+- `lByteArr` is not checkpoint-copied.
+- Two direct saveCheckpoint call sites found: stage transition after event queue cursors reset; gameplay path after sound 9 and 100ms delay. Queue arrays/cursors are not captured.
+- Stage setup allocates `oByteArr` to group countdown array length.
+
+### Implemented
+- Added `docs/DIRU-NA-DEV-003W9-CHECKPOINT_GROUP_STATE_LIFECYCLE.md`.
+- Commit: `87157d485cad07534a1e1b304c96742b2f7c96bb`.
+- Documentation only; no production group/checkpoint runtime code added.
+
+### Next
+Close DEV-003W9 with a source coverage matrix and readiness review. List unresolved evidence gaps, define the smallest deterministic native implementation slice and tests. Keep GroupCountdownState mutable and GroupTextIndexTable immutable/separate; preserve signed-byte semantics and capture/restore ordering.
