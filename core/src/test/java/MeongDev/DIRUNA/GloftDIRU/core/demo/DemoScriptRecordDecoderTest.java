@@ -44,6 +44,14 @@ public class DemoScriptRecordDecoderTest {
         assertArrayEquals(new byte[]{9,8}, decoded.records().get(18).copyData());
     }
 
+    @Test public void decodesOpcode8WithOpcode9CallbackOperands() {
+        DemoScriptRecordDecoder.Record record =
+                DemoScriptRecordDecoder.decode(script(1, 8, 1,0, 2,0, 3,0)).records().get(0);
+        assertEquals(8, record.opcode());
+        assertArrayEquals(new long[]{1,2,3}, record.operands());
+        assertArrayEquals(new byte[]{8,1,0,2,0,3,0}, record.copyWireBytes());
+    }
+
     @Test public void parsesOneLevelGroupAndPreservesWireBytes() {
         DemoScriptRecordDecoder.DecodedScript decoded =
             DemoScriptRecordDecoder.decode(script(1, 0, 2, 7, 14));
