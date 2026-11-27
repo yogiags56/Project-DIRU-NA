@@ -89,6 +89,24 @@ public final class GameSession {
         return new TickResult(TickKind.MOVEMENT_STARTED, input.kind());
     }
 
+    /**
+     * Captures the immutable core projection only at a settled ordinary-movement
+     * boundary. This is a narrow state-owner seam, not a complete gameplay
+     * checkpoint and not a persistence API: stage preprocessing, collision
+     * runtime arrays, progression, optional modes, and object tables are not
+     * represented by this projection.
+     *
+     * Must be called by the GameSession owner thread.
+     */
+    public GameplayRenderSnapshot captureStableView() {
+        assertOwnerThread();
+        if (interpolation.isActive()) {
+            throw new IllegalStateException(
+                    "gameplay view is not stable while movement interpolation is active");
+        }
+        return renderSnapshot;
+    }
+
     public GameplayRenderSnapshot renderSnapshot() { return renderSnapshot; }
     private void publishSnapshot() {
         int active=interpolation.isActive()?interpolation.direction():LegacyDirectionResolver.NONE;
