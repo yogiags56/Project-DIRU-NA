@@ -41,8 +41,13 @@ public class DemoScriptNormalizerTest {
     }
 
     @Test public void rejectsLegacySignedLengthOverflowDuringNormalization() {
+        byte[] oversized = new byte[2 + 3 + 32768];
+        oversized[0] = 1;
+        oversized[2] = 27;
+        oversized[3] = 0;
+        oversized[4] = (byte) 0x80;
         DemoScriptRecordDecoder.DecodedScript decoded =
-                DemoScriptRecordDecoder.decode(script(1, 27, 0, (byte)0x80, 1));
+                DemoScriptRecordDecoder.decode(oversized);
         try {
             DemoScriptNormalizer.normalize(decoded);
             fail("expected invalid legacy signed length");
