@@ -790,3 +790,29 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Verify current-head CI: core tests, Android storage tests, and debug APK assembly
 
 **Status:** Stable projection seam committed. This is not a complete checkpoint/provider and does not mark DEV-003CS complete. Workflow verification for the latest head remains pending.
+
+
+### DEV-003CS-2A / 2B — Checkpoint evidence closure increment
+
+- [x] Record exact scalar save/restore assignments from the pinned `saveCheckpoint()` and `restoreCheckpoint()` bodies
+- [x] Record four always-copied grid/layer arrays and their exact row-copy directions
+- [x] Record the conditional `lBoolean` metadata/object/auxiliary group and separate nullable `mByteArr` copy
+- [x] Preserve mode-specific restore semantics for `kByte == 1` and `kByte == 5`
+- [x] Trace restore helper bodies `kVoid(int,int)`, `dVoid(byte)`, `aiVoid()`, and `yVoid()`
+- [x] Document code-48 reconstruction, derived span tuple writes, and 3×3 `cByteArrArr` writes
+- [ ] Trace `hVoid(int)` and transitive door writes
+- [ ] Complete `cByteArrArr` and `eByteArr` writers/consumers/allocation lifecycle
+- [ ] Close opaque scalar ownership, mode invariants, and runtime/retail vectors
+- [ ] Implement detached aggregate candidate and atomic restore only after schema closure
+
+**Status:** Static assignment and selected transitive helper evidence substantially expanded. CS-2 remains in progress; no production checkpoint provider or runtime compatibility claim. See `DEV-003CS-2A_EXACT_CHECKPOINT_COPY_RESTORE_ASSIGNMENT_LEDGER.md` and `DEV-003CS-2B_RESTORE_HELPER_TRANSITIVE_SIDE_EFFECT_AUDIT.md`.
+
+### CI — run #656
+
+- [x] Corrected test fixture was picked up by a new PR workflow run for commit `e74acd1b16ef955ea2d901579c766ac035ccd583`
+- [x] Checkout, JDK 17, Android SDK setup, and SDK package installation completed
+- [ ] Core JVM tests
+- [ ] Android storage tests
+- [ ] Debug APK assembly and artifact upload
+
+Do not mark the workflow green until all required steps finish successfully.
