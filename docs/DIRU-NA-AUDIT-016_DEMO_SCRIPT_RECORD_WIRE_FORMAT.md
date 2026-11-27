@@ -123,3 +123,37 @@ The decoder supports opcodes 25, 26, and 27 as wire records. Their semantic inte
 `DemoScriptRecordDecoder` parses the leading u16 top-level logical-record count, then exactly that many records. It supports the observed opcode forms 0, 1, 2, 4–7, 9–18, and 25–27. Opcode 0 is represented as an immutable one-level group with parsed child records. Nested opcode-0 groups, unknown opcodes, truncated operands, invalid signed-short top-level counts, and trailing bytes fail closed.
 
 The decoder retains each record's original wire bytes, typed integer operands, opaque variable data, and byte offset. It does not construct the legacy normalized runtime byte arrays, execute opcodes, allocate sprites, mutate stages, or render.
+
+
+## 10. Legacy normalized-record byte layouts — implementation notes
+
+The helper overloads used by the pinned source write 16-bit and 32-bit values little-endian. The native normalization layer therefore emits little-endian fields and keeps the opcode and legacy secondary byte at offsets 0 and 1.
+
+| Opcode | Normalized length | Field layout after opcode + secondary byte |
+|---:|---:|---|
+| 0 | variable | group header, one-byte child count, u32 child lengths, concatenated normalized children |
+| 1 | 12 | x*24:u16@2, y*24:u16@4, duration:u16@6, sentinel 10000@8 and @10 |
+| 2 | 11 + n | n:u16@2, sentinel 10000@4, value:u16@6, mode:u8@8, zero bytes @9/@10, data@11 |
+| 4 | 16 | seven u16 values @2..14 |
+| 5 | 7 | x:u16@2, y:u16@4, flag:u8@6 |
+| 6 | 6 | u32@2 |
+| 7,14,15 | 2 | no additional fields |
+| 9 | 8 | three u16 values @2..6 |
+| 10 | 3 | u8@2 |
+| 11,12 | 6 | two u16 values @2/@4 |
+| 13 | 12 | three u16 values @2/@4/@6, sentinels 10000@8/@10 |
+| 16,17 | 6 | u16@2, u8@4, zero byte @5 |
+| 18 | 8 | u16@2, u24 value written at @3..6 using legacy four-byte writer, byte @7 forced to zero |
+| 25 | 8 | u16@2, u16@4, u8@6, u8@7 |
+| 26 | 10 | u16@2, u16@4, u32@6 |
+| 27 | 8 + n | n:u16@2, sentinel 10000@4, zero bytes @6/@7, data@8 |
+
+**Opcode 18 compatibility quirk:** the legacy source invokes its 32-bit little-endian writer at offset 3 for a value that was decoded from only three wire bytes. This overlaps the high byte of the preceding u16 at offset 2. Byte 7 is then explicitly cleared. The native normalizer reproduces the final byte layout exactly and retains the original wire bytes in the decoder record. This is intentional compatibility behavior, not a recommended new format.
+
+**Signed variable-length boundary:** opcode 2 and 27 lengths are read from u16 wire fields, but the legacy source casts them to signed Java short before allocation. The normalizer accepts only 0..32767. The wire decoder can preserve and inspect larger unsigned lengths if the complete data exists, but normalization rejects them with INVALID_LENGTH rather than reproducing negative array sizes or ambiguous legacy behavior.
+
+## 11. DEV-003W10.9 implementation boundary
+
+`DemoScriptNormalizer` converts immutable decoded records into immutable-by-copy legacy byte arrays. It reconstructs opcode-specific layouts, sentinels, coordinate scaling, group offset tables, and the opcode 18 overlapping write. It has no interpreter, stage, sprite, or rendering side effects.
+
+Synthetic tests cover opcode 1 coordinate scaling and sentinels, opcode 2 variable text, opcode 18's legacy write quirk, opcode 27 payload layout, group length-table packing, signed-short variable-length rejection, and defensive copying. These are source-derived fixture expectations; they are not yet a comparison against a captured retail demo binary.
