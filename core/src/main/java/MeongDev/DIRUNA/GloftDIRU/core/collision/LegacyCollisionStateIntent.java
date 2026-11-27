@@ -5,10 +5,10 @@ package MeongDev.DIRUNA.GloftDIRU.core.collision;
  * This is a proposal only; it never writes gameplay state.
  */
 public final class LegacyCollisionStateIntent {
-    public enum Channel { PLAYER, ANIMATION, MOVEMENT_FLAGS, FOREGROUND_CACHE }
+    public enum Channel { PLAYER, ANIMATION, MOVEMENT_FLAGS, FOREGROUND_CACHE, B_BYTE_STATE, C_BYTE_STATE }
     public enum Field {
         TILE_X, TILE_Y, PENDING_DIRECTION, ACTIVE_DIRECTION, INTERPOLATION_PROGRESS,
-        ANIMATION_ID, ANIMATION_FRAME, BLOCKED_FLAG, CACHE_VALUE
+        ANIMATION_ID, ANIMATION_FRAME, BLOCKED_FLAG, CACHE_VALUE, BYTE_VALUE
     }
 
     private final Channel channel;
@@ -51,9 +51,14 @@ public final class LegacyCollisionStateIntent {
             case FOREGROUND_CACHE:
                 valid = field==Field.CACHE_VALUE && coordinateScoped;
                 break;
+            case B_BYTE_STATE:
+            case C_BYTE_STATE:
+                valid = field==Field.BYTE_VALUE && coordinateScoped;
+                break;
             default: valid=false;
         }
-        if (!valid || (coordinateScoped && channel!=Channel.FOREGROUND_CACHE))
+        if (!valid || (coordinateScoped && channel!=Channel.FOREGROUND_CACHE
+                && channel!=Channel.B_BYTE_STATE && channel!=Channel.C_BYTE_STATE))
             throw new IllegalArgumentException("field is not valid for state channel");
     }
 
