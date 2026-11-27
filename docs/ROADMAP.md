@@ -736,3 +736,18 @@ Project-owner approval is required before treating this proposal as the official
 - [ ] Implement bounded wire-record decoder and synthetic fixtures (DEV-003W10.8)
 
 **Status:** Static source audit committed. No record decoder, interpreter execution, stage mutation, or rendering integration is included.
+
+
+## DIRU-NA-DEV-003W10.8 — Bounded demo script record decoder
+
+- [x] Implement bounded top-level record count parsing
+- [x] Decode verified fixed-width opcodes and little-endian operands
+- [x] Decode opcode 2 and opcode 27 variable-length payloads
+- [x] Decode opcode 18 24-bit little-endian integer
+- [x] Decode one-level opcode 0 groups
+- [x] Preserve raw wire bytes, typed operands, data, and offsets
+- [x] Reject unknown opcodes, nested groups, truncation, invalid counts, and trailing bytes
+- [x] Add synthetic fixtures for opcode coverage, groups, malformed input, and defensive copies
+- [ ] Run core JVM tests and Android build in CI
+
+**Status:** Bounded decoder and synthetic tests committed. Semantic opcode mapping, legacy normalized-record reconstruction, interpreter execution, and gameplay integration remain deferred. CI/build verification is pending.
