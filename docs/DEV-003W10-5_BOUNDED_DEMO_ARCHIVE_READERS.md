@@ -55,3 +55,10 @@ Source and test files are committed to the development branch. The GitHub connec
 - interpreter, rendering, stage mutation, and gameplay integration.
 
 The resource-directory wrapper is deliberately deferred because W10.5's public parser contract consumes an already-extracted inner chunk. Keeping these layers separate prevents the inner tagged stream from being confused with the outer resource directory.
+
+
+## Follow-up: selected payload header reader
+
+`DemoPayloadHeaderReader` now parses the selected payload's unsigned little-endian 16-bit sprite count and ID list, validates the complete list before indexing, and exposes the remaining bytes as an opaque script-record tail. It preserves source-order IDs and provides a sorted/deduplicated list for safe archive/cache requests. IDs above 32767 are rejected because the legacy source casts IDs to signed Java `short` and uses them as cache indices. Script bytes remain undecoded and unexecuted.
+
+`DemoPayloadHeaderReaderTest` covers zero IDs, multiple IDs, duplicate IDs, ordering, truncated headers/lists, signed-short range rejection, and defensive copies. CI remains pending.
