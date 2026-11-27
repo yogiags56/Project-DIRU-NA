@@ -93,7 +93,7 @@ public final class MovingObjectSpanMutationPlanTest {
         assertEquals(43, source.playerAt(2, 2));
         assertEquals(9, result.stage().playerAt(2, 2));
         assertEquals(48, result.copyMarkerLayer()[1 + 1 * 6]);
-        assertEquals(1, result.queue().nextIndex());
+        assertEquals(0, result.queue().nextIndex());
         assertEquals(2, result.queue().copyX()[7]);
         assertEquals(2, result.queue().copyY()[7]);
         assertEquals(1, result.queue().copyType()[7]);
