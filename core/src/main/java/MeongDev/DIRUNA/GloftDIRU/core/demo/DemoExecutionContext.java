@@ -20,6 +20,8 @@ public final class DemoExecutionContext {
         if (slot.opcode() != plan.entryOpcode()
                 || slot.opcode() != descriptor.entryOpcode())
             throw new IllegalArgumentException("execution input opcode mismatch");
+        if (!plan.isSkipped() && !descriptor.switchLabels().equals(plan.reachedLabels()))
+            throw new IllegalArgumentException("descriptor and dispatch plan label sequences differ");
         this.slot = slot;
         this.descriptor = descriptor;
         this.plan = plan;
