@@ -29,7 +29,7 @@ public class DemoExecutionSessionTest {
 
     @Test public void traversesChildrenOfPackedGroupThenNextTopLevelRecord() {
         DemoExecutionSession session = session(runtime(2,0,
-                0,2, 1,0,0,0,0,0,0,0,0,0,0,0, 6,1,0,0,0,
+                0,2, 1,0,0,0,0,0,0, 6,1,0,0,0,
                 6,2,0,0,0));
         assertEquals(1, session.currentOpcode());
         session.step();
