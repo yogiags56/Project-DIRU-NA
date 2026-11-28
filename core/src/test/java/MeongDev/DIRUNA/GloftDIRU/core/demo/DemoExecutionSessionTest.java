@@ -83,6 +83,63 @@ public class DemoExecutionSessionTest {
         assertArrayEquals(before, runtime.buffers().get(0).copyNormalizedBytes());
     }
 
+    @Test public void tickAdvancesWithinGroupAndResetsAtNextBufferBoundary() {
+        DemoExecutionSession session = session(runtime(2,0,
+                0,2,
+                6,1,0,0,0,
+                6,2,0,0,0,
+                6,3,0,0,0));
+        assertEquals(0, session.tick());
+        assertEquals(Arrays.asList(6), session.step().visitedLabels());
+        assertEquals(1, session.tick());
+        assertEquals(Arrays.asList(6), session.step().visitedLabels());
+        assertEquals(1, session.currentBufferIndex());
+        assertEquals(0, session.currentRecordIndex());
+        assertEquals(0, session.tick());
+        assertEquals(Arrays.asList(6), session.step().visitedLabels());
+        assertEquals(1, session.tick());
+        assertFalse(session.hasCurrentRecord());
+    }
+
+    @Test public void skipOfSupportedRecordAdvancesWithoutDispatchTrace() {
+        DemoExecutionSession session = session(runtime(1,0, 1,0,0,0,0,0));
+        session.setSkipRequested(true);
+        DemoOpcodeDryRunEngine.Result result = session.step();
+        assertTrue(result.isSkipped());
+        assertTrue(result.visitedLabels().isEmpty());
+        assertFalse(session.hasCurrentRecord());
+        assertEquals(1, session.tick());
+    }
+
+    @Test public void failureInSecondBufferKeepsSecondBufferCursorAndTickStable() {
+        DemoExecutionSession session = session(runtime(2,0,
+                6,1,0,0,0,
+                7));
+        assertEquals(Arrays.asList(6), session.step().visitedLabels());
+        assertEquals(1, session.currentBufferIndex());
+        assertEquals(0, session.tick());
+        try {
+            session.step();
+            fail("unknown opcode must not advance the session");
+        } catch (IllegalArgumentException expected) {
+            assertEquals(1, session.currentBufferIndex());
+            assertEquals(0, session.currentRecordIndex());
+            assertEquals(0, session.tick());
+            assertEquals(7, session.currentOpcode());
+        }
+    }
+
+    @Test public void emptyGroupsDoNotConsumeTicksDuringInitialNormalization() {
+        DemoExecutionSession session = session(runtime(3,0,
+                0,0,
+                0,0,
+                6,1,0,0,0));
+        assertEquals(2, session.currentBufferIndex());
+        assertEquals(0, session.currentRecordIndex());
+        assertEquals(0, session.tick());
+        assertEquals(6, session.currentOpcode());
+    }
+
     @Test public void emptyScriptStartsExhaustedAndResetRemainsExhausted() {
         DemoExecutionSession session = session(runtime(0,0));
         assertFalse(session.hasCurrentRecord());
