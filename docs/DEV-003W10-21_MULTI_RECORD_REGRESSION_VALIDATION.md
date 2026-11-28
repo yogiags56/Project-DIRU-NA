@@ -25,6 +25,10 @@ This milestone strengthens dry-run session regression coverage; it does not add 
 - Skip propagation without normalized-record byte mutation.
 - Empty script lifecycle.
 
+## Follow-up regression found during CI review
+
+The terminal-selection invariant intentionally changes `selectNextBuffer()`: after the last buffer, selection becomes `-1`. The pre-existing `DemoInterpreterRuntimeStateTest.tickAndSelectionAreIndependent` still expected the previous final index (`1`). The assertion is updated to expect `-1`; this keeps the test aligned with the documented exhausted-session contract.
+
 ## Safety boundary
 All execution remains trace-only dry-run. This milestone does not set record completion, mutate stage state, execute gameplay callbacks, or use proprietary assets. Unsupported or unverified opcodes fail closed.
 
