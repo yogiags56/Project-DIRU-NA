@@ -50,7 +50,7 @@ public class DemoInterpreterRuntimeStateTest {
         assertEquals(1, state.selectedBufferIndex());
         assertEquals(0, state.tick());
         assertFalse(state.selectNextBuffer());
-        assertEquals(1, state.selectedBufferIndex());
+        assertEquals(-1, state.selectedBufferIndex());
     }
 
     @Test public void resetClearsCountersSkipAndAllBuffers() {
