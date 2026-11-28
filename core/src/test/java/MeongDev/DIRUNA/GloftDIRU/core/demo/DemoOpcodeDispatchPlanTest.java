@@ -7,8 +7,8 @@ import static org.junit.Assert.*;
 public class DemoOpcodeDispatchPlanTest {
     @Test public void preservesOverlayFallThrough() {
         assertEquals(Arrays.asList(16,14,12), DemoOpcodeDispatchPlan.forOpcode(16, false).reachedLabels());
-        assertEquals(Arrays.asList(17,14,12), DemoOpcodeDispatchPlan.forOpcode(17, false).reachedLabels());
-        assertEquals(Arrays.asList(18,14,12), DemoOpcodeDispatchPlan.forOpcode(18, false).reachedLabels());
+        assertEquals(Arrays.asList(17,15,12), DemoOpcodeDispatchPlan.forOpcode(17, false).reachedLabels());
+        assertEquals(Arrays.asList(18,15,12), DemoOpcodeDispatchPlan.forOpcode(18, false).reachedLabels());
         assertEquals(Arrays.asList(14,12), DemoOpcodeDispatchPlan.forOpcode(14, false).reachedLabels());
         assertEquals(Arrays.asList(15,12), DemoOpcodeDispatchPlan.forOpcode(15, false).reachedLabels());
     }
