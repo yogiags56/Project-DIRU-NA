@@ -117,8 +117,8 @@ public final class DemoOpcodeOperandDescriptor {
                 r(12,2,ReadKind.U16_LE,"x coordinate"),
                 r(12,4,ReadKind.U16_LE,"y coordinate")));
 
-        // 25 falls through 26, 5, 8, 9, then 27.
-        add(map, 25, labels(25,26,5,8,9,27), reads(
+        // 25 falls through 26, 5, 8, 9, 27, then 2.
+        add(map, 25, labels(25,26,5,8,9,27,2), reads(
                 r(25,2,ReadKind.U16_LE,"foreground x"),
                 r(25,4,ReadKind.U16_LE,"foreground y"),
                 r(25,6,ReadKind.U8,"foreground tile high/low byte"),
@@ -132,10 +132,12 @@ public final class DemoOpcodeOperandDescriptor {
                 r(9,2,ReadKind.U16_LE,"stage x"),
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
-                r(27,7,ReadKind.U8,"completion flag")));
+                r(27,7,ReadKind.U8,"completion flag"),
+                r(2,4,ReadKind.U16_LE,"text position sentinel"),
+                r(2,10,ReadKind.U8,"text completion flag")));
 
         // Standalone entries into labels that are reached by fall-through.
-        add(map, 26, labels(26,5,8,9,27), reads(
+        add(map, 26, labels(26,5,8,9,27,2), reads(
                 r(26,2,ReadKind.U16_LE,"collision x"),
                 r(26,4,ReadKind.U16_LE,"collision y"),
                 r(26,6,ReadKind.U32_LE,"collision value"),
@@ -146,7 +148,7 @@ public final class DemoOpcodeOperandDescriptor {
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
                 r(27,7,ReadKind.U8,"completion flag")));
-        add(map, 5, labels(5,8,9,27), reads(
+        add(map, 5, labels(5,8,9,27,2), reads(
                 r(5,2,ReadKind.U16_LE,"stage x"),
                 r(5,4,ReadKind.U16_LE,"stage y"),
                 r(5,6,ReadKind.U8,"stage operation"),
@@ -154,17 +156,20 @@ public final class DemoOpcodeOperandDescriptor {
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
                 r(27,7,ReadKind.U8,"completion flag")));
-        add(map, 8, labels(8,9,27), reads(
+        add(map, 8, labels(8,9,27,2), reads(
                 r(9,2,ReadKind.U16_LE,"stage x"),
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
                 r(27,7,ReadKind.U8,"completion flag")));
-        add(map, 9, labels(9,27), reads(
+        add(map, 9, labels(9,27,2), reads(
                 r(9,2,ReadKind.U16_LE,"stage x"),
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
                 r(27,7,ReadKind.U8,"completion flag")));
-        add(map, 27, labels(27), reads(r(27,7,ReadKind.U8,"completion flag")));
+        add(map, 27, labels(27,2), reads(
+                r(27,7,ReadKind.U8,"completion flag"),
+                r(2,4,ReadKind.U16_LE,"text position sentinel"),
+                r(2,10,ReadKind.U8,"text completion flag")));
 
         // Opcode 2 has text-dependent trailing data; only fixed reads visible
         // in the switch are recorded here.
