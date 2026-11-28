@@ -102,7 +102,7 @@ public class DemoExecutionSessionTest {
     }
 
     @Test public void skipOfSupportedRecordAdvancesWithoutDispatchTrace() {
-        DemoExecutionSession session = session(runtime(1,0, 1,0,0,0,0,0));
+        DemoExecutionSession session = session(runtime(1,0, 1,0,0,0,0,0,0));
         session.setSkipRequested(true);
         DemoOpcodeDryRunEngine.Result result = session.step();
         assertTrue(result.isSkipped());
