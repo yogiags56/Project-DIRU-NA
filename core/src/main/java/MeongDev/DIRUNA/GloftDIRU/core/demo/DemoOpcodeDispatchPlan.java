@@ -42,10 +42,11 @@ public final class DemoOpcodeDispatchPlan {
 
         List<Integer> labels = new ArrayList<Integer>();
         switch (opcode) {
-            case 16: case 17: case 18:
-                labels.add(opcode);
-                labels.add(14);
-                labels.add(12);
+            case 16:
+                add(labels, 16, 14, 12);
+                break;
+            case 17: case 18:
+                add(labels, opcode, 15, 12);
                 break;
             case 14: case 15:
                 labels.add(opcode);
