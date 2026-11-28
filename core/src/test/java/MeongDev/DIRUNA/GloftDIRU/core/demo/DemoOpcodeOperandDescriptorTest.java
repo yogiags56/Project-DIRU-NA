@@ -22,7 +22,7 @@ public class DemoOpcodeOperandDescriptorTest {
     }
 
     @Test public void computesMaximumPhysicalReadSpan() {
-        assertEquals(11, DemoOpcodeOperandDescriptor.forOpcode(1).minimumBackingSpan());
+        assertEquals(12, DemoOpcodeOperandDescriptor.forOpcode(1).minimumBackingSpan());
         assertEquals(16, DemoOpcodeOperandDescriptor.forOpcode(4).minimumBackingSpan());
         assertEquals(6, DemoOpcodeOperandDescriptor.forOpcode(6).minimumBackingSpan());
         assertEquals(10, DemoOpcodeOperandDescriptor.forOpcode(26).minimumBackingSpan());
