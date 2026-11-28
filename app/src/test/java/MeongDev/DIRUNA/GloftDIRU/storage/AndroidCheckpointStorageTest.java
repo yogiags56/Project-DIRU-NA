@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.util.Map;
 
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpoint;
+import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.ObjectRecordTable;
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpointBinaryCodec;
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableLifecycleCoordinator;
 import org.junit.After;
@@ -84,16 +85,29 @@ public class AndroidCheckpointStorageTest {
         assertEquals(AndroidCheckpointLoadResult.Status.RESTORED, result.status());
     }
 
+    private static long stateOneRaw(int direction, int movement, int x, int y) {
+        return ((long) y << 20) | ((long) x << 13) | ((long) movement << 6)
+                | ((long) direction << 4) | 1L;
+    }
+
     @Test public void corruptCheckpointIsReportedAndNotSilentlyReset() throws Exception {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
         store.write(new byte[] { 0x44, 0x49, 0x52, 0x55, 0, 0, 0, 99 });
 
         CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        ObjectRecordTable.TileGroup liveTile = new ObjectRecordTable.TileGroup(3, 4, 0);
+        CrossTableLifecycleCoordinator.AttachResult live = destination.attach(
+                ObjectRecordTable.RecordType.TYPE_2, 3, 4, 0, liveTile, 2,
+                stateOneRaw(1, 0, 3, 4));
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, live.status());
+
         AndroidCheckpointLoadResult result =
                 new AndroidCheckpointStorage(context).loadSafelyInto(destination);
         assertEquals(AndroidCheckpointLoadResult.Status.CORRUPT, result.status());
-        assertTrue(destination.snapshot().objectSnapshot().records().isEmpty());
+        assertEquals(2, destination.associatedSlot(live.objectHandle()));
+        assertEquals(ObjectRecordTable.Status.OK,
+                destination.objects().lookup(liveTile).status());
         assertTrue(checkpointFile.exists());
     }
 
@@ -105,6 +119,83 @@ public class AndroidCheckpointStorageTest {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
         assertArrayEquals(knownGood, store.read());
+    }
+
+    @Test public void newStorageInstanceRestoresCheckpointAfterProcessRecreation() throws Exception {
+        AndroidCheckpointStorage writer = new AndroidCheckpointStorage(context);
+        CrossTableCheckpoint expected = new CrossTableCheckpoint(
+                new CrossTableLifecycleCoordinator().snapshot(), Map.of());
+        writer.save(expected);
+
+        // A new adapter instance models application process recreation: no
+        // in-memory storage object is reused for the subsequent load.
+        AndroidCheckpointStorage reopened = new AndroidCheckpointStorage(context);
+        AndroidCheckpointLoadResult candidate = reopened.loadCandidate();
+        assertTrue(candidate.restored());
+
+        CrossTableLifecycleCoordinator destination = new CrossTableLifecycleCoordinator();
+        assertEquals(CrossTableLifecycleCoordinator.Status.OK, candidate.applyTo(destination));
+    }
+
+    @Test public void backupOnlyCheckpointIsRecognizedAndRecovered() throws Exception {
+        byte[] knownGood = validEmptyCheckpoint();
+        File backup = new File(checkpointFile.getPath() + ".bak");
+        Files.write(backup.toPath(), knownGood);
+        assertFalse(checkpointFile.exists());
+
+        AndroidCheckpointStorage reopened = new AndroidCheckpointStorage(context);
+        AndroidCheckpointLoadResult candidate = reopened.loadCandidate();
+
+        assertTrue(candidate.restored());
+        assertArrayEquals(knownGood, new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME).read());
+    }
+
+
+    @Test public void truncatedCheckpointIsReportedAsCorruptAndPreserved() throws Exception {
+        byte[] valid = validEmptyCheckpoint();
+        byte[] truncated = java.util.Arrays.copyOf(valid, valid.length / 2);
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        store.write(truncated);
+
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.CORRUPT, result.status());
+        assertTrue(store.hasRecoverableFile());
+        assertArrayEquals(truncated, store.read());
+    }
+
+
+    @Test public void emptyCheckpointFileIsStorageErrorAndPreserved() throws Exception {
+        Files.write(checkpointFile.toPath(), new byte[0]);
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.STORAGE_ERROR, result.status());
+        assertTrue(store.hasRecoverableFile());
+        assertEquals(0, checkpointFile.length());
+    }
+
+    @Test public void unsupportedBinaryFormatVersionIsCorruptAndPreserved() throws Exception {
+        byte[] encoded = validEmptyCheckpoint();
+        encoded[4] = 0;
+        encoded[5] = 0;
+        encoded[6] = 0;
+        encoded[7] = 99;
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        store.write(encoded);
+
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.CORRUPT, result.status());
+        assertArrayEquals(encoded, store.read());
     }
 
     @Test public void invalidDestinationIsReportedWithoutFileMutation() throws Exception {
@@ -119,14 +210,62 @@ public class AndroidCheckpointStorageTest {
         assertArrayEquals(valid, store.read());
     }
 
-    @Test public void oversizedWriteIsRejected() throws Exception {
+    @Test public void failedAtomicWritePreservesPreviousCheckpoint() throws Exception {
+        byte[] previous = validEmptyCheckpoint();
+        AndroidAtomicCheckpointStore normal = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        normal.write(previous);
+
+        AndroidAtomicCheckpointStore failing = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME,
+                new AndroidAtomicCheckpointStore.CheckpointWriteOperation() {
+                    @Override public void write(FileOutputStream output, byte[] bytes)
+                            throws java.io.IOException {
+                        output.write(bytes, 0, Math.max(1, bytes.length / 2));
+                        throw new java.io.IOException("injected mid-write failure");
+                    }
+                });
+
+        try {
+            failing.write(validEmptyCheckpoint());
+            fail("injected write failure must propagate");
+        } catch (java.io.IOException expected) {
+            assertEquals("injected mid-write failure", expected.getMessage());
+        }
+
+        AndroidAtomicCheckpointStore reopened = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        assertArrayEquals(previous, reopened.read());
+    }
+
+    @Test public void oversizedWriteIsRejectedWithoutReplacingPreviousCheckpoint() throws Exception {
         AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
                 context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        byte[] previous = validEmptyCheckpoint();
+        store.write(previous);
+
         try {
             store.write(new byte[CrossTableCheckpointBinaryCodec.MAX_ENCODED_BYTES + 1]);
             fail("oversized payload must be rejected");
         } catch (java.io.IOException expected) {
-            assertFalse(store.hasRecoverableFile());
+            assertTrue(store.hasRecoverableFile());
+            assertArrayEquals(previous, store.read());
         }
+    }
+
+    @Test public void oversizedStoredFileIsRejectedAndPreserved() throws Exception {
+        byte[] oversized = new byte[CrossTableCheckpointBinaryCodec.MAX_ENCODED_BYTES + 1];
+        try (FileOutputStream output = new FileOutputStream(checkpointFile)) {
+            output.write(oversized);
+        }
+
+        AndroidAtomicCheckpointStore store = new AndroidAtomicCheckpointStore(
+                context.getFilesDir(), AndroidCheckpointStorage.DEFAULT_FILE_NAME);
+        AndroidCheckpointLoadResult result =
+                new AndroidCheckpointStorage(context).loadCandidate();
+
+        assertEquals(AndroidCheckpointLoadResult.Status.STORAGE_ERROR, result.status());
+        assertTrue(store.hasRecoverableFile());
+        assertEquals(oversized.length, checkpointFile.length());
     }
 }

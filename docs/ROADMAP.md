@@ -612,3 +612,344 @@ Language payload changes are deferred until a Native Android APK is verified pla
 - [ ] Build synthetic map and sprite parser fixtures
 - [ ] Validate against original Nokia package/runtime evidence
 
+
+
+## Proposed next milestone — DEV-003CS
+
+**Proposal:** [DEV-003CS — Gameplay State Snapshot Model & Provider Foundation](DEV-003CS_GAMEPLAY_STATE_SNAPSHOT_PROVIDER_FOUNDATION.md)
+
+This proposal follows the DEV-003CR source-level exit gate. It is not marked approved or complete. Its purpose is to connect the checkpoint boundary to a real gameplay-owned state model only after an authoritative gameplay owner and its thread are implemented. It defines evidence-backed persisted-field mapping, immutable capture, owner-thread restore, deterministic tests, and safe lifecycle save requests. The README still marks the first reproducible gameplay milestone incomplete, so production provider integration is gated on that prerequisite.
+
+Project-owner approval is required before treating this proposal as the official DEV-003CS scope.
+
+
+### DEV-003CS progress
+
+- [x] CS-1 — Gameplay state ownership and lifecycle boundary documented (architecture/evidence only; no production owner implemented).
+- [~] CS-2 — Evidence-backed persisted-field matrix (initial evidence draft committed; field-by-field source trace and review remain).
+- [ ] CS-3 — Native gameplay state model seam (depends on first reproducible gameplay owner in DEV-002).
+- [ ] CS-4 — Immutable snapshot provider.
+- [ ] CS-5 — Provider and restore tests.
+- [ ] CS-6 — Lifecycle request integration.
+- [ ] CS-7 — CI and documentation acceptance.
+
+
+
+## DIRU-NA-DEV-002D — First Playable Vertical Slice Contract
+
+**Working document:** [First Playable Vertical Slice Contract](DIRU-NA-DEV-002D_FIRST_PLAYABLE_VERTICAL_SLICE_CONTRACT.md)
+
+- [x] Define single-writer gameplay owner boundary and immutable render projection
+- [x] Define minimum player/stage state and deterministic tick responsibilities
+- [x] Record audited direction priority, tile deltas, and ordinary interpolation contract
+- [x] Define unsupported-branch fail-closed behavior and atomic no-mutation rule
+- [x] Define synthetic-stage vertical-slice acceptance tests and exit evidence
+- [ ] Implement platform-independent gameplay owner and validated stage model
+- [ ] Implement the first explicitly supported collision subset and typed outcomes
+- [ ] Add deterministic end-to-end simulation tests and synthetic fixture
+- [ ] Integrate the gameplay shell and record manual device/emulator verification
+
+**Status:** Contract committed; implementation not started. This does not mark DEV-002 complete and does not change the README playable milestone status.
+
+
+
+
+## DEV-002E — Stage Model & Ordinary Movement Primitive (implementation increment)
+
+- [x] Add immutable validated three-layer StageGrid with defensive copies and checked bounds
+- [x] Add isolated ordinary movement interpolation clock (18→12→6→0)
+- [x] Add JVM tests for layer validation/copying, bounds, overflow and movement clock
+- [ ] Add platform-independent single-writer GameSession owner
+- [ ] Add player logical state and immutable render projection
+- [ ] Integrate input dispatcher with owner tick without bypassing state gates
+- [ ] Add explicitly supported collision gate and typed no-commit outcomes
+- [ ] Add deterministic synthetic-stage movement integration tests
+
+**Status:** First core primitives committed; no gameplay owner or playable stage yet.
+
+
+
+
+## DEV-002F — Single-writer GameSession foundation (implementation increment)
+
+- [x] Add immutable PlayerMotionState projection
+- [x] Add immutable GameplayRenderSnapshot
+- [x] Add platform-independent GameSession owner-thread boundary
+- [x] Connect LegacyInputDispatcher to deterministic session ticks
+- [x] Reject out-of-bounds targets before collision policy invocation
+- [x] Fail closed when collision policy is missing or unsupported
+- [x] Commit logical tile coordinates only after explicit ACCEPTED policy result
+- [x] Add unit tests for blocked/unsupported no-mutation, accepted movement, interpolation, bounds, and thread ownership
+- [ ] Implement a source-derived collision policy; do not use the test double as production behavior
+- [ ] Integrate supported player-layer/foreground branch evaluation and typed outcomes
+- [ ] Add deterministic synthetic-stage end-to-end tests with actual collision fixtures
+- [ ] Connect render snapshot to Android gameplay shell
+
+**Status:** GameSession foundation committed; production collision evaluator and playable stage remain incomplete.
+
+
+
+
+## DEV-002G — Collision Grid Capture Bridge
+
+- [x] Add read-only LegacyCollisionGridView adapter for StageGrid
+- [x] Require explicit packed-metadata layer; never infer it from background values
+- [x] Preserve optional auxiliary-layer absence distinctly from zero-valued data
+- [x] Defensively copy metadata/auxiliary data and guard all reads by stage bounds
+- [x] Add six adapter tests for layer mapping, missing metadata, optional data, copies and bounds
+- [ ] Add a branch-capture facade that validates context and required samples as one request
+- [ ] Add source-derived typed collision outcome composer without reducing b2/b3/probe/writeback to one boolean
+- [ ] Add transactional application of only fully supported collision decisions
+- [ ] Connect production collision policy to GameSession after golden fixtures pass
+
+**Status:** Collision data bridge committed; collision outcome evaluation remains incomplete.
+
+
+## DIRU-NA-DEV-003W10.4 — Demo archive parser contract
+
+**Working document:** [Demo Archive Parser Contract](DEV-003W10-4_DEMO_ARCHIVE_PARSER_CONTRACT.md)
+
+- [x] Define bounded `demo.f` tagged-chunk reader contract
+- [x] Define bounded `demoSpr.bin` sprite-archive reader contract
+- [x] Specify fail-closed parse outcomes and overflow-safe bounds rules
+- [x] Define synthetic binary fixture matrix and parser ownership boundary
+- [x] Verify exact source byte order and signedness for archive fields against pinned decompiled source
+- [x] Implement bounded inner `demo.f` tagged-chunk reader with first-match compatibility
+- [x] Implement bounded `demoSpr.bin` reader with duplicate/missing-ID handling
+- [x] Add synthetic malformed-input, ordering, and defensive-copy tests
+- [x] Parse selected payload sprite-ID header with signed-short index validation
+- [x] Preserve script-record tail as opaque bounded bytes
+- [x] Add synthetic tests for count, IDs, duplicates, ordering, truncation, and immutability
+- [ ] Validate core tests and Android build in GitHub Actions
+
+**Status:** Inner archive readers and selected-payload header reader committed; CI verification is pending. Outer resource-directory parsing, script-record decoding, interpreter execution, shared sprite cache ownership, and gameplay integration remain deferred.
+
+
+## DIRU-NA-DEV-003W10.7 — Demo script record layout audit
+
+- [x] Trace top-level script buffer count and framing
+- [x] Enumerate observed fixed-size opcode operands and wire sizes
+- [x] Identify variable-length text and 24-bit integer forms
+- [x] Document opcode 0 group packing and child length table
+- [x] Record unsupported opcode and malformed-input fail-closed policy
+- [x] Separate source-proven one-level group behavior from unproven recursive nesting
+- [ ] Implement bounded wire-record decoder and synthetic fixtures (DEV-003W10.8)
+
+**Status:** Static source audit committed. No record decoder, interpreter execution, stage mutation, or rendering integration is included.
+
+
+## DIRU-NA-DEV-003W10.8 — Bounded demo script record decoder
+
+- [x] Implement bounded top-level record count parsing
+- [x] Decode verified fixed-width opcodes and little-endian operands
+- [x] Decode opcode 2 and opcode 27 variable-length payloads
+- [x] Decode opcode 18 24-bit little-endian integer
+- [x] Decode one-level opcode 0 groups
+- [x] Preserve raw wire bytes, typed operands, data, and offsets
+- [x] Reject unknown opcodes, nested groups, truncation, invalid counts, and trailing bytes
+- [x] Add synthetic fixtures for opcode coverage, groups, malformed input, and defensive copies
+- [ ] Run core JVM tests and Android build in CI
+
+**Status:** Bounded decoder and synthetic tests committed. Semantic opcode mapping, legacy normalized-record reconstruction, interpreter execution, and gameplay integration remain deferred. CI/build verification is pending.
+
+
+## DIRU-NA-DEV-003W10.9 — Legacy script normalization layer
+
+- [x] Reconstruct normalized layouts for all currently decoded opcodes
+- [x] Reproduce opcode 1 coordinate scaling and sentinel coordinates
+- [x] Reproduce opcode 2 and 27 variable-payload layouts and legacy signed-short length boundary
+- [x] Reproduce opcode 0 packed group header, u32 child-length table, and concatenated normalized children
+- [x] Reproduce opcode 18 overlapping 32-bit write quirk byte-for-byte
+- [x] Add synthetic golden-byte tests for representative layouts and malformed legacy length boundary
+- [ ] Run core JVM tests and Android build in GitHub Actions
+- [ ] Compare normalized records against a captured demo payload / legacy runtime trace
+
+**Status:** Source-derived normalizer and synthetic byte-layout tests committed. No interpreter execution, stage mutation, sprite allocation, or rendering integration. CI and retail-fixture verification remain pending.
+
+
+### DEV-003W10.9 CI follow-up — 2026-11-27
+
+- [x] Inspect failed GitHub Actions run #639 (run ID 45971114514)
+- [x] Identify failure as Java test-source compilation: `DemoScriptNormalizerTest.java:70`, integer literal 255 cannot be narrowed into a byte array initializer
+- [x] Correct fixture to use explicit `(byte) 255` cast; fix committed as `73260e0559e05c7820daf513a490b9bbb087d26a`
+- [ ] Verify a workflow run for the corrected branch head and obtain passing core JVM tests
+- [ ] Verify Android storage tests and debug APK assembly
+
+**CI finding:** The prior run compiled `:core:compileJava` successfully, then failed at `:core:compileTestJava` on the test fixture literal. The remaining test and APK steps were skipped. The corrected commit is the current PR #1 head, but a completed workflow result for that exact head has not yet been exposed by the available run lookup. Do not mark CI green.
+
+
+### DEV-003CS-3A — Stable GameSession capture seam
+
+- [x] Add owner-thread-only `GameSession.captureStableView()`
+- [x] Reject capture while ordinary movement interpolation is active
+- [x] Verify settled capture before and after an accepted move completes
+- [x] Verify cross-thread capture rejection
+- [x] Document the exact limited projection and non-persistence boundary
+- [ ] Complete CS-2 field/invariant closure and production mutable gameplay-state owner
+- [ ] Implement complete atomic gameplay checkpoint provider only after the authoritative owner exists
+- [ ] Verify current-head CI: core tests, Android storage tests, and debug APK assembly
+
+**Status:** Stable projection seam committed. This is not a complete checkpoint/provider and does not mark DEV-003CS complete. Workflow verification for the latest head remains pending.
+
+
+### DEV-003CS-2A / 2B — Checkpoint evidence closure increment
+
+- [x] Record exact scalar save/restore assignments from the pinned `saveCheckpoint()` and `restoreCheckpoint()` bodies
+- [x] Record four always-copied grid/layer arrays and their exact row-copy directions
+- [x] Record the conditional `lBoolean` metadata/object/auxiliary group and separate nullable `mByteArr` copy
+- [x] Preserve mode-specific restore semantics for `kByte == 1` and `kByte == 5`
+- [x] Trace restore helper bodies `kVoid(int,int)`, `dVoid(byte)`, `aiVoid()`, and `yVoid()`
+- [x] Document code-48 reconstruction, derived span tuple writes, and 3×3 `cByteArrArr` writes
+- [ ] Trace `hVoid(int)` and transitive door writes
+- [ ] Complete `cByteArrArr` and `eByteArr` writers/consumers/allocation lifecycle
+- [ ] Close opaque scalar ownership, mode invariants, and runtime/retail vectors
+- [ ] Implement detached aggregate candidate and atomic restore only after schema closure
+
+**Status:** Static assignment and selected transitive helper evidence substantially expanded. CS-2 remains in progress; no production checkpoint provider or runtime compatibility claim. See `DEV-003CS-2A_EXACT_CHECKPOINT_COPY_RESTORE_ASSIGNMENT_LEDGER.md` and `DEV-003CS-2B_RESTORE_HELPER_TRANSITIVE_SIDE_EFFECT_AUDIT.md`.
+
+### CI — run #656
+
+- [x] Corrected test fixture was picked up by a new PR workflow run for commit `e74acd1b16ef955ea2d901579c766ac035ccd583`
+- [x] Checkout, JDK 17, Android SDK setup, and SDK package installation completed
+- [ ] Core JVM tests
+- [ ] Android storage tests
+- [ ] Debug APK assembly and artifact upload
+
+Do not mark the workflow green until all required steps finish successfully.
+
+
+### DEV-003CS-2B follow-up — door restore branch
+
+- [x] Trace `hVoid(int)` reached by the code-48 restore continuation
+- [x] Trace five-argument `aVoid` horizontal propagation through foreground codes 8/9
+- [x] Record door countdown nibble, high-metadata updates, cByteArrArr write, and sound side effect
+- [ ] Confirm door-index construction and restore-time reachability
+- [ ] Add deterministic golden fixtures for door countdown and propagation boundaries
+
+**Status:** Door helper's direct and transitive grid write set documented; runtime reachability and complete door lifecycle remain open.
+
+
+### DEV-003CS-2B follow-up — derived span lifecycle
+
+- [x] Confirm `eByteArr` allocation as `awInt * 3` bytes
+- [x] Trace initial code-48 span population from stage preprocessing and packed slot metadata
+- [x] Identify observed renderer, updater, and collision/interaction consumers
+- [x] Record that span records are derived state, not an independent checkpoint payload
+- [ ] Close all endpoint sentinel and slot lifecycle cases with fixtures
+
+**Status:** Major `eByteArr` lifecycle consumers identified from static source; runtime and full slot invariants remain open.
+
+
+### CI result — Android Build and Core Tests #656 (2026-11-27)
+
+- [x] Core JVM tests — passed
+- [x] Android storage unit tests — passed
+- [x] Assemble Android debug APK — passed
+- [x] Upload debug APK artifact — passed
+- [x] Download and inspect artifact ZIP; it contains `app-debug.apk` (991,170 bytes)
+- [x] Verify APK ZIP integrity; no corrupt entries found
+
+**Tested source commit:** `e74acd1b16ef955ea2d901579c766ac035ccd583`. Later commits in this increment update documentation only; no source or test code changed after the tested commit. Artifact SHA-256: `4c896862b969567c4b20fa2e0368162cc71f60dcd5a61fbfcd6fc963c109aac2`. This is a successful debug build, not a release-signing or on-device gameplay validation result.
+
+
+### DEV-003CS-3B — Immutable moving-object span view
+
+- [x] Add platform-independent `MovingObjectSpanTable` with exact three-byte signed record preservation
+- [x] Validate triple alignment and slot bounds
+- [x] Defensively copy source and exported raw arrays
+- [x] Add synthetic tests for ordering, sentinel preservation, invalid input, and copying
+- [ ] Implement stage-preprocessing reconstruction only after full slot lifecycle and mutable stage ownership are closed
+- [ ] Re-run CI on the new code/test commits
+
+**Status:** Immutable derived-state view implemented; no renderer, collision, restore, or persistence integration. CI for this latest code increment is pending.
+
+
+### DEV-003CS-3C — Detached initial moving-object span reconstruction
+
+- [x] Rebuild fixed-width span slots in row-major stage scan order
+- [x] Apply candidate-X direction from below-cell metadata bit `0x10`
+- [x] Preserve recognized-occupant endpoint and negative-row sentinel rules
+- [x] Rebuild packed slot high-byte metadata in a detached array
+- [x] Reject invalid grid geometry without out-of-bounds reads
+- [x] Add synthetic fixtures for direction, slot order, recognized/unknown occupants, detached output, and invalid edges
+- [ ] Add full-source golden vectors from stage preprocessing
+- [ ] Implement and test runtime span updater separately from initial reconstruction
+- [ ] Close slot removal/reuse and restore-time reconstruction lifecycle
+
+**Status:** Initial stage-preprocessing projection implemented. Runtime moving-object lifecycle remains out of scope.
+
+
+### CI #685 — Initial span reconstruction
+
+- [x] Core JVM tests passed
+- [x] Android storage tests passed
+- [x] Android debug APK assembled
+- [x] Debug APK artifact uploaded
+
+**Tested head:** `8289aee0b3dcecacb3a136df9345af903fb94321`. The later commits introducing the pure runtime updater are separate and require their own CI run.
+
+### DEV-003CS-3D — Pure runtime span endpoint updater
+
+- [x] Trace legacy `VVoid()` endpoint update and `aByte(...)` directional scan
+- [x] Implement detached left/right endpoint recalculation over immutable StageGrid
+- [x] Preserve source traversability set: empty, code 31, and recognized `dInt` occupants
+- [x] Add tests for both directions, stop boundaries, sentinels, and invalid coordinates
+- [ ] Add golden fixtures captured from actual legacy stage states
+- [ ] Implement the separate per-cell gameplay mutation performed by legacy `aBoolean()`
+- [ ] Reconcile updater and checkpoint/restore publication order
+
+**Important scope:** `VVoid()` calls `aBoolean()` for every cell in the recomputed inclusive span. That helper can transform eligible occupants into code 9, update packed background metadata, invoke `cVoid(...,1)`, and hurt the hero. The new updater intentionally computes only the endpoint projection; it does not claim to reproduce those gameplay side effects.
+
+
+### DEV-003CS-3D follow-up — signed-byte and side-effect audit
+
+- [x] Guard legacy signed-byte coordinate capacity (maximum dimension 128)
+- [x] Add a regression test for oversized stage dimensions
+- [x] Document the separate `aBoolean()` mutation/collision side effects
+- [ ] Capture source-derived golden vectors from real stage states
+- [ ] Implement gameplay mutation transaction with hero collision preconditions
+- [ ] Run CI against the complete updater increment
+
+
+### DEV-003CS-3E — Detached moving-span interaction mutation plan
+
+- [x] Plan recognized occupant conversion to player code 9
+- [x] Preserve source packed-metadata mask and encoded object type
+- [x] Preserve special snake-code-43 flag
+- [x] Plan 3×3 value-48 marker writes and interaction queue event
+- [x] Validate active interval and marker bounds
+- [x] Add immutable-plan tests for recognized, unrecognized, inactive, and boundary cases
+- [ ] Implement atomic application against a mutable stage transaction
+- [ ] Model hero collision/damage preconditions and interaction ring-buffer semantics
+- [ ] Add golden vectors from real stage snapshots
+
+**Status:** Detached mutation plan implemented. No live gameplay state is changed; collision and queue execution remain explicit follow-up work.
+
+
+### DEV-003CS-3F — Atomic detached moving-span mutation transaction
+
+- [x] Capture expected player/background values in each planned cell mutation
+- [x] Simulate sequential source mutation when spans overlap
+- [x] Preserve byte-valued 3×3 marker grid
+- [x] Model eight-slot x/y/type/status interaction ring buffer
+- [x] Preserve queue status reset and `(index + 1) & 7` wraparound
+- [x] Preflight all cell, marker, and event bounds before publishing output
+- [x] Reject stale cell preconditions without mutating source objects
+- [x] Add tests for overlap, queue wrap, atomic publication, and stale input
+- [ ] Integrate transaction result with authoritative mutable GameSession owner
+- [ ] Implement hero collision/damage using player position, cooldown, and animator context
+- [ ] Implement interaction queue consumer and validate runtime ordering
+- [ ] Add golden fixtures from actual stage snapshots and full-source trace
+
+**Status:** Immutable transaction result implemented. No live gameplay-owner integration or hero-damage behavior is claimed. Latest source/test increment requires its own CI result.
+
+
+### DEV-003CS-3F CI correction — ring-buffer wrap expectation
+
+- [x] Inspect failed workflow #725 (run ID `46058777495`)
+- [x] Confirm all 493 core tests compiled and executed; one new transaction test failed
+- [x] Identify the fixture error: queue index 7 advances by `(7 + 1) & 7 = 0`, not 1
+- [x] Correct the expected next index to zero while retaining the event at slot 7
+- [ ] Verify the corrected current head with Core JVM tests, Android storage tests, and APK assembly
+
+**CI status:** Workflow #725 failed on a test expectation only. The implementation's ring-buffer wrap rule matches the source; the test assertion was wrong. Do not mark the new head green until its own CI completes.

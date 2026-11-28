@@ -22,12 +22,12 @@ public final class LegacyForegroundBranchEvaluatorTest {
                 LegacyForegroundBranchEvaluator.evaluate(0x2007).getCollisionFlagEffect());
     }
 
-    @Test public void typeThreeUsesSignedHighByteThresholdAndAlwaysSkipsPlayerLayer() {
+    @Test public void typeThreeUsesSignedHighByteThresholdForFlagAndFlow() {
         LegacyForegroundBranchEvaluator.Decision below =
                 LegacyForegroundBranchEvaluator.evaluate(0x0003);
         assertEquals(LegacyForegroundBranchEvaluator.CollisionFlagEffect.SET_TRUE,
                 below.getCollisionFlagEffect());
-        assertEquals(LegacyForegroundBranchEvaluator.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundBranchEvaluator.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 below.getPlayerLayerFlow());
 
         LegacyForegroundBranchEvaluator.Decision at =
@@ -41,6 +41,8 @@ public final class LegacyForegroundBranchEvaluatorTest {
                 LegacyForegroundBranchEvaluator.evaluate(0xFFFFFF03);
         assertEquals(LegacyForegroundBranchEvaluator.CollisionFlagEffect.SET_TRUE,
                 negative.getCollisionFlagEffect());
+        assertEquals(LegacyForegroundBranchEvaluator.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
+                negative.getPlayerLayerFlow());
     }
 
     @Test public void unrelatedForegroundTypesAreNotClaimedByThisEvaluator() {

@@ -23,15 +23,19 @@ The source checks:
 
 If true, local `n10=1`, then `n3=n10`, so the player-layer switch is skipped. Otherwise, execution reaches player-layer evaluation. This branch does not itself change `b2`.
 
-## 3. Type 3
+## 3. Type 3 — corrected control-flow interpretation
 
 The source checks signed arithmetic shift:
 `raw >> 8 < 3`.
 
-- If true: `b2=true`, then skip the player-layer switch.
-- Otherwise: `b2=false`, `n10=1`, then skip the player-layer switch.
+The branch's `break Label_0738` exits the foreground switch block; execution then assigns `n3 = n10`. The value of `n10` differs by path:
 
-Both outcomes skip player-layer evaluation; the collision flag differs. This is not the same metadata expression as type 7 and must not be masked to an unsigned byte.
+- If `raw >> 8 < 3`: `b2=true`; `n10` remains 0. The player-layer switch is evaluated.
+- Otherwise: `b2=false`; `n10=1`. The player-layer switch is skipped.
+
+Therefore type 3 does **not** always skip player-layer evaluation. The local return flag and player-layer flow are independent channels. The high-byte expression is signed arithmetic shift and must not be masked to an unsigned byte.
+
+This correction is based on the full control-flow around `Label_0738`, not only the type-3 case body.
 
 ## 4. Implementation
 

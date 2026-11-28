@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 
 import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CrossTableCheckpoint;
+import MeongDev.DIRUNA.GloftDIRU.core.objectrecord.CheckpointSaveSequence;
 
 /**
  * Serializes checkpoint disk I/O away from the UI thread.
@@ -27,18 +28,17 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         void onComplete(CheckpointSaveResult result);
     }
 
-    private final AndroidCheckpointStorage storage;
+    private final CheckpointStorage storage;
     private final ExecutorService io = Executors.newSingleThreadExecutor(r -> {
         Thread thread = new Thread(r, "diru-na-checkpoint-io");
         thread.setDaemon(true);
         return thread;
     });
     private final Handler main = new Handler(Looper.getMainLooper());
-    private long nextSequence;
-    private long latestRequestedSequence;
+    private final CheckpointSaveSequence saveSequence = new CheckpointSaveSequence();
     private boolean closed;
 
-    public CheckpointIoDispatcher(AndroidCheckpointStorage storage) {
+    public CheckpointIoDispatcher(CheckpointStorage storage) {
         if (storage == null) throw new IllegalArgumentException("storage is required");
         this.storage = storage;
     }
@@ -51,8 +51,21 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         if (callback == null) throw new IllegalArgumentException("callback is required");
         if (closed) throw new IllegalStateException("dispatcher is closed");
         io.execute(() -> {
-            AndroidCheckpointLoadResult result = storage.loadCandidate();
-            main.post(() -> callback.onComplete(result));
+            AndroidCheckpointLoadResult result;
+            try {
+                result = storage.loadCandidate();
+                if (result == null) {
+                    result = AndroidCheckpointLoadResult.of(
+                            AndroidCheckpointLoadResult.Status.STORAGE_ERROR,
+                            "checkpoint storage returned no load result");
+                }
+            } catch (RuntimeException ex) {
+                result = AndroidCheckpointLoadResult.of(
+                        AndroidCheckpointLoadResult.Status.STORAGE_ERROR,
+                        "checkpoint load failed: " + ex.getClass().getSimpleName());
+            }
+            AndroidCheckpointLoadResult completed = result;
+            main.post(() -> callback.onComplete(completed));
         });
     }
 
@@ -68,8 +81,7 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         if (immutableSnapshot == null || callback == null)
             throw new IllegalArgumentException("snapshot and callback are required");
         if (closed) throw new IllegalStateException("dispatcher is closed");
-        long sequence = ++nextSequence;
-        latestRequestedSequence = sequence;
+        long sequence = saveSequence.request();
         try {
             io.execute(() -> {
                 if (isSuperseded(sequence)) {
@@ -102,8 +114,8 @@ public final class CheckpointIoDispatcher implements AutoCloseable {
         return sequence;
     }
 
-    private synchronized boolean isSuperseded(long sequence) {
-        return sequence < latestRequestedSequence;
+    private boolean isSuperseded(long sequence) {
+        return saveSequence.isSuperseded(sequence);
     }
 
     private void postSave(SaveCallback callback, CheckpointSaveResult result) {

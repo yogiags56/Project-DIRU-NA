@@ -2,7 +2,9 @@ package MeongDev.DIRUNA.GloftDIRU.core.collision;
 
 /**
  * Pure outcome model for legacy foreground types 4 (checkpoint) and 28.
- * It describes requested effects; it never commits them to game state.
+ * Both branches exit the foreground switch block, then fall through to the
+ * player-layer switch (n3 remains zero). It describes requested effects;
+ * it never commits them to game state.
  */
 public final class LegacyForegroundType428Evaluator {
     public enum Status { EVALUATED, NOT_HANDLED }
@@ -57,17 +59,17 @@ public final class LegacyForegroundType428Evaluator {
             if(!probeMode) {
                 int checkpointValue=(foregroundRaw & 0xFFFFFF00) >> 8;
                 if(checkpointValue >= checkpointProgress) {
-                    return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+                    return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                             LocalXBooleanEffect.UNCHANGED,true,true,checkpointValue+1,
                             true,globalStageClock+13);
                 }
             }
-            return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+            return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     LocalXBooleanEffect.UNCHANGED,false,false,checkpointProgress,
                     false,0);
         }
         if(type==28) {
-            return new Decision(Status.EVALUATED,PlayerLayerFlow.SKIP_PLAYER_LAYER,
+            return new Decision(Status.EVALUATED,PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                     probeMode ? LocalXBooleanEffect.UNCHANGED
                             : LocalXBooleanEffect.SET_TRUE,
                     false,false,checkpointProgress,false,0);

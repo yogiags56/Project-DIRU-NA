@@ -38,13 +38,13 @@ public final class LegacyForegroundType2EvaluatorTest {
         assertFalse(d.shouldUpdateAEInt());
         assertEquals(23,d.getNextAEInt());
     }
-    @Test public void probeSuppressesAllTypeTwoEffectsButStillSkipsPlayerLayer() {
+    @Test public void probeSuppressesAllTypeTwoEffectsButStillContinuesToPlayerLayer() {
         LegacyForegroundType2Evaluator.Decision d =
                 LegacyForegroundType2Evaluator.evaluate(0x000002, true, 99, 17, 23);
         assertFalse(d.shouldSetAuxiliaryBranchFlag());
         assertFalse(d.shouldUpdateADInt());
         assertFalse(d.shouldUpdateAEInt());
-        assertEquals(LegacyForegroundType2Evaluator.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundType2Evaluator.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 d.getPlayerLayerFlow());
     }
     @Test public void unrelatedForegroundIsNotHandled() {

@@ -12,7 +12,7 @@ public final class LegacyForegroundType428EvaluatorTest {
         assertEquals(5,equal.getNextCheckpointProgress());
         assertTrue(equal.shouldUpdateCheckpointTimer());
         assertEquals(113,equal.getNextCheckpointTimer());
-        assertEquals(LegacyForegroundType428Evaluator.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundType428Evaluator.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 equal.getPlayerLayerFlow());
     }
 
@@ -46,7 +46,7 @@ public final class LegacyForegroundType428EvaluatorTest {
                 LegacyForegroundType428Evaluator.evaluate(28,false,3,9);
         assertEquals(LegacyForegroundType428Evaluator.LocalXBooleanEffect.SET_TRUE,
                 normal.getLocalXBooleanEffect());
-        assertEquals(LegacyForegroundType428Evaluator.PlayerLayerFlow.SKIP_PLAYER_LAYER,
+        assertEquals(LegacyForegroundType428Evaluator.PlayerLayerFlow.EVALUATE_PLAYER_LAYER,
                 normal.getPlayerLayerFlow());
         LegacyForegroundType428Evaluator.Decision probe =
                 LegacyForegroundType428Evaluator.evaluate(28,true,3,9);
