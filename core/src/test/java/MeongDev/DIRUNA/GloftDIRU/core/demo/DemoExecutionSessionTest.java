@@ -18,7 +18,7 @@ public class DemoExecutionSessionTest {
     }
 
     @Test public void traversesTopLevelRecordsInOrder() {
-        DemoExecutionSession session = session(runtime(2,0, 1, 0,0,0,0,0,0,0,0,0,0, 6, 1,0,0,0));
+        DemoExecutionSession session = session(runtime(2,0, 1, 0,0,0,0,0, 6, 1,0,0,0));
         assertTrue(session.hasCurrentRecord());
         assertEquals(1, session.currentOpcode());
         assertEquals(Arrays.asList(1), session.step().visitedLabels());
@@ -67,7 +67,7 @@ public class DemoExecutionSessionTest {
         assertEquals(1, session.tick());
         assertEquals(6, session.currentOpcode());
         session.reset();
-        assertEquals(1, session.currentOpcode());
+        assertEquals(6, session.currentOpcode());
         assertEquals(0, session.currentBufferIndex());
         assertEquals(0, session.tick());
     }
