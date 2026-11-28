@@ -68,7 +68,7 @@ public class DemoLegacyBufferLayoutTest {
                 null,
                 new byte[]{0},
                 new byte[]{0,1,8,0,0,0,25,0},
-                new byte[]{0,1,3,0,0,0,25,0,1},
+                new byte[]{0,1,2,0,0,0,25,1},
                 new byte[]{0,1,2,0,0,0,0,0}
         }) {
             try {
