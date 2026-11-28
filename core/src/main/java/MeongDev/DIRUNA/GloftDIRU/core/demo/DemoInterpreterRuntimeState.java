@@ -86,9 +86,13 @@ public final class DemoInterpreterRuntimeState {
     public int tick() { return tick; }
     public boolean skipRequested() { return skipRequested; }
 
-    /** Returns false and leaves selection at -1 when there is no next buffer. */
+    /** Returns false and moves selection to -1 when there is no next buffer. */
     public boolean selectNextBuffer() {
-        if (selectedBufferIndex < 0 || selectedBufferIndex + 1 >= buffers.size()) return false;
+        if (selectedBufferIndex < 0) return false;
+        if (selectedBufferIndex + 1 >= buffers.size()) {
+            selectedBufferIndex = -1;
+            return false;
+        }
         selectedBufferIndex++;
         tick = 0;
         return true;
