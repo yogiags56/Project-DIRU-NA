@@ -25,7 +25,8 @@ public final class DemoInterpreterRuntimeState {
                 throw new IllegalArgumentException("normalized record must contain a two-byte header");
             normalizedBytes = bytes.clone();
             opcode = normalizedBytes[0] & 0xFF;
-            if ((normalizedBytes[1] & 0xFF) != 0)
+            // For groups byte 1 is the child count, not a reserved byte.
+            if (opcode != 0 && (normalizedBytes[1] & 0xFF) != 0)
                 throw new IllegalArgumentException("normalized record reserved byte must be zero");
             if (opcode == 0) {
                 children = Collections.unmodifiableList(parseGroupChildren(normalizedBytes));
