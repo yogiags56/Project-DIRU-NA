@@ -73,7 +73,7 @@ public class DemoExecutionSessionTest {
     }
 
     @Test public void skipFlagIsPassedThroughWithoutChangingRecordBytes() {
-        DemoInterpreterRuntimeState runtime = runtime(1,0, 1,0,0,0,0,0,0,0,0,0,0,0);
+        DemoInterpreterRuntimeState runtime = runtime(1,0, 1,0,0,0,0,0,0);
         byte[] before = runtime.buffers().get(0).copyNormalizedBytes();
         DemoExecutionSession session = session(runtime);
         session.setSkipRequested(true);
