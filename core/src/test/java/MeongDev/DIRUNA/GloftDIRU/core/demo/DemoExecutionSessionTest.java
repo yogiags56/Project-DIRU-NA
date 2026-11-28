@@ -25,6 +25,7 @@ public class DemoExecutionSessionTest {
         assertEquals(6, session.currentOpcode());
         assertEquals(Arrays.asList(6), session.step().visitedLabels());
         assertFalse(session.hasCurrentRecord());
+        assertEquals(-1, session.currentBufferIndex());
     }
 
     @Test public void traversesChildrenOfPackedGroupThenNextTopLevelRecord() {
@@ -39,6 +40,7 @@ public class DemoExecutionSessionTest {
         assertEquals(1, session.currentBufferIndex());
         session.step();
         assertFalse(session.hasCurrentRecord());
+        assertEquals(-1, session.currentBufferIndex());
     }
 
     @Test public void emptyGroupsAreSkippedWithoutProducingFakeRecords() {
@@ -143,7 +145,9 @@ public class DemoExecutionSessionTest {
     @Test public void emptyScriptStartsExhaustedAndResetRemainsExhausted() {
         DemoExecutionSession session = session(runtime(0,0));
         assertFalse(session.hasCurrentRecord());
+        assertEquals(-1, session.currentBufferIndex());
         session.reset();
         assertFalse(session.hasCurrentRecord());
+        assertEquals(-1, session.currentBufferIndex());
     }
 }
