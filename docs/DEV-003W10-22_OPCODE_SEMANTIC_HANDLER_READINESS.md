@@ -31,6 +31,17 @@ Candidate entry opcodes: 5, 8, and 9. These are not independent isolated effects
 6. Add invalid-coordinate tests proving zero writes occur before bounds validation.
 7. Keep semantic execution opt-in; no Android renderer, camera, audio, or real retail stage wiring.
 
+## First opt-in implementation slice
+
+Implemented in `DemoStageCellCallbackExecutor` with isolated tests in `DemoStageCellCallbackExecutorTest`:
+- Opcode 5 reads signed-short x/y and the signed byte at +6, applies the opcode-5 callback (player-layer then background=0), then preserves the audited fall-through callback at label 9 using the signed-short value at +6.
+- Opcode 8 executes the shared label-9 callback using signed-short x/y and signed-short +6.
+- Opcode 9 executes the same immediate callback directly.
+- Each callback routes through `DemoStageMutationAdapter`; its bounds check runs before either cell write.
+- The executor is explicitly opt-in and accepts only entry opcodes 5, 8, and 9. It does not replace the dry-run registry or claim to execute downstream opcode-27 completion / opcode-2 dialogue semantics.
+
+The ordered callback trace is asserted in unit tests, including opcode-5 repeated writes, signed-short negative coordinate rejection, and fail-closed behavior for opcode 25. The opcode-25/26 composite sequence remains deferred until a dedicated ordered-effect executor models its foreground, background, completion, callback, and conditional downstream paths.
+
 ## Deferred family
 Opcodes 25 and 26 remain deferred. Their path includes foreground/background writes followed by fall-through into the 5/8/9 callback path and labels 27/2. They require an ordered composite-effect model and branch-condition tests; implementing them as independent handlers would be incorrect.
 
