@@ -45,6 +45,17 @@ The ordered callback trace is asserted in unit tests, including opcode-5 repeate
 ## Deferred family
 Opcodes 25 and 26 remain deferred. Their path includes foreground/background writes followed by fall-through into the 5/8/9 callback path and labels 27/2. They require an ordered composite-effect model and branch-condition tests; implementing them as independent handlers would be incorrect.
 
+## Opcode 25/26 composite implementation slice
+
+Added `DemoStageCompositeCellExecutor` and isolated regression tests:
+- Entry opcode 25 performs the foreground write using the source's signed-byte high/low expression, then follows through opcode 26.
+- Entry opcode 26 performs the u32 background write, then both entry paths continue through opcode 5, empty label 8, and callback label 9.
+- Opcode 27's raw +7 gate is evaluated after the cell callbacks. Nonzero marks label 27 complete and returns before dialogue; zero reaches the opcode-2 boundary.
+- All stage writes use `DemoStageMutationAdapter`; signed-short coordinates are validated before the first write.
+- The executor reports completion labels without mutating normalized record bytes. Opcode-2 dialogue timing/text behavior remains deferred.
+
+Important physical-layout constraint: the legacy opcode-26 u32 read at +6 is wider than the normalized 8-byte opcode-25/26 leaf. In packed opcode-0 groups, this read can consume bytes from the following sibling record. Tests therefore construct an actual packed group and assert the shared-backing read rather than padding a leaf into an artificial 10-byte record. The operand descriptor explicitly declares this fall-through u32 read for opcode 25.
+
 ## Acceptance criteria
 - Source label sequence and conditional exits have explicit tests.
 - Operand reads are gated by the existing descriptor and physical record layout.
