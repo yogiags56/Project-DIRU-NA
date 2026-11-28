@@ -13,7 +13,9 @@ public class DemoOpcodeOperandDescriptorTest {
     }
 
     @Test public void recordsKnownFallThroughChainsInSourceOrder() {
-        assertEquals(java.util.Arrays.asList(25,26,5,8,9,27),
+        assertEquals(java.util.Arrays.asList(25,26,5,8,9,27,2),
+                DemoOpcodeOperandDescriptor.forOpcode(25).switchLabels());
+        assertEquals(java.util.Arrays.asList(25,26,5,8,9,27,2),
                 DemoOpcodeOperandDescriptor.forOpcode(25).switchLabels());
         assertEquals(java.util.Arrays.asList(11,10,13),
                 DemoOpcodeOperandDescriptor.forOpcode(11).switchLabels());
