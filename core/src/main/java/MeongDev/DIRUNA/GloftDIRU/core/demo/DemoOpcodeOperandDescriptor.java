@@ -123,6 +123,7 @@ public final class DemoOpcodeOperandDescriptor {
                 r(25,4,ReadKind.U16_LE,"foreground y"),
                 r(25,6,ReadKind.U8,"foreground tile high/low byte"),
                 r(25,7,ReadKind.U8,"foreground tile high/low byte"),
+                r(25,6,ReadKind.U32_LE,"opcode-26 fall-through collision value"),
                 r(26,2,ReadKind.U16_LE,"collision x"),
                 r(26,4,ReadKind.U16_LE,"collision y"),
                 r(26,6,ReadKind.U32_LE,"collision value"),
