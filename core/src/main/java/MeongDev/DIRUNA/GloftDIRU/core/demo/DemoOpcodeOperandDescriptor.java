@@ -147,7 +147,9 @@ public final class DemoOpcodeOperandDescriptor {
                 r(9,2,ReadKind.U16_LE,"stage x"),
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
-                r(27,7,ReadKind.U8,"completion flag")));
+                r(27,7,ReadKind.U8,"completion flag"),
+                r(2,4,ReadKind.U16_LE,"text position sentinel"),
+                r(2,10,ReadKind.U8,"text completion flag")));
         add(map, 5, labels(5,8,9,27,2), reads(
                 r(5,2,ReadKind.U16_LE,"stage x"),
                 r(5,4,ReadKind.U16_LE,"stage y"),
@@ -155,17 +157,23 @@ public final class DemoOpcodeOperandDescriptor {
                 r(9,2,ReadKind.U16_LE,"stage x"),
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
-                r(27,7,ReadKind.U8,"completion flag")));
+                r(27,7,ReadKind.U8,"completion flag"),
+                r(2,4,ReadKind.U16_LE,"text position sentinel"),
+                r(2,10,ReadKind.U8,"text completion flag")));
         add(map, 8, labels(8,9,27,2), reads(
                 r(9,2,ReadKind.U16_LE,"stage x"),
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
-                r(27,7,ReadKind.U8,"completion flag")));
+                r(27,7,ReadKind.U8,"completion flag"),
+                r(2,4,ReadKind.U16_LE,"text position sentinel"),
+                r(2,10,ReadKind.U8,"text completion flag")));
         add(map, 9, labels(9,27,2), reads(
                 r(9,2,ReadKind.U16_LE,"stage x"),
                 r(9,4,ReadKind.U16_LE,"stage y"),
                 r(9,6,ReadKind.U16_LE,"stage value"),
-                r(27,7,ReadKind.U8,"completion flag")));
+                r(27,7,ReadKind.U8,"completion flag"),
+                r(2,4,ReadKind.U16_LE,"text position sentinel"),
+                r(2,10,ReadKind.U8,"text completion flag")));
         add(map, 27, labels(27,2), reads(
                 r(27,7,ReadKind.U8,"completion flag"),
                 r(2,4,ReadKind.U16_LE,"text position sentinel"),
