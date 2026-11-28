@@ -14,6 +14,7 @@ This milestone strengthens dry-run session regression coverage; it does not add 
 - A skip-allowed record advances the cursor with an empty dispatch trace.
 - An unsupported record in a later buffer leaves buffer index, child index, and tick unchanged.
 - Multiple empty groups are skipped during initial cursor normalization without consuming ticks.
+- Exhausted traversal clears the selected buffer index to `-1`, including empty scripts and terminal group/top-level transitions.
 
 ## Existing regression coverage retained
 - Top-level record ordering.
