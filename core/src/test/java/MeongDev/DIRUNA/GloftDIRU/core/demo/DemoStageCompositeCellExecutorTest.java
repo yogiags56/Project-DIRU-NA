@@ -23,12 +23,23 @@ public class DemoStageCompositeCellExecutorTest {
     }
 
     private static DemoLegacyBufferLayout.RecordSlot record(byte[] bytes) {
-        return DemoLegacyBufferLayout.topLevelLeaf(bytes).slot(0);
+        if (bytes.length != 8) throw new IllegalArgumentException("normalized opcode record must be 8 bytes");
+        // Legacy opcode-26 reads u32 at +6 from the shared packed group array.
+        // The final two bytes therefore come from the following sibling record.
+        byte[] group = new byte[]{
+                0, 2,
+                8, 0, 0, 0,
+                2, 0, 0, 0,
+                bytes[0], bytes[1], bytes[2], bytes[3],
+                bytes[4], bytes[5], bytes[6], bytes[7],
+                52, 0
+        };
+        return DemoLegacyBufferLayout.packedGroup(group).slot(0);
     }
 
     @Test public void opcode25PreservesForegroundBackgroundAndCallbackFallThroughOrder() {
         FakeStage stage = new FakeStage();
-        byte[] bytes = new byte[]{25, 0, 2, 0, 1, 0, 5, 0x12, 0x34, 0x56};
+        byte[] bytes = new byte[]{25, 0, 2, 0, 1, 0, 5, 0x12};
         DemoStageCompositeCellExecutor executor =
                 new DemoStageCompositeCellExecutor(new DemoStageMutationAdapter(stage));
 
@@ -36,24 +47,24 @@ public class DemoStageCompositeCellExecutorTest {
 
         assertEquals(Arrays.asList(
                 "F:2:1:4613",
-                "B:2:1:1446251013",
+                "B:2:1:3412485",
                 "P:2:1:5", "B:2:1:0",
                 "P:2:1:0", "B:2:1:4613"), stage.writes);
         assertEquals(Arrays.asList(25, 26, 5, 9, 27), result.completedLabels());
         assertFalse(result.dialogueReached());
-        assertArrayEquals(new byte[]{25, 0, 2, 0, 1, 0, 5, 0x12, 0x34, 0x56}, bytes);
+        assertArrayEquals(new byte[]{25, 0, 2, 0, 1, 0, 5, 0x12}, bytes);
     }
 
     @Test public void opcode26WithClearGateReachesDialogueWithoutCompletingLabel27() {
         FakeStage stage = new FakeStage();
-        byte[] bytes = new byte[]{26, 0, 1, 0, 2, 0, 7, 0, 0, 0};
+        byte[] bytes = new byte[]{26, 0, 1, 0, 2, 0, 7, 0};
         DemoStageCompositeCellExecutor executor =
                 new DemoStageCompositeCellExecutor(new DemoStageMutationAdapter(stage));
 
         DemoStageCompositeCellExecutor.Result result = executor.execute(record(bytes));
 
         assertEquals(Arrays.asList(
-                "B:1:2:7",
+                "B:1:2:3407879",
                 "P:1:2:7", "B:1:2:0",
                 "P:1:2:0", "B:1:2:7"), stage.writes);
         assertEquals(Arrays.asList(26, 5, 9), result.completedLabels());
@@ -62,7 +73,7 @@ public class DemoStageCompositeCellExecutorTest {
 
     @Test public void opcode25PreservesSignedHighByteWhenBuildingForegroundValue() {
         FakeStage stage = new FakeStage();
-        byte[] bytes = new byte[]{25, 0, 1, 0, 1, 0, 5, (byte) 0x80, 0, 0};
+        byte[] bytes = new byte[]{25, 0, 1, 0, 1, 0, 5, (byte) 0x80};
         DemoStageCompositeCellExecutor executor =
                 new DemoStageCompositeCellExecutor(new DemoStageMutationAdapter(stage));
 
@@ -73,7 +84,7 @@ public class DemoStageCompositeCellExecutorTest {
 
     @Test public void invalidCoordinatesFailBeforeAnyCompositeStageWrite() {
         FakeStage stage = new FakeStage();
-        byte[] bytes = new byte[]{25, 0, (byte) 0xFF, (byte) 0xFF, 1, 0, 5, 0x12, 0x34, 0x56};
+        byte[] bytes = new byte[]{25, 0, (byte) 0xFF, (byte) 0xFF, 1, 0, 5, 0x12};
         DemoStageCompositeCellExecutor executor =
                 new DemoStageCompositeCellExecutor(new DemoStageMutationAdapter(stage));
 
