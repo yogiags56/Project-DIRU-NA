@@ -12,7 +12,7 @@ public class DemoInterpreterRuntimeStateTest {
     }
 
     @Test public void keepsRuntimeCompletionOutsideNormalizedBytes() {
-        DemoInterpreterRuntimeState state = state(1,0, 7, 7);
+        DemoInterpreterRuntimeState state = state(2,0, 7, 7);
         DemoInterpreterRuntimeState.RecordState record = state.buffers().get(0);
         byte[] before = record.copyNormalizedBytes();
         record.setCompleted(true);
@@ -54,7 +54,7 @@ public class DemoInterpreterRuntimeStateTest {
     }
 
     @Test public void resetClearsCountersSkipAndAllBuffers() {
-        DemoInterpreterRuntimeState state = state(2,0, 27,1,0, 7);
+        DemoInterpreterRuntimeState state = state(2,0, 27,1,0, 7, 7);
         DemoInterpreterRuntimeState.RecordState first = state.buffers().get(0);
         first.setRevealCounter(4);
         first.setScrollPosition(9);
@@ -80,12 +80,12 @@ public class DemoInterpreterRuntimeStateTest {
         assertEquals(-1, state.selectedBufferIndex());
     }
 
-    @Test public void rejectsMalformedGroupLengthTable() {
+    @Test public void rejectsNestedGroupBeforeRuntimeConstruction() {
         try {
-            state(1,0, 0,1, 20,0,0,0, 7);
-            fail("expected invalid group length");
-        } catch (IllegalArgumentException expected) {
-            assertTrue(expected.getMessage().contains("length"));
+            state(1,0, 0,1, 0,0);
+            fail("expected nested group rejection");
+        } catch (DemoParseException expected) {
+            assertEquals(DemoParseException.Code.NESTED_GROUP, expected.code());
         }
     }
 }
